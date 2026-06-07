@@ -12,5 +12,5 @@ export async function logoutAction() {
   await supabase.auth.signOut();
 
   // 3. Redirect the user back to the login page
-  redirect("/login");
+  redirect("/");
 }

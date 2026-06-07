@@ -64,15 +64,11 @@ export default function LoginPage() {
         });
 
       if (authError) {
-        toast.error("ការចូលប្រើប្រាស់បរាជ័យ (Login Failed)", {
-          description: authError.message,
-        });
+        toast.error("ការចូលប្រើប្រាស់បរាជ័យ ");
         return;
       }
 
-      toast.success("បានចូលប្រើប្រាស់ជោគជ័យ! (Success)", {
-        description: "កំពុងប្តូរទៅកាន់ទំព័រដើម... (Redirecting...)",
-      });
+      toast.success("បានចូលប្រើប្រាស់ជោគជ័យ!");
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -114,7 +110,7 @@ export default function LoginPage() {
 
         {/* ── Card ── */}
         <Card className="border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/60 dark:shadow-none">
-          <CardHeader className="pb-4">
+          <CardHeader className="pb-4 text-center">
             <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-100">
               ចូលប្រើប្រាស់គណនី
             </CardTitle>
@@ -207,7 +203,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-9 mt-1 bg-slate-600 hover:bg-slate-700 text-white font-medium text-sm shadow-md shadow-blue-500/20 transition-all"
+                className="w-full h-9 mt-1 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm shadow-md shadow-blue-500/20 transition-all"
               >
                 {isSubmitting ? (
                   <>
@@ -223,7 +219,7 @@ export default function LoginPage() {
         </Card>
 
         {/* Footer note */}
-        <p className="text-center text-[11px] text-slate-400 dark:text-slate-600 mt-5">
+        <p className="text-center text-[11px] text-slate-300 dark:text-slate-500 mt-5">
           © {new Date().getFullYear()} RRMS. រក្សាសិទ្ធិគ្រប់យ៉ាង (All rights
           reserved).
         </p>

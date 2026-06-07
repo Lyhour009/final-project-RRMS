@@ -34,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="km"
-      suppressHydrationWarning // ✅ Perfect, this fixes the theme error
+      suppressHydrationWarning
       className={cn(
         "h-full antialiased",
         inter.variable,
@@ -42,12 +42,16 @@ export default function RootLayout({
         "font-sans", // Let Tailwind apply the base font here
       )}
     >
-      <body className="min-h-full flex flex-col bg-slate-50 dark:bg-slate-950">
+      <body
+        suppressHydrationWarning
+        className="min-h-full flex flex-col bg-slate-50 dark:bg-slate-950"
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          nonce={undefined}
         >
           <TooltipProvider>{children}</TooltipProvider>
           <Toaster richColors closeButton position="top-right" />

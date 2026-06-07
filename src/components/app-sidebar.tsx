@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   Building2,
+  ContactRound,
 } from "lucide-react";
 
 import {
@@ -28,24 +29,30 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+interface User {
+  email?: string;
+}
+
 const adminLinks = [
-  { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
-  { title: "Rooms", url: "/admin/rooms", icon: BedDouble },
-  { title: "Tenants", url: "/admin/tenants", icon: Users },
-  { title: "Billing", url: "/admin/billing", icon: Receipt },
-  { title: "Maintenance", url: "/admin/maintenance", icon: Wrench },
-  { title: "Settings", url: "/admin/settings", icon: Settings },
+  { title: "ទិដ្ឋភាពទូទៅ", url: "/admin/dashboard", icon: LayoutDashboard },
+  { title: "បន្ទប់ជួល", url: "/admin/rooms", icon: BedDouble },
+  { title: "អ្នកជួល", url: "/admin/tenants", icon: Users },
+  { title: "កិច្ចព្រមព្រៀង", url: "/admin/contracts", icon: ContactRound },
+  { title: "ការទូទាត់", url: "/admin/billing", icon: Receipt },
+  { title: "ថែទាំ", url: "/admin/maintenance", icon: Wrench },
+  { title: "ការកំណត់", url: "/admin/settings", icon: Settings },
 ];
 
 const tenantLinks = [
-  { title: "My Dashboard", url: "/tenant/overview", icon: LayoutDashboard },
-  { title: "My Room", url: "/tenant/room", icon: BedDouble },
-  { title: "Invoices", url: "/tenant/invoices", icon: Receipt },
-  { title: "Request Repair", url: "/tenant/repair", icon: Wrench },
-  { title: "Settings", url: "/tenant/settings", icon: Settings },
+  { title: "ការគ្រប់គ្រង", url: "/tenant/overview", icon: LayoutDashboard },
+  { title: "បន្ទប់របស់ខ្ញុំ", url: "/tenant/room", icon: BedDouble },
+  { title: "វិក្កយបត្រ", url: "/tenant/invoices", icon: Receipt },
+  { title: "ស្នើសុំជួសជុល", url: "/tenant/repair", icon: Wrench },
+  { title: "ការកំណត់", url: "/tenant/settings", icon: Settings },
 ];
+1;
 
-export function AppSidebar({ user, role }: { user: any; role: string }) {
+export function AppSidebar({ user, role }: { user: User; role: string }) {
   const pathname = usePathname();
 
   const userEmail = user?.email || "guest@roommaster.com";
@@ -57,14 +64,14 @@ export function AppSidebar({ user, role }: { user: any; role: string }) {
   return (
     <Sidebar
       variant="sidebar"
-      className="border-r-0 [&>[data-sidebar=sidebar]]:bg-[#0f1629] [&>[data-sidebar=sidebar]]:border-r [&>[data-sidebar=sidebar]]:border-white/5"
+      className="border-r-0 *:data-[sidebar=sidebar]:bg-[#0f1629] *:data-[sidebar=sidebar]:border-r *:data-[sidebar=sidebar]:border-white/5"
     >
       {/* ── Brand ─────────────────────────────────── */}
       <SidebarHeader className="px-4 py-5">
         <div className="flex items-center gap-3">
           {/* Logo badge */}
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-indigo-500 to-sky-500 shadow-lg shadow-indigo-500/30">
-            <Building2 className="h-[18px] w-[18px] text-white" />
+            <Building2 className="h-4.5 w-4.5 text-white" />
           </div>
 
           {/* Name + role */}
@@ -72,8 +79,10 @@ export function AppSidebar({ user, role }: { user: any; role: string }) {
             <p className="text-[15px] font-bold tracking-tight text-slate-100">
               RRMS
             </p>
-            <p className="mt-0.5 text-[10px]  uppercase tracking-widest text-indigo-400/70 font-bold">
-              {role === "admin" ? "Admin Panel" : "Tenant Panel"}
+            <p className="mt-0.5 text-[12px]  uppercase  text-indigo-400/70 font-bold">
+              {role === "admin"
+                ? "ផ្ទាំងគ្រប់គ្រងប្រព័ន្ធ"
+                : "ប្រព័ន្ធព័ត៌មានអ្នកជួល"}
             </p>
           </div>
         </div>
@@ -83,8 +92,8 @@ export function AppSidebar({ user, role }: { user: any; role: string }) {
       <SidebarContent className="px-3">
         <SidebarGroup>
           {/* Section label */}
-          <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-400/50">
-            {role === "admin" ? "Management" : "My Account"}
+          <p className="mb-2 px-3 text-[12px] font-bold uppercase  text-indigo-400/50">
+            {role === "admin" ? "ការគ្រប់គ្រង" : "គណនីរបស់ខ្ញុំ"}
           </p>
 
           <SidebarGroupContent>
@@ -131,7 +140,7 @@ export function AppSidebar({ user, role }: { user: any; role: string }) {
         <div className="mb-3 h-px bg-linear-to-r from-transparent via-white/10 to-transparent" />
 
         {/* User card */}
-        <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-2 backdrop-blur-sm">
+        <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/3 px-4 py-2 backdrop-blur-sm">
           <Avatar className="h-8 w-8 rounded-lg">
             <AvatarFallback className="rounded-lg bg-linear-to-br from-indigo-500 to-sky-500 text-[11px] font-bold text-white">
               {userInitials}
@@ -153,7 +162,7 @@ export function AppSidebar({ user, role }: { user: any; role: string }) {
             className="w-full justify-start gap-3 rounded-xl px-4 text-[13px] font-medium text-slate-500 hover:bg-red-500/10 hover:text-red-400"
           >
             <LogOut className="h-4 w-4 shrink-0" />
-            Sign out
+            <span>ចាកចេញ</span>
           </Button>
         </form>
       </SidebarFooter>
