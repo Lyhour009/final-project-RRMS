@@ -5,14 +5,22 @@ import Link from "next/link";
 import { logoutAction } from "@/actions/logout";
 import {
   LayoutDashboard,
-  BedDouble,
-  Users,
   Receipt,
   Wrench,
   Settings,
   LogOut,
   Building2,
-  ContactRound,
+  CreditCard,
+  FileText,
+  Home,
+  ReceiptText,
+  FileSignature,
+  Wallet,
+  ClipboardList,
+  UsersRound,
+  Files,
+  User2,
+  User,
 } from "lucide-react";
 
 import {
@@ -34,23 +42,87 @@ interface User {
 }
 
 const adminLinks = [
-  { title: "ទិដ្ឋភាពទូទៅ", url: "/admin/dashboard", icon: LayoutDashboard },
-  { title: "បន្ទប់ជួល", url: "/admin/rooms", icon: BedDouble },
-  { title: "អ្នកជួល", url: "/admin/tenants", icon: Users },
-  { title: "កិច្ចព្រមព្រៀង", url: "/admin/contracts", icon: ContactRound },
-  { title: "ការទូទាត់", url: "/admin/billing", icon: Receipt },
-  { title: "ថែទាំ", url: "/admin/maintenance", icon: Wrench },
-  { title: "ការកំណត់", url: "/admin/settings", icon: Settings },
+  {
+    title: "ផ្ទាំងគ្រប់គ្រង",
+    url: "/admin/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "ការគ្រប់គ្រងបន្ទប់",
+    url: "/admin/rooms",
+    icon: Building2,
+  },
+  {
+    title: "អ្នកជួល",
+    url: "/admin/tenants",
+    icon: UsersRound,
+  },
+  {
+    title: "កិច្ចសន្យាជួល",
+    url: "/admin/contracts",
+    icon: FileSignature,
+  },
+  {
+    title: "វិក្កយបត្រ",
+    url: "/admin/billing",
+    icon: ReceiptText,
+  },
+  {
+    title: "ការទូទាត់",
+    url: "/admin/payments",
+    icon: Wallet,
+  },
+  {
+    title: "របាយការណ័",
+    url: "/admin/reports",
+    icon: Files,
+  },
+  {
+    title: "សំណើជួសជុល",
+    url: "/admin/maintenance",
+    icon: ClipboardList,
+  },
+  {
+    title: "ការកំណត់",
+    url: "/admin/settings",
+    icon: Settings,
+  },
+  { title: "គណនីរបស់ខ្ញុំ", url: "/profile", icon: User },
 ];
 
-const tenantLinks = [
-  { title: "ការគ្រប់គ្រង", url: "/tenant/overview", icon: LayoutDashboard },
-  { title: "បន្ទប់របស់ខ្ញុំ", url: "/tenant/room", icon: BedDouble },
-  { title: "វិក្កយបត្រ", url: "/tenant/invoices", icon: Receipt },
-  { title: "ស្នើសុំជួសជុល", url: "/tenant/repair", icon: Wrench },
-  { title: "ការកំណត់", url: "/tenant/settings", icon: Settings },
+export const tenantLinks = [
+  {
+    title: "ផ្ទាំងគ្រប់គ្រង",
+    url: "/tenant/dashboard",
+    icon: Home,
+  },
+  {
+    title: "កិច្ចសន្យារបស់ខ្ញុំ",
+    url: "/tenant/contracts",
+    icon: FileText,
+  },
+  {
+    title: "វិក្កយបត្រ",
+    url: "/tenant/bills",
+    icon: Receipt,
+  },
+  {
+    title: "ប្រវត្តិការទូទាត់",
+    url: "/tenant/payments",
+    icon: CreditCard,
+  },
+  {
+    title: "សំណើជួសជុល",
+    url: "/tenant/maintenance",
+    icon: Wrench,
+  },
+  { title: "គណនីរបស់ខ្ញុំ", url: "/profile", icon: User },
+  // {
+  //   title: "ការកំណត់",
+  //   url: "/tenant/settings",
+  //   icon: Settings,
+  // },
 ];
-1;
 
 export function AppSidebar({ user, role }: { user: User; role: string }) {
   const pathname = usePathname();

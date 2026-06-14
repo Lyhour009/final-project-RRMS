@@ -1,117 +1,105 @@
 "use client";
 
-import React, { useState } from "react";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { useState } from "react";
+import { Contract } from "@/lib/validations/contracts";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { deleteContractAction } from "@/actions/contracts";
-import type { Contract } from "@/types/contract";
+import { toast } from "sonner";
+import { deleteContract } from "@/actions/contracts";
 
-interface DeleteContractModalProps {
-  contract?: Contract | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess: (id: string) => void;
+interface ContractDeleteModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  contract: Contract | null;
+  onDeleteSuccess: (contractId: string) => void;
 }
 
-export default function DeleteContractModal({
+export default function ContractDeleteModal({
+  isOpen,
+  onClose,
   contract,
-  open,
-  onOpenChange,
-  onSuccess,
-}: DeleteContractModalProps) {
+  onDeleteSuccess,
+}: ContractDeleteModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  async function handleDelete() {
-    if (!contract) return;
+  if (!contract) return null;
+
+  const handleDelete = async () => {
     setIsDeleting(true);
-    setError(null);
+
     try {
-      const result = await deleteContractAction(contract.id);
-      if (result.success) {
-        onSuccess(contract.id);
-        onOpenChange(false);
-      } else {
-        setError(result.error ?? "មានបញ្ហាមិនស្គាល់។");
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "មានបញ្ហាមិនស្គាល់។");
+      await deleteContract(contract.id);
+
+      onDeleteSuccess(contract.id);
+      onClose();
+      toast.success("បានលុបកិច្ចសន្យាជោគជ័យ");
+    } catch (error: any) {
+      toast.error(error.message || "មានបញ្ហាក្នុងការលុបកិច្ចសន្យានេះ");
     } finally {
       setIsDeleting(false);
     }
-  }
-
-  const tenantName = contract?.profiles?.full_name ?? "—";
-  const roomNumber = contract?.rooms?.room_number ?? "—";
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[380px] font-khmer bg-slate-950/95 backdrop-blur-xl border-white/[0.08] text-white p-0">
-        <DialogHeader className="px-6 pt-6 pb-0">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-rose-500/10 p-2.5">
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
-            </div>
-            <div>
-              <DialogTitle className="text-base font-semibold">
-                លុបកិច្ចសន្យា
-              </DialogTitle>
-              <DialogDescription className="text-slate-400 text-xs mt-0.5">
-                សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។
-              </DialogDescription>
-            </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[420px] bg-[#131626] border-zinc-800 text-white rounded-xl">
+        <DialogHeader className="flex flex-col items-center text-center space-y-3">
+          <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+            <AlertTriangle size={24} />
           </div>
+
+          <DialogTitle className="text-xl font-bold">
+            តើអ្នកពិតជាចង់លុបកិច្ចសន្យានេះមែនទេ?
+          </DialogTitle>
+
+          <DialogDescription className="text-zinc-400 text-sm">
+            សកម្មភាពនេះមិនអាចត្រឡប់ថយក្រោយវិញបានឡើយ។ កិច្ចសន្យារបស់{" "}
+            <span className="text-red-400 font-semibold">
+              {contract.profiles?.full_name || "អ្នកជួល"}
+            </span>{" "}
+            បន្ទប់{" "}
+            <span className="text-red-400 font-semibold">
+              #{contract.rooms?.room_number || "-"}
+            </span>{" "}
+            នឹងត្រូវលុបចេញពីប្រព័ន្ធ។
+          </DialogDescription>
         </DialogHeader>
 
-        <Separator className="mt-4 bg-white/[0.06]" />
+        <DialogFooter className="flex sm:justify-center gap-2 mt-4">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onClose}
+            disabled={isDeleting}
+            className="w-full sm:w-auto bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          >
+            បោះបង់
+          </Button>
 
-        <div className="px-6 pb-6 mt-4 space-y-4">
-          <p className="text-sm text-slate-300">
-            តើអ្នកពិតជាចង់លុបកិច្ចសន្យារបស់{" "}
-            <span className="font-semibold text-white">{tenantName}</span>{" "}
-            សម្រាប់បន្ទប់{" "}
-            <span className="font-semibold text-white">#{roomNumber}</span>{" "}
-            មែនទេ?
-          </p>
-
-          {error && (
-            <div className="flex items-start gap-2 text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2.5">
-              <span className="shrink-0 mt-0.5">⚠</span>
-              <span>{error}</span>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-3 pt-2 border-t border-white/[0.06]">
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={isDeleting}
-              onClick={() => onOpenChange(false)}
-              className="text-slate-400 hover:text-white hover:bg-white/[0.06]"
-            >
-              បោះបង់
-            </Button>
-            <Button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-rose-600 hover:bg-rose-500 text-white min-w-[100px]"
-            >
-              {isDeleting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                "លុបចោល"
-              )}
-            </Button>
-          </div>
-        </div>
+          <Button
+            type="button"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-medium min-w-[100px]"
+          >
+            {isDeleting ? (
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 size={16} className="animate-spin" />
+                <span>កំពុងលុប...</span>
+              </div>
+            ) : (
+              "យល់ព្រមលុប"
+            )}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

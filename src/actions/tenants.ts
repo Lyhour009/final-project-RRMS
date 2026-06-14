@@ -1,279 +1,201 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { getTenantSchema, type TenantFormValues } from "@/types/tenant";
+import { createClient } from "@supabase/supabase-js";
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
-
-async function getSupabase() {
-  const cookiesStore = await cookies();
-  return await createClient(cookiesStore);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    },
+  );
 }
 
-// ─── Validate with Zod (shared logic) ────────────────────────────────────────
+export async function getTenants() {
+  const supabase = getSupabaseAdmin();
 
-function validatePayload(payload: TenantFormValues, isEditMode: boolean) {
-  const result = getTenantSchema(isEditMode).safeParse(payload);
-  if (!result.success) {
-    const messages = result.error.issues.map((e) => e.message).join(" ");
-    return { ok: false as const, error: messages };
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("role", "tenant")
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  return data || [];
+}
+
+export async function upsertTenant(id: string | null, formData: FormData) {
+  const supabase = getSupabaseAdmin();
+
+  const full_name = String(formData.get("full_name") || "").trim();
+  const email = String(formData.get("email") || "").trim();
+  const phone_number = String(formData.get("phone_number") || "").trim();
+  const password = String(formData.get("password") || "").trim();
+  const existingImageUrl = String(formData.get("existing_image_url") || "");
+
+  if (!full_name || !email || !phone_number) {
+    throw new Error("សូមបំពេញព័ត៌មានឲ្យបានគ្រប់គ្រាន់");
   }
-  return { ok: true as const, data: result.data };
-}
 
-// ── 1. ទាញយក Tenants ទាំងអស់ ─────────────────────────────────────────────────
-
-export async function getTenantsAction() {
-  try {
-    const supabase = await getSupabase();
-    const { data, error } = await supabase
-      .from("profiles")
-      .select(
-        `
-        id,
-        full_name,
-        phone_number,
-        role,
-        created_at,
-        contracts (
-          id,
-          status,
-          start_date,
-          end_date,
-          rooms ( room_number )
-        )
-      `,
-      )
-      .eq("role", "tenant")
-      .order("created_at", { ascending: false });
-
-    if (error) return { success: false, data: [], error: error.message };
-    return { success: true, data };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, data: [], error: msg };
+  if (!id && password.length < 6) {
+    throw new Error("លេខកូដសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ ៦ ខ្ទង់");
   }
-}
 
-// ── 2. ទាញយក Tenant តែមួយ ────────────────────────────────────────────────────
+  const imageFile = formData.get("id_card_image") as File | null;
+  let imageUrl = existingImageUrl;
 
-export async function getTenantByIdAction(id: string) {
-  try {
-    const supabase = await getSupabase();
-    const { data, error } = await supabase
-      .from("profiles")
-      .select(
-        `
-        id,
-        full_name,
-        phone_number,
-        role,
-        created_at,
-        contracts (
-          id,
-          status,
-          start_date,
-          end_date,
-          deposit_amount,
-          rooms ( room_number, room_type, base_price )
-        )
-      `,
-      )
-      .eq("id", id)
-      .single();
+  if (imageFile && imageFile.size > 0) {
+    const fileName = `${Date.now()}-${imageFile.name.replace(/\s+/g, "_")}`;
 
-    if (error) return { success: false, data: null, error: error.message };
-    return { success: true, data };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, data: null, error: msg };
-  }
-}
-
-// ── 3. បង្កើត Tenant ថ្មី ────────────────────────────────────────────────────
-// NOTE: Tenants ត្រូវបង្កើតតាមរយៈ Supabase Auth ជាមុន
-// Action នេះ Update profile fields បន្ថែម
-
-export async function createTenantAction(payload: TenantFormValues) {
-  try {
-    const validation = validatePayload(payload, false);
-    if (!validation.ok) return { success: false, error: validation.error };
-
-    const supabase = await getSupabase();
-
-    // 1. បង្កើត auth user (admin invite)
-    const { data: authData, error: authError } =
-      await supabase.auth.admin.createUser({
-        email: validation.data.email!,
-        password: crypto.randomUUID(), // Random password, tenant resets later
-        email_confirm: true,
-        user_metadata: { full_name: validation.data.fullName },
+    const { error: uploadError } = await supabase.storage
+      .from("tenants")
+      .upload(fileName, imageFile, {
+        upsert: false,
       });
 
-    if (authError) return { success: false, error: authError.message };
-
-    // 2. Update profile (auto-created by trigger)
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({
-        full_name: validation.data.fullName.trim(),
-        phone_number: validation.data.phoneNumber.trim(),
-        role: "tenant",
-      })
-      .eq("id", authData.user.id);
-
-    if (profileError) return { success: false, error: profileError.message };
-
-    revalidatePath("/admin/tenants");
-    return { success: true, id: authData.user.id };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: msg };
-  }
-}
-
-// ── 4. កែប្រែ Tenant ────────────────────────────────────────────────────────
-
-export async function updateTenantAction(
-  id: string,
-  payload: TenantFormValues,
-) {
-  try {
-    const validation = validatePayload(payload, true);
-    if (!validation.ok) return { success: false, error: validation.error };
-
-    const supabase = await getSupabase();
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        full_name: validation.data.fullName.trim(),
-        phone_number: validation.data.phoneNumber.trim(),
-      })
-      .eq("id", id);
-
-    if (error) return { success: false, error: error.message };
-
-    revalidatePath("/admin/tenants");
-    return { success: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: msg };
-  }
-}
-
-// ── 5. លុប Tenant ────────────────────────────────────────────────────────────
-
-export async function deleteTenantAction(id: string) {
-  try {
-    const supabase = await getSupabase();
-
-    // លុប auth user (profile លុបដោយ cascade)
-    const { error } = await supabase.auth.admin.deleteUser(id);
-    if (error) return { success: false, error: error.message };
-
-    revalidatePath("/admin/tenants");
-    return { success: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: msg };
-  }
-}
-
-// ── 6. Upload រូប ID Card ─────────────────────────────────────────────────────
-
-export async function uploadIdCardImagesAction(
-  tenantId: string,
-  files: FormData,
-) {
-  try {
-    const supabase = await getSupabase();
-    const uploadedUrls: string[] = [];
-
-    for (const [, file] of files.entries()) {
-      if (!(file instanceof File)) continue;
-
-      const ext = file.name.split(".").pop();
-      const path = `${tenantId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("tenants")
-        .upload(path, file, { upsert: false });
-
-      if (uploadError) return { success: false, error: uploadError.message };
-
-      const { data: urlData } = supabase.storage
-        .from("tenants")
-        .getPublicUrl(path);
-
-      uploadedUrls.push(urlData.publicUrl);
+    if (uploadError) {
+      throw new Error("Upload រូបភាពបរាជ័យ: " + uploadError.message);
     }
 
-    // Append to existing id_card_images
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id_card_images")
-      .eq("id", tenantId)
-      .single();
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("tenants").getPublicUrl(fileName);
 
-    const existing: string[] = Array.isArray(profile?.id_card_images)
-      ? profile.id_card_images
-      : [];
-    const merged = [...existing, ...uploadedUrls];
-
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ id_card_images: merged })
-      .eq("id", tenantId);
-
-    if (updateError) return { success: false, error: updateError.message };
-
-    revalidatePath("/admin/tenants");
-    return { success: true, urls: merged };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: msg };
+    imageUrl = publicUrl;
   }
-}
 
-// ── 6b. លុបរូប ID Card តែមួយ ─────────────────────────────────────────────────
+  if (id) {
+    const authUpdate: {
+      email: string;
+      password?: string;
+      user_metadata: {
+        full_name: string;
+        phone_number: string;
+      };
+    } = {
+      email,
+      user_metadata: {
+        full_name,
+        phone_number,
+      },
+    };
 
-export async function deleteIdCardImageAction(tenantId: string, url: string) {
-  try {
-    const supabase = await getSupabase();
+    if (password.length >= 6) {
+      authUpdate.password = password;
+    }
 
-    const path = url.split("/tenants/").pop();
-    if (!path) return { success: false, error: "Invalid URL" };
-
-    const { error: removeError } = await supabase.storage
-      .from("tenants")
-      .remove([path]);
-
-    if (removeError) return { success: false, error: removeError.message };
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id_card_images")
-      .eq("id", tenantId)
-      .single();
-
-    const updated = (profile?.id_card_images ?? []).filter(
-      (u: string) => u !== url,
+    const { error: authError } = await supabase.auth.admin.updateUserById(
+      id,
+      authUpdate,
     );
 
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ id_card_images: updated.length > 0 ? updated : null })
-      .eq("id", tenantId);
+    if (authError) throw new Error(authError.message);
 
-    if (updateError) return { success: false, error: updateError.message };
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({
+        role: "tenant",
+        full_name,
+        email,
+        phone_number,
+        id_card_images: imageUrl ? [imageUrl] : [],
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
 
     revalidatePath("/admin/tenants");
-    return { success: true, urls: updated };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: msg };
+    return data;
   }
+
+  const { data: authData, error: authError } =
+    await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        full_name,
+        phone_number,
+      },
+    });
+
+  if (authError) throw new Error(authError.message);
+
+  const userId = authData.user.id;
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .insert([
+      {
+        id: userId,
+        role: "tenant",
+        full_name,
+        email,
+        phone_number,
+        id_card_images: imageUrl ? [imageUrl] : [],
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/tenants");
+  return data;
+}
+
+export async function deleteTenant(id: string) {
+  const supabase = getSupabaseAdmin();
+
+  const checkTables = ["contracts", "bills", "maintenance_requests"];
+
+  for (const table of checkTables) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("id")
+      .eq("tenant_id", id)
+      .limit(1);
+
+    if (error) throw new Error(error.message);
+
+    if (data && data.length > 0) {
+      throw new Error("មិនអាចលុបអ្នកជួលនេះបានទេ ព្រោះមានទិន្នន័យពាក់ព័ន្ធ");
+    }
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id_card_images")
+    .eq("id", id)
+    .single();
+
+  const imageUrls = profile?.id_card_images || [];
+
+  if (imageUrls.length > 0) {
+    const paths = imageUrls
+      .map((url: string) => {
+        const marker = "/storage/v1/object/public/tenants/";
+        const index = url.indexOf(marker);
+        return index >= 0 ? url.slice(index + marker.length) : null;
+      })
+      .filter(Boolean) as string[];
+
+    if (paths.length > 0) {
+      await supabase.storage.from("tenants").remove(paths);
+    }
+  }
+
+  const { error } = await supabase.auth.admin.deleteUser(id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/tenants");
 }

@@ -1,16 +1,27 @@
-import { getContractsAction } from "@/actions/contracts";
-import ContractsClient from "@/components/contract/contract-client";
-
-export const revalidate = 0;
-export const dynamic = "force-dynamic";
+import { getContracts, getContractFormData } from "@/actions/contracts";
+import { ContractTableWrapper } from "@/components/contract/contract-table";
 
 export default async function ContractsPage() {
-  const result = await getContractsAction();
-  const initialContracts = result.success && result.data ? result.data : [];
+  const contracts = await getContracts();
+  const { tenants, rooms } = await getContractFormData();
 
   return (
-    <div className="w-full min-h-screen p-1 md:p-6">
-      <ContractsClient initialContracts={initialContracts} />
+    <div className="p-6 space-y-6 text-white">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          📋 គ្រប់គ្រងកិច្ចសន្យាជួល
+        </h1>
+
+        <p className="text-sm text-zinc-400 mt-1">
+          ទំព័រចាត់ចែងកិច្ចសន្យាជួល បន្ថែម កែប្រែ និងលុប
+        </p>
+      </div>
+
+      <ContractTableWrapper
+        initialContracts={contracts || []}
+        tenants={tenants || []}
+        rooms={rooms || []}
+      />
     </div>
   );
 }

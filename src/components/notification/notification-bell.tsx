@@ -1,0 +1,112 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Bell } from "lucide-react";
+import {
+  getMyNotifications,
+  markNotificationAsRead,
+} from "@/actions/notifications";
+
+type NotificationItem = {
+  id: string;
+  type: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+  link: string | null;
+};
+
+export function NotificationBell() {
+  const [open, setOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  async function loadNotifications() {
+    const data = await getMyNotifications();
+    setNotifications(data as NotificationItem[]);
+  }
+
+  // useEffect(() => {
+  //   loadNotifications();
+
+  //   const interval = setInterval(() => {
+  //     loadNotifications();
+  //   }, 10000);
+
+  //   return () => clearInterval(interval);
+  // }, []);
+  useEffect(() => {
+    loadNotifications();
+
+    const interval = setInterval(() => {
+      loadNotifications();
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const unreadCount = notifications.filter((item) => !item.is_read).length;
+
+  async function handleRead(id: string) {
+    await markNotificationAsRead(id);
+    setNotifications((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, is_read: true } : item)),
+    );
+  }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="relative flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
+      >
+        <Bell className="w-4 h-4" />
+
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-500 px-1 text-[10px] font-bold text-white flex items-center justify-center">
+            {unreadCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-3 w-80 rounded-xl border border-zinc-800 bg-[#131626] shadow-xl z-50 overflow-hidden">
+          <div className="p-4 border-b border-zinc-800">
+            <h3 className="text-sm font-semibold text-white">ការជូនដំណឹង</h3>
+          </div>
+
+          <div className="max-h-80 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <p className="p-4 text-sm text-zinc-500">មិនទាន់មានការជូនដំណឹង</p>
+            ) : (
+              notifications.map((item) => {
+                const content = (
+                  <div
+                    onClick={() => handleRead(item.id)}
+                    className={`p-4 border-b border-zinc-800 hover:bg-zinc-900/50 cursor-pointer ${
+                      !item.is_read ? "bg-blue-500/5" : ""
+                    }`}
+                  >
+                    <p className="text-sm text-white">{item.message}</p>
+                    <p className="text-xs text-zinc-500 mt-1">
+                      {new Date(item.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                );
+
+                return item.link ? (
+                  <Link key={item.id} href={item.link}>
+                    {content}
+                  </Link>
+                ) : (
+                  <div key={item.id}>{content}</div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

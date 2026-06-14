@@ -1,40 +1,39 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Loader2, FileText, User, DoorOpen } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { SubmitHandler } from "react-hook-form";
+import { toast } from "sonner";
 
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 
 import {
-  createContractAction,
-  updateContractAction,
-  getContractFormOptionsAction,
-} from "@/actions/contracts";
-import {
-  contractFormSchema,
-  type Contract,
-  type ContractFormValues,
-  type ContractStatus,
-} from "@/types/contract";
+  Contract,
+  contractSchema,
+  ContractFormValues,
+  ContractStatus,
+} from "@/lib/validations/contracts";
+import { upsertContract } from "@/actions/contracts";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface TenantOption {
   id: string;
   full_name: string;
   phone_number: string;
+  email?: string;
 }
 
 interface RoomOption {
@@ -42,370 +41,373 @@ interface RoomOption {
   room_number: string;
   room_type: string;
   base_price: number;
+  floor: number;
   status: string;
 }
 
-interface ContractFormModalProps {
+interface ContractModalProps {
+  isOpen: boolean;
+  onClose: () => void;
   contract?: Contract | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess: (contract: Contract, type: "add" | "edit") => void;
+  tenants: TenantOption[];
+  rooms: RoomOption[];
+  onSuccess?: (contract: Contract) => void;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const STATUS_OPTIONS: {
-  value: ContractStatus;
-  label: string;
-  color: string;
-}[] = [
-  { value: "active", label: "សកម្ម", color: "text-emerald-400" },
-  { value: "terminated", label: "បញ្ចប់", color: "text-rose-400" },
-  { value: "expired", label: "ផុតកំណត់", color: "text-amber-400" },
-];
-
-const DEFAULT_VALUES: ContractFormValues = {
-  tenantId: "",
-  roomId: "",
-  startDate: "",
-  endDate: "",
-  depositAmount: "",
-  status: "active",
-  dueDay: "1",
+const STATUS_LABELS: Record<ContractStatus, string> = {
+  active: "សកម្ម (Active)",
+  pending: "កំពុងរង់ចាំ (Pending)",
+  expired: "អស់សុពលភាព (Expired)",
+  terminated: "បានបញ្ចប់ (Terminated)",
 };
 
-// ─── Field Wrapper ────────────────────────────────────────────────────────────
-function Field({
-  label,
-  error,
-  required,
-  children,
-}: {
-  label: string;
-  error?: string;
-  required?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label className="text-xs font-medium text-slate-400">
-        {label}
-        {required && <span className="text-rose-400 ml-0.5">*</span>}
-      </label>
-      {children}
-      {error && <p className="text-[11px] text-rose-400">{error}</p>}
-    </div>
-  );
-}
-
-// ─── Select Class Helper ──────────────────────────────────────────────────────
-const selectCls = (hasError?: boolean) =>
-  cn(
-    "w-full bg-white/[0.03] border border-white/[0.08] text-white rounded-md px-3 py-2 text-sm outline-none focus:border-indigo-500/50 transition-colors",
-    hasError && "border-rose-500/50",
-  );
-
-// ─── Component ────────────────────────────────────────────────────────────────
-export default function ContractFormModal({
+export default function ContractModal({
+  isOpen,
+  onClose,
   contract,
-  open,
-  onOpenChange,
+  tenants,
+  rooms,
   onSuccess,
-}: ContractFormModalProps) {
+}: ContractModalProps) {
+  const [loading, setLoading] = useState(false);
   const isEditMode = !!contract;
 
-  const [tenants, setTenants] = useState<TenantOption[]>([]);
-  const [rooms, setRooms] = useState<RoomOption[]>([]);
-  const [loadingOptions, setLoadingOptions] = useState(false);
-
-  // ─── React Hook Form + Zod ───────────────────────────────────────────────
   const {
     register,
     handleSubmit,
-    reset,
     setValue,
     watch,
-    setError,
-    formState: { errors, isSubmitting },
+    reset,
+    formState: { errors },
   } = useForm<ContractFormValues>({
-    resolver: zodResolver(contractFormSchema),
-    defaultValues: DEFAULT_VALUES,
+    resolver: zodResolver(contractSchema),
+    defaultValues: {
+      tenant_id: "",
+      room_id: "",
+      start_date: "",
+      end_date: "",
+      deposit_amount: 0,
+      status: "active",
+      due_day: 5,
+    },
   });
 
-  const currentStatus = watch("status");
-  const selectedRoomId = watch("roomId");
+  const tenantIdValue = watch("tenant_id");
+  const roomIdValue = watch("room_id");
+  const statusValue = watch("status");
 
-  // ─── Load Options & Populate on Open ────────────────────────────────────
   useEffect(() => {
-    if (!open) return;
-
-    reset(
-      isEditMode && contract
-        ? {
-            tenantId: contract.tenant_id ?? "",
-            roomId: contract.room_id ?? "",
-            startDate: contract.start_date?.slice(0, 10) ?? "",
-            endDate: contract.end_date?.slice(0, 10) ?? "",
-            depositAmount: contract.deposit_amount?.toString() ?? "",
-            status: contract.status ?? "active",
-            dueDay: contract.due_day?.toString() ?? "1",
-          }
-        : DEFAULT_VALUES,
-    );
-
-    setLoadingOptions(true);
-    getContractFormOptionsAction().then((res) => {
-      if (res.success) {
-        setTenants(res.tenants as TenantOption[]);
-        setRooms(res.rooms as RoomOption[]);
-      }
-      setLoadingOptions(false);
-    });
-  }, [open, contract, isEditMode, reset]);
-
-  // ─── Submit Handler ──────────────────────────────────────────────────────
-  const onSubmit: SubmitHandler<ContractFormValues> = async (data) => {
-    try {
-      const result = isEditMode
-        ? await updateContractAction(contract!.id, data)
-        : await createContractAction(data);
-
-      if (result.success && result.data) {
-        onSuccess(result.data as Contract, isEditMode ? "edit" : "add");
-        onOpenChange(false);
+    if (isOpen) {
+      if (contract) {
+        reset({
+          tenant_id: contract.tenant_id,
+          room_id: contract.room_id,
+          start_date: contract.start_date?.slice(0, 10) || "",
+          end_date: contract.end_date?.slice(0, 10) || "",
+          deposit_amount: contract.deposit_amount,
+          status: contract.status,
+          due_day: contract.due_day,
+        });
       } else {
-        setError("root", {
-          message: (result as { error?: string }).error ?? "មានបញ្ហាមិនស្គាល់។",
+        reset({
+          tenant_id: "",
+          room_id: "",
+          start_date: "",
+          end_date: "",
+          deposit_amount: 0,
+          status: "active",
+          due_day: 5,
         });
       }
-    } catch (err: unknown) {
-      setError("root", {
-        message: err instanceof Error ? err.message : "មានបញ្ហាមិនស្គាល់។",
-      });
+    }
+  }, [isOpen, contract, reset]);
+
+  const roomsForDropdown = useMemo(() => {
+    if (!isEditMode || !contract?.room_id) {
+      return rooms.filter((room) => room.status === "available");
+    }
+
+    return rooms.filter(
+      (room) => room.status === "available" || room.id === contract.room_id,
+    );
+  }, [rooms, isEditMode, contract]);
+
+  const selectedTenant = tenants.find((tenant) => tenant.id === tenantIdValue);
+  const selectedRoom = roomsForDropdown.find((room) => room.id === roomIdValue);
+
+  const onSubmit = async (values: ContractFormValues) => {
+    setLoading(true);
+
+    const formData = new FormData();
+
+    formData.append("tenant_id", values.tenant_id);
+    formData.append("room_id", values.room_id);
+    formData.append("start_date", values.start_date);
+    formData.append("end_date", values.end_date);
+    formData.append("deposit_amount", String(values.deposit_amount));
+    formData.append("status", values.status);
+    formData.append("due_day", String(values.due_day));
+
+    try {
+      const result = await upsertContract(contract?.id || null, formData);
+
+      toast.success(
+        isEditMode
+          ? "បានកែប្រែកិច្ចសន្យាជោគជ័យ"
+          : "បានបង្កើតកិច្ចសន្យាថ្មីជោគជ័យ",
+      );
+
+      if (onSuccess && result) {
+        onSuccess(result);
+      }
+
+      onClose();
+    } catch (error: any) {
+      toast.error(error.message || "មានបញ្ហាខុសបច្ចេកទេស");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ─── Selected Room Warning ───────────────────────────────────────────────
-  const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
-  const roomUnavailable = selectedRoom && selectedRoom.status !== "available";
-
-  // ─── Render ──────────────────────────────────────────────────────────────
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] font-khmer bg-slate-950/95 backdrop-blur-xl border-white/[0.08] text-white p-0">
-        {/* Header */}
-        <DialogHeader className="px-6 pt-6 pb-0">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-indigo-500/10 p-2.5">
-              <FileText className="w-4 h-4 text-indigo-400" />
-            </div>
-            <div>
-              <DialogTitle className="text-base font-semibold leading-snug">
-                {isEditMode ? "កែប្រែកិច្ចសន្យា" : "បង្កើតកិច្ចសន្យាថ្មី"}
-              </DialogTitle>
-              <DialogDescription className="text-slate-400 text-xs mt-0.5">
-                {isEditMode
-                  ? "កែប្រែព័ត៌មានកិច្ចសន្យា រួចរក្សាទុក។"
-                  : "បំពេញព័ត៌មានខាងក្រោម ដើម្បីបង្កើតកិច្ចសន្យា។"}
-              </DialogDescription>
-            </div>
-          </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="bg-[#0b0d19] text-white border-zinc-800 max-w-xl max-h-[90vh] overflow-y-auto rounded-xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-semibold text-zinc-100">
+            {isEditMode
+              ? "📝 កែប្រែកិច្ចសន្យាជួល"
+              : "📋 បន្ថែមកិច្ចសន្យាជួលថ្មី"}
+          </DialogTitle>
         </DialogHeader>
 
-        <Separator className="mt-4 bg-white/[0.06]" />
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
+          <div className="space-y-1.5">
+            <Label className="text-zinc-400">អ្នកជួល</Label>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="px-6 pb-6 space-y-4 mt-4 max-h-[70vh] overflow-y-auto"
-        >
-          {/* Section: Parties */}
-          <div className="space-y-3">
-            <p className="text-[11px] uppercase tracking-widest text-slate-500 flex items-center gap-2">
-              <User className="w-3 h-3" /> អ្នកជួល និងបន្ទប់
-            </p>
+            <Select
+              value={tenantIdValue}
+              onValueChange={(value) =>
+                setValue("tenant_id", value ? value : "", {
+                  shouldValidate: true,
+                })
+              }
+            >
+              <SelectTrigger className="bg-[#131626] border-zinc-800 text-white">
+                <span
+                  className={selectedTenant ? "text-white" : "text-zinc-500"}
+                >
+                  {selectedTenant
+                    ? `${selectedTenant.full_name} (${selectedTenant.phone_number})`
+                    : "ជ្រើសរើសអ្នកជួល..."}
+                </span>
+              </SelectTrigger>
 
-            {/* Tenant */}
-            <Field label="អ្នកជួល" error={errors.tenantId?.message} required>
-              <select
-                {...register("tenantId")}
-                disabled={loadingOptions}
-                className={selectCls(!!errors.tenantId)}
-              >
-                <option value="" className="bg-slate-900">
-                  {loadingOptions ? "កំពុងទាញ..." : "ជ្រើសរើសអ្នកជួល..."}
-                </option>
-                {tenants.map((t) => (
-                  <option key={t.id} value={t.id} className="bg-slate-900">
-                    {t.full_name}
-                    {t.phone_number ? ` — ${t.phone_number}` : ""}
-                  </option>
-                ))}
-              </select>
-            </Field>
+              <SelectContent className="bg-[#131626] border-zinc-800 text-white w-fit">
+                {tenants.length === 0 ? (
+                  <SelectItem value="_none" disabled>
+                    មិនមានអ្នកជួលឡើយ
+                  </SelectItem>
+                ) : (
+                  tenants.map((tenant) => (
+                    <SelectItem
+                      key={tenant.id}
+                      value={tenant.id}
+                      className="text-xs"
+                    >
+                      {tenant.full_name}{" "}
+                      <span className="text-zinc-500">
+                        ({tenant.phone_number})
+                      </span>
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
 
-            {/* Room */}
-            <Field label="បន្ទប់" error={errors.roomId?.message} required>
-              <select
-                {...register("roomId")}
-                disabled={loadingOptions}
-                className={selectCls(!!errors.roomId)}
-              >
-                <option value="" className="bg-slate-900">
-                  {loadingOptions ? "កំពុងទាញ..." : "ជ្រើសរើសបន្ទប់..."}
-                </option>
-                {rooms.map((r) => (
-                  <option key={r.id} value={r.id} className="bg-slate-900">
-                    #{r.room_number} — {r.room_type} (${r.base_price}/ខែ)
-                    {r.status !== "available" ? " ⚠" : ""}
-                  </option>
-                ))}
-              </select>
-              {roomUnavailable && (
-                <p className="text-[11px] text-amber-400 mt-1">
-                  ⚠ បន្ទប់នេះមានស្ថានភាព &quot;{selectedRoom.status}&quot;។
+            {errors.tenant_id && (
+              <p className="text-xs text-red-400">{errors.tenant_id.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-zinc-400">បន្ទប់</Label>
+
+            <Select
+              value={roomIdValue}
+              onValueChange={(value) =>
+                setValue("room_id", value ? value : "", {
+                  shouldValidate: true,
+                })
+              }
+            >
+              <SelectTrigger className="bg-[#131626] border-zinc-800 text-white w-fit">
+                <span className={selectedRoom ? "text-white" : "text-zinc-500"}>
+                  {selectedRoom
+                    ? `#${selectedRoom.room_number} — ${selectedRoom.room_type} (ជាន់ ${selectedRoom.floor}) — $${selectedRoom.base_price}`
+                    : "ជ្រើសរើសបន្ទប់..."}
+                </span>
+              </SelectTrigger>
+
+              <SelectContent className="bg-[#131626] border-zinc-800 text-white w-fit">
+                {roomsForDropdown.length === 0 ? (
+                  <SelectItem value="_none" disabled>
+                    មិនមានបន្ទប់ទំនេរឡើយ
+                  </SelectItem>
+                ) : (
+                  roomsForDropdown.map((room) => (
+                    <SelectItem
+                      key={room.id}
+                      value={room.id}
+                      className="text-xs"
+                    >
+                      #{room.room_number} — {room.room_type} — ជាន់ {room.floor}{" "}
+                      —{" "}
+                      <span className="text-emerald-400">
+                        ${room.base_price}
+                      </span>
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+
+            {errors.room_id && (
+              <p className="text-xs text-red-400">{errors.room_id.message}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-zinc-400">ថ្ងៃចាប់ផ្តើម</Label>
+
+              <Input
+                type="date"
+                className="bg-[#131626] border-zinc-800 text-white"
+                {...register("start_date")}
+              />
+
+              {errors.start_date && (
+                <p className="text-xs text-red-400">
+                  {errors.start_date.message}
                 </p>
               )}
-            </Field>
-          </div>
-
-          <Separator className="bg-white/[0.06]" />
-
-          {/* Section: Dates */}
-          <div className="space-y-3">
-            <p className="text-[11px] uppercase tracking-widest text-slate-500 flex items-center gap-2">
-              <DoorOpen className="w-3 h-3" /> រយៈពេលកិច្ចសន្យា
-            </p>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field
-                label="ថ្ងៃចូលជួល"
-                error={errors.startDate?.message}
-                required
-              >
-                <Input
-                  type="date"
-                  {...register("startDate")}
-                  className={cn(
-                    "bg-white/[0.03] border-white/[0.08] text-white [color-scheme:dark]",
-                    errors.startDate && "border-rose-500/50",
-                  )}
-                />
-              </Field>
-
-              <Field label="ថ្ងៃបញ្ចប់" error={errors.endDate?.message}>
-                <Input
-                  type="date"
-                  {...register("endDate")}
-                  className={cn(
-                    "bg-white/[0.03] border-white/[0.08] text-white [color-scheme:dark]",
-                    errors.endDate && "border-rose-500/50",
-                  )}
-                />
-              </Field>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {/* Deposit */}
-              <Field
-                label="ប្រាក់កក់ ($)"
-                error={errors.depositAmount?.message}
-              >
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
-                    $
-                  </span>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    {...register("depositAmount")}
-                    placeholder="0"
-                    className={cn(
-                      "bg-white/[0.03] border-white/[0.08] text-white placeholder:text-slate-600 pl-7",
-                      errors.depositAmount && "border-rose-500/50",
-                    )}
-                  />
-                </div>
-              </Field>
+            <div className="space-y-1.5">
+              <Label className="text-zinc-400">ថ្ងៃបញ្ចប់</Label>
 
-              {/* Due Day */}
-              <Field label="ថ្ងៃបង់ប្រចាំខែ" error={errors.dueDay?.message}>
-                <Input
-                  type="number"
-                  min="1"
-                  max="31"
-                  {...register("dueDay")}
-                  placeholder="1"
-                  className={cn(
-                    "bg-white/[0.03] border-white/[0.08] text-white placeholder:text-slate-600",
-                    errors.dueDay && "border-rose-500/50",
-                  )}
-                />
-              </Field>
+              <Input
+                type="date"
+                className="bg-[#131626] border-zinc-800 text-white"
+                {...register("end_date")}
+              />
+
+              {errors.end_date && (
+                <p className="text-xs text-red-400">
+                  {errors.end_date.message}
+                </p>
+              )}
             </div>
           </div>
 
-          <Separator className="bg-white/[0.06]" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-zinc-400">ប្រាក់កក់ ($)</Label>
 
-          {/* Status Buttons */}
-          <Field label="ស្ថានភាព" error={errors.status?.message} required>
-            <div className="flex gap-2">
-              {STATUS_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() =>
-                    setValue("status", opt.value, { shouldValidate: true })
-                  }
-                  className={cn(
-                    "flex-1 py-2 rounded-lg text-xs font-medium border transition-all",
-                    currentStatus === opt.value
-                      ? "border-indigo-500/50 bg-indigo-500/10 text-white"
-                      : "border-white/[0.08] bg-white/[0.02] text-slate-500 hover:text-slate-300",
-                  )}
-                >
-                  <span
-                    className={
-                      currentStatus === opt.value ? opt.color : undefined
-                    }
-                  >
-                    {opt.label}
-                  </span>
-                </button>
-              ))}
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="ឧ. 400"
+                className="bg-[#131626] border-zinc-800 text-white"
+                {...register("deposit_amount", { valueAsNumber: true })}
+              />
+
+              {errors.deposit_amount && (
+                <p className="text-xs text-red-400">
+                  {errors.deposit_amount.message}
+                </p>
+              )}
             </div>
-          </Field>
 
-          {/* Root / Server Error */}
-          {errors.root && (
-            <div className="flex items-start gap-2 text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2.5">
-              <span className="shrink-0 mt-0.5">⚠</span>
-              <span>{errors.root.message}</span>
+            <div className="space-y-1.5">
+              <Label className="text-zinc-400">ថ្ងៃបង់ប្រាក់/ខែ</Label>
+
+              <Input
+                type="number"
+                min={1}
+                max={31}
+                step={1}
+                placeholder="ឧ. 5"
+                className="bg-[#131626] border-zinc-800 text-white"
+                {...register("due_day", { valueAsNumber: true })}
+              />
+
+              {errors.due_day && (
+                <p className="text-xs text-red-400">{errors.due_day.message}</p>
+              )}
             </div>
-          )}
+          </div>
 
-          {/* Footer Actions */}
-          <div className="flex justify-end gap-3 pt-2 border-t border-white/[0.06]">
+          <div className="space-y-1.5">
+            <Label className="text-zinc-400">ស្ថានភាព</Label>
+
+            <Select
+              value={statusValue}
+              onValueChange={(value: string | null) =>
+                setValue("status", value as ContractStatus, {
+                  shouldValidate: true,
+                })
+              }
+            >
+              <SelectTrigger className="bg-[#131626] border-zinc-800 text-white">
+                <span className={statusValue ? "text-white" : "text-zinc-500"}>
+                  {statusValue
+                    ? STATUS_LABELS[statusValue]
+                    : "ជ្រើសរើសស្ថានភាព"}
+                </span>
+              </SelectTrigger>
+
+              <SelectContent className="bg-[#131626] border-zinc-800 text-white w-fit">
+                <SelectItem className="text-xs" value="active">
+                  សកម្ម (Active)
+                </SelectItem>
+
+                <SelectItem className="text-xs" value="pending">
+                  កំពុងរង់ចាំ (Pending)
+                </SelectItem>
+
+                <SelectItem className="text-xs" value="expired">
+                  អស់សុពលភាព (Expired)
+                </SelectItem>
+
+                <SelectItem className="text-xs" value="terminated">
+                  បានបញ្ចប់ (Terminated)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {errors.status && (
+              <p className="text-xs text-red-400">{errors.status.message}</p>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800/60">
             <Button
               type="button"
               variant="ghost"
-              disabled={isSubmitting}
-              onClick={() => onOpenChange(false)}
-              className="text-slate-400 hover:text-white hover:bg-white/[0.06]"
+              onClick={onClose}
+              className="text-zinc-400 hover:text-white hover:bg-zinc-800"
             >
               បោះបង់
             </Button>
+
             <Button
               type="submit"
-              disabled={isSubmitting || loadingOptions}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white min-w-[130px]"
+              disabled={loading}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6"
             >
-              {isSubmitting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : isEditMode ? (
-                "រក្សាទុក"
-              ) : (
-                "បង្កើតកិច្ចសន្យា"
-              )}
+              {loading ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
             </Button>
           </div>
         </form>

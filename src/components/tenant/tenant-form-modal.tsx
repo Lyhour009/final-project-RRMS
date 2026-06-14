@@ -1,0 +1,294 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff, UploadCloud, X } from "lucide-react";
+import { toast } from "sonner";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+import {
+  Tenant,
+  tenantSchema,
+  TenantFormValues,
+} from "@/lib/validations/tenants";
+import { upsertTenant } from "@/actions/tenants";
+
+interface TenantModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  tenant?: Tenant | null;
+  onSuccess?: (tenant: Tenant) => void;
+}
+
+export default function TenantModal({
+  isOpen,
+  onClose,
+  tenant,
+  onSuccess,
+}: TenantModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const isEditMode = !!tenant;
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<TenantFormValues>({
+    resolver: zodResolver(tenantSchema),
+    defaultValues: {
+      full_name: "",
+      email: "",
+      phone_number: "",
+      password: "",
+    },
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      if (tenant) {
+        reset({
+          full_name: tenant.full_name || "",
+          email: tenant.email || "",
+          phone_number: tenant.phone_number || "",
+          password: "",
+        });
+
+        setPreview(tenant.id_card_images?.[0] || null);
+      } else {
+        reset({
+          full_name: "",
+          email: "",
+          phone_number: "",
+          password: "",
+        });
+
+        setPreview(null);
+      }
+
+      setShowPassword(false);
+    }
+  }, [isOpen, tenant, reset]);
+
+  async function onSubmit(values: TenantFormValues) {
+    setLoading(true);
+
+    const formData = new FormData();
+
+    formData.append("full_name", values.full_name);
+    formData.append("email", values.email);
+    formData.append("phone_number", values.phone_number);
+    formData.append("password", values.password || "");
+
+    if (values.id_card_image) {
+      formData.append("id_card_image", values.id_card_image);
+    } else if (tenant?.id_card_images?.[0]) {
+      formData.append("existing_image_url", tenant.id_card_images[0]);
+    }
+
+    try {
+      const result = await upsertTenant(tenant?.id || null, formData);
+
+      toast.success(
+        isEditMode ? "បានកែប្រែអ្នកជួលជោគជ័យ" : "បានបង្កើតអ្នកជួលថ្មីជោគជ័យ",
+      );
+
+      if (onSuccess && result) {
+        onSuccess(result as Tenant);
+      }
+
+      onClose();
+    } catch (error: any) {
+      toast.error(error.message || "មានបញ្ហាខុសបច្ចេកទេស");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="bg-[#0b0d19] text-white border-zinc-800 max-w-xl max-h-[90vh] overflow-y-auto rounded-xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-semibold text-zinc-100">
+            {isEditMode ? "📝 កែប្រែអ្នកជួល" : "👤 បន្ថែមអ្នកជួលថ្មី"}
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-zinc-800 rounded-xl p-4 bg-[#131626]">
+            {preview ? (
+              <div className="relative w-full h-44">
+                <img
+                  src={preview}
+                  className="w-full h-full object-cover rounded-lg"
+                  alt="ID Card Preview"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreview(null);
+                    setValue("id_card_image", undefined, {
+                      shouldValidate: true,
+                    });
+                  }}
+                  className="absolute top-2 right-2 bg-red-600/80 hover:bg-red-600 text-white p-1.5 rounded-full transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <label className="cursor-pointer flex flex-col items-center py-6 w-full">
+                <UploadCloud size={40} className="text-zinc-500 mb-2" />
+
+                <span className="text-sm text-zinc-400">
+                  ផ្ទេរឡើងរូបអត្តសញ្ញាណប័ណ្ណ
+                </span>
+
+                <span className="text-xs text-zinc-500 mt-1">
+                  JPG, PNG, WEBP / អតិបរមា 5MB
+                </span>
+
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+
+                    if (file) {
+                      setValue("id_card_image", file, {
+                        shouldValidate: true,
+                      });
+                      setPreview(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+              </label>
+            )}
+
+            {errors.id_card_image && (
+              <p className="text-xs text-red-400 mt-1">
+                {errors.id_card_image.message as string}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-zinc-400">ឈ្មោះពេញ</Label>
+
+            <Input
+              className="bg-[#131626] border-zinc-800 text-white"
+              placeholder="ឧទាហរណ៍៖ សុខ សំណាង"
+              {...register("full_name")}
+            />
+
+            {errors.full_name && (
+              <p className="text-xs text-red-400">{errors.full_name.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-zinc-400">អ៊ីមែល</Label>
+
+            <Input
+              type="email"
+              className="bg-[#131626] border-zinc-800 text-white"
+              placeholder="tenant@example.com"
+              {...register("email")}
+            />
+
+            {errors.email && (
+              <p className="text-xs text-red-400">{errors.email.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-zinc-400">លេខទូរស័ព្ទ</Label>
+
+            <Input
+              className="bg-[#131626] border-zinc-800 text-white"
+              placeholder="ឧទាហរណ៍៖ 087640628"
+              {...register("phone_number")}
+            />
+
+            {errors.phone_number && (
+              <p className="text-xs text-red-400">
+                {errors.phone_number.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-zinc-400">
+              លេខកូដសម្ងាត់{" "}
+              {isEditMode && (
+                <span className="text-xs text-zinc-500">
+                  (ទុកទទេ បើមិនចង់ប្តូរ)
+                </span>
+              )}
+            </Label>
+
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                className="bg-[#131626] border-zinc-800 text-white pr-10"
+                placeholder={
+                  isEditMode
+                    ? "បញ្ចូលលេខកូដថ្មី ប្រសិនបើចង់ប្តូរ"
+                    : "យ៉ាងតិច 6 ខ្ទង់"
+                }
+                {...register("password")}
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+
+            {errors.password && (
+              <p className="text-xs text-red-400">{errors.password.message}</p>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800/60">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+            >
+              បោះបង់
+            </Button>
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6"
+            >
+              {loading ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -1,31 +1,28 @@
-import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
-import { AmbientBackground } from "@/components/shared/ui";
-import HomeNavbar from "@/components/home/navbar";
-import HeroSection from "@/components/home/hero";
-import FeaturesSection from "@/components/home/feature";
-import { TenantCTA } from "@/components/home/tenant-cta";
+import { createClient } from "@/lib/supabase/server";
+import { LandingPageClient } from "@/components/landing/landing-page-client";
 
-async function getSession() {
-  const cookiesStore = await cookies();
-  const supabase = await createClient(cookiesStore);
+async function getUserRole() {
+  const cookieStore = await cookies();
+  const supabase = await createClient(cookieStore);
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return !!user;
+
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return profile?.role || null;
 }
 
 export default async function HomePage() {
-  const isLoggedIn = await getSession();
+  const role = await getUserRole();
 
-  return (
-    <div className="min-h-screen bg-slate-950 font-khmer text-white overflow-x-hidden">
-      <AmbientBackground />
-      <HomeNavbar isLoggedIn={isLoggedIn} />
-      <HeroSection isLoggedIn={isLoggedIn} />
-      <FeaturesSection />
-      <TenantCTA isLoggedIn={isLoggedIn} />
-      {/* <HomeFooter /> */}
-    </div>
-  );
+  return <LandingPageClient role={role} />;
 }

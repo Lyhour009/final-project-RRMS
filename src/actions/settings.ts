@@ -1,188 +1,113 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import type {
-  ProfileSettings,
-  PasswordSettings,
-  PropertySettings,
-  BillingSettings,
-} from "@/types/setting";
 
+const QR_BUCKET = "room-images";
 async function getSupabase() {
-  const cookiesStore = await cookies();
-  return await createClient(cookiesStore);
+  const cookieStore = await cookies();
+  return await createClient(cookieStore);
 }
 
-// ── 1. ទាញយក Profile Admin បច្ចុប្បន្ន ──────────────────────────────────────
-export async function getAdminProfileAction() {
-  try {
-    const supabase = await getSupabase();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+export async function getSettings() {
+  const supabase = await getSupabase();
 
-    if (authError || !user) return { success: false, data: null };
+  const { data, error } = await supabase
+    .from("settings")
+    .select("*")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, full_name, phone_number, role")
-      .eq("id", user.id)
-      .single();
+  if (error) throw new Error(error.message);
 
-    if (error) return { success: false, data: null, error: error.message };
+  return data;
+}
 
-    return {
-      success: true,
-      data: {
-        ...data,
-        email: user.email ?? "",
-      },
-    };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, data: null, error: msg };
+export async function updateSettings(prevState: any, formData: FormData) {
+  const supabase = await getSupabase();
+
+  const id = String(formData.get("id") || "");
+
+  if (!id) {
+    return { success: false, message: "រកមិនឃើញ Settings ID" };
   }
+
+  const { error } = await supabase
+    .from("settings")
+    .update({
+      water_rate: Number(formData.get("water_rate") || 0),
+      electric_rate: Number(formData.get("electric_rate") || 0),
+      late_fee: Number(formData.get("late_fee") || 0),
+      monthly_due_day: Number(formData.get("monthly_due_day") || 1),
+      currency: String(formData.get("currency") || "USD"),
+      payment_instruction: String(formData.get("payment_instruction") || ""),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) return { success: false, message: error.message };
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/tenant/payments");
+
+  return {
+    success: true,
+    message: "ការកំណត់ត្រូវបានរក្សាទុកជោគជ័យ",
+  };
 }
 
-// ── 2. Update Profile Admin ───────────────────────────────────────────────────
-export async function updateProfileAction(payload: ProfileSettings) {
-  try {
-    const supabase = await getSupabase();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "មិនបានចូលប្រព័ន្ធ។" };
+export async function uploadPaymentQr(prevState: any, formData: FormData) {
+  const supabase = await getSupabase();
 
-    // Update profiles table
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({
-        full_name: payload.fullName.trim(),
-        phone_number: payload.phoneNumber.trim(),
-      })
-      .eq("id", user.id);
+  const qrFile = formData.get("qr_image") as File | null;
 
-    if (profileError) return { success: false, error: profileError.message };
-
-    // Update email in auth if changed
-    if (payload.email !== user.email) {
-      const { error: emailError } = await supabase.auth.updateUser({
-        email: payload.email,
-      });
-      if (emailError) return { success: false, error: emailError.message };
-    }
-
-    revalidatePath("/admin/settings");
-    return { success: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: msg };
+  if (!qrFile || qrFile.size === 0) {
+    return { success: false, message: "សូមជ្រើសរើស QR Image" };
   }
-}
 
-// ── 3. ផ្លាស់ប្តូរ Password ───────────────────────────────────────────────────
-export async function updatePasswordAction(payload: PasswordSettings) {
-  try {
-    const supabase = await getSupabase();
+  const { data: settings, error: settingsError } = await supabase
+    .from("settings")
+    .select("id")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .single();
 
-    // Verify current password by re-signing in
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user?.email) return { success: false, error: "មិនបានចូលប្រព័ន្ធ។" };
+  if (settingsError || !settings) {
+    return { success: false, message: "មិនមាន Settings row ក្នុង Database" };
+  }
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: user.email,
-      password: payload.currentPassword,
+  const fileName = `payment-qr/${Date.now()}-${qrFile.name.replace(/\s+/g, "_")}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(QR_BUCKET)
+    .upload(fileName, qrFile, {
+      upsert: false,
     });
-    if (signInError)
-      return { success: false, error: "លេខសម្ងាត់បច្ចុប្បន្នមិនត្រឹមត្រូវ។" };
 
-    // Update to new password
-    const { error } = await supabase.auth.updateUser({
-      password: payload.newPassword,
-    });
-    if (error) return { success: false, error: error.message };
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(QR_BUCKET).getPublicUrl(fileName);
 
-    return { success: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: msg };
+  const { error: updateError } = await supabase
+    .from("settings")
+    .update({
+      payment_qr_url: publicUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", settings.id);
+
+  if (updateError) {
+    return { success: false, message: updateError.message };
   }
-}
 
-// ── 4. ទាញយក Property Settings ───────────────────────────────────────────────
-// Stored in a single-row "settings" table
-export async function getPropertySettingsAction() {
-  try {
-    const supabase = await getSupabase();
-    const { data, error } = await supabase
-      .from("settings")
-      .select("*")
-      .eq("key", "property")
-      .single();
+  revalidatePath("/admin/settings");
+  revalidatePath("/tenant/payments");
 
-    if (error) return { success: false, data: null };
-    return { success: true, data: data?.value ?? null };
-  } catch {
-    return { success: false, data: null };
-  }
-}
-
-// ── 5. Update Property Settings ──────────────────────────────────────────────
-export async function updatePropertySettingsAction(payload: PropertySettings) {
-  try {
-    const supabase = await getSupabase();
-
-    const { error } = await supabase
-      .from("settings")
-      .upsert({ key: "property", value: payload }, { onConflict: "key" });
-
-    if (error) return { success: false, error: error.message };
-
-    revalidatePath("/admin/settings");
-    return { success: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: msg };
-  }
-}
-
-// ── 6. ទាញយក Billing Settings ────────────────────────────────────────────────
-export async function getBillingSettingsAction() {
-  try {
-    const supabase = await getSupabase();
-    const { data, error } = await supabase
-      .from("settings")
-      .select("*")
-      .eq("key", "billing")
-      .single();
-
-    if (error) return { success: false, data: null };
-    return { success: true, data: data?.value ?? null };
-  } catch {
-    return { success: false, data: null };
-  }
-}
-
-// ── 7. Update Billing Settings ────────────────────────────────────────────────
-export async function updateBillingSettingsAction(payload: BillingSettings) {
-  try {
-    const supabase = await getSupabase();
-
-    const { error } = await supabase
-      .from("settings")
-      .upsert({ key: "billing", value: payload }, { onConflict: "key" });
-
-    if (error) return { success: false, error: error.message };
-
-    revalidatePath("/admin/settings");
-    return { success: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: msg };
-  }
+  return {
+    success: true,
+    message: "បាន Upload និងរក្សាទុក QR Code ជោគជ័យ",
+    url: publicUrl,
+  };
 }

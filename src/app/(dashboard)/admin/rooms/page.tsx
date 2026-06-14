@@ -1,16 +1,22 @@
-import { getRoomsAction } from "@/actions/rooms";
-import RoomsClient from "@/components/room/room-client";
-
-export const revalidate = 0;
-export const dynamic = "force-dynamic";
+import { getRooms } from "@/actions/rooms";
+import RoomTable from "@/components/room/room-table";
 
 export default async function RoomsPage() {
-  const result = await getRoomsAction();
-  const initialRooms = result.success && result.data ? result.data : [];
+  const rooms = await getRooms();
 
   return (
-    <div className="w-full min-h-screen p-1 md:p-6">
-      <RoomsClient initialRooms={initialRooms} />
+    <div className="p-6 space-y-6 text-white">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          🏢 គ្រប់គ្រងបន្ទប់ជួល
+        </h1>
+
+        <p className="text-sm text-zinc-400 mt-1">
+          ទំព័រចាត់ចែងទិន្នន័យបន្ទប់ បន្ថែម កែប្រែ និងលុប
+        </p>
+      </div>
+
+      <RoomTable initialRooms={rooms || []} />
     </div>
   );
 }

@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react"; // 👈 Added for handling component mount triggers
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { Building2, Loader2, Mail, Lock } from "lucide-react";
+import { Building2, Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-// ── Validation ────────────────────────────────────────────────────────────────
 const loginSchema = z.object({
   email: z
     .string()
@@ -29,28 +28,27 @@ const loginSchema = z.object({
     .string()
     .min(
       6,
-      "លិខិតឆ្លងដែនត្រូវមានយ៉ាងហោចណាស់ ៦ ខ្ទង់ (Password must be at least 6 characters)",
+      "លេខកូដសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ ៦ ខ្ទង់ (Password must be at least 6 characters)",
     ),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-// ── Component ─────────────────────────────────────────────────────────────────
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
-    reset, // 👈 Destructured reset function from react-hook-form
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 
-  // 👈 Force-clears form values on fresh load/redirect mount
   useEffect(() => {
     reset({ email: "", password: "" });
   }, [reset]);
@@ -64,11 +62,15 @@ export default function LoginPage() {
         });
 
       if (authError) {
-        toast.error("ការចូលប្រើប្រាស់បរាជ័យ ");
+        console.error("Login error:", authError.message);
+        toast.error(authError.message);
         return;
       }
 
-      toast.success("បានចូលប្រើប្រាស់ជោគជ័យ!");
+      if (!authData.user) {
+        toast.error("រកមិនឃើញអ្នកប្រើប្រាស់ទេ​ !");
+        return;
+      }
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -77,15 +79,22 @@ export default function LoginPage() {
         .single();
 
       if (profileError || !profile) {
-        router.push("/login");
+        console.error("Profile error:", profileError);
+        toast.error("Profile not found. Please check profiles table.");
         return;
       }
 
-      router.push(
-        profile.role === "admin" ? "/admin/dashboard" : "/tenant/overview",
-      );
+      toast.success("បានចូលប្រើប្រាស់ជោគជ័យ!");
+
+      if (profile.role === "admin") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/tenant/dashboard");
+      }
+
       router.refresh();
-    } catch {
+    } catch (error) {
+      console.error("Unexpected login error:", error);
       toast.error("មានបញ្ហាបច្ចេកទេសកើតឡើង (Unexpected Error)");
     }
   };
@@ -93,11 +102,11 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
       <div className="w-full max-w-sm relative">
-        {/* ── Brand mark ── */}
         <div className="flex flex-col items-center mb-6 gap-3">
           <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-blue-600 shadow-lg shadow-blue-500/25">
             <Building2 className="w-5 h-5 text-white" />
           </div>
+
           <div className="text-center">
             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
               RRMS
@@ -108,12 +117,12 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* ── Card ── */}
         <Card className="border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/60 dark:shadow-none">
           <CardHeader className="pb-4 text-center">
             <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-100">
               ចូលប្រើប្រាស់គណនី
             </CardTitle>
+
             <CardDescription
               lang="km"
               className="text-slate-500 dark:text-slate-400 text-[13px] leading-relaxed"
@@ -123,13 +132,11 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent>
-            {/* Added autoComplete="off" to the outer form block wrapper */}
             <form
               onSubmit={handleSubmit(onLoginSubmit)}
               autoComplete="off"
               className="space-y-4"
             >
-              {/* ── Email ── */}
               <div className="space-y-1.5">
                 <Label
                   htmlFor="email"
@@ -141,11 +148,12 @@ export default function LoginPage() {
                     (Email Address)
                   </span>
                 </Label>
+
                 <Input
                   id="email"
                   type="email"
                   placeholder="name@example.com"
-                  autoComplete="off" // 👈 Changed from "email" to stop browser auto-injection
+                  autoComplete="username"
                   className={`h-9 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus-visible:ring-blue-500 ${
                     errors.email
                       ? "border-rose-500 focus-visible:ring-rose-500"
@@ -153,6 +161,7 @@ export default function LoginPage() {
                   }`}
                   {...register("email")}
                 />
+
                 {errors.email && (
                   <p className="text-xs text-rose-500 font-medium">
                     {errors.email.message}
@@ -160,7 +169,6 @@ export default function LoginPage() {
                 )}
               </div>
 
-              {/* ── Password ── */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label
@@ -173,6 +181,7 @@ export default function LoginPage() {
                       (Password)
                     </span>
                   </Label>
+
                   <button
                     type="button"
                     className="text-[12px] text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
@@ -180,18 +189,37 @@ export default function LoginPage() {
                     Forgot password?
                   </button>
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  autoComplete="new-password" // 👈 Prevents the browser password chain auto-populating on logouts
-                  className={`h-9 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus-visible:ring-blue-500 ${
-                    errors.password
-                      ? "border-rose-500 focus-visible:ring-rose-500"
-                      : ""
-                  }`}
-                  {...register("password")}
-                />
+
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    className={`h-9 pr-10 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus-visible:ring-blue-500 ${
+                      errors.password
+                        ? "border-rose-500 focus-visible:ring-rose-500"
+                        : ""
+                    }`}
+                    {...register("password")}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+
                 {errors.password && (
                   <p className="text-xs text-rose-500 font-medium">
                     {errors.password.message}
@@ -199,7 +227,6 @@ export default function LoginPage() {
                 )}
               </div>
 
-              {/* ── Submit ── */}
               <Button
                 type="submit"
                 disabled={isSubmitting}
@@ -211,14 +238,13 @@ export default function LoginPage() {
                     <span lang="km">កំពុងផ្ទៀងផ្ទាត់...</span>
                   </>
                 ) : (
-                  <span lang="km">ចូលប្រើប្រាស់ប្រព័ន្ធ </span>
+                  <span lang="km">ចូលប្រើប្រាស់ប្រព័ន្ធ</span>
                 )}
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        {/* Footer note */}
         <p className="text-center text-[11px] text-slate-300 dark:text-slate-500 mt-5">
           © {new Date().getFullYear()} RRMS. រក្សាសិទ្ធិគ្រប់យ៉ាង (All rights
           reserved).

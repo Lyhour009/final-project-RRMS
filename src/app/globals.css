@@ -122,6 +122,9 @@
     var(--font-sans), var(--font-sans-khmer), ui-sans-serif, system-ui,
     sans-serif;
 }
+html {
+  scroll-behavior: smooth;
+}
 
 @layer base {
   * {
@@ -141,4 +144,18 @@
   html {
     @apply font-sans;
   }
+}
+
+.dashboard-chart text {
+  font-size: 13px !important;
+  font-family: var(--font-khmer), Inter, system-ui, sans-serif !important;
+}
+
+.dashboard-chart .recharts-legend-item-text {
+  font-size: 13px !important;
+  color: #a1a1aa !important;
+}
+
+.dashboard-chart .recharts-tooltip-wrapper {
+  font-size: 12px !important;
 }

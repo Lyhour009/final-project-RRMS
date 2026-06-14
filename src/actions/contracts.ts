@@ -1,187 +1,322 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { contractFormSchema } from "@/types/contract";
-import type { Contract } from "@/types/contract";
+import { createClient } from "@/lib/supabase/server";
 
 async function getSupabase() {
-  const cookiesStore = await cookies();
-  return await createClient(cookiesStore);
+  const cookieStore = await cookies();
+  return await createClient(cookieStore);
 }
 
-const CONTRACT_SELECT = `
-  id,
-  tenant_id,
-  room_id,
-  start_date,
-  end_date,
-  deposit_amount,
-  status,
-  created_at,
-  due_day,
-  renewed_from,
-  profiles ( id, full_name, phone_number ),
-  rooms ( id, room_number, room_type, base_price )
-`;
+export async function getContracts() {
+  const supabase = await getSupabase();
 
-// ── 1. ទាញយក Contracts ទាំងអស់ ──────────────────────────────────────────────
-export async function getContractsAction() {
-  try {
-    const supabase = await getSupabase();
-    const { data, error } = await supabase
-      .from("contracts")
-      .select(CONTRACT_SELECT)
-      .order("created_at", { ascending: false });
+  const { data, error } = await supabase
+    .from("contracts")
+    .select(
+      `
+      *,
+      profiles:tenant_id (
+        id,
+        full_name,
+        phone_number,
+        email
+      ),
+      rooms:room_id (
+        id,
+        room_number,
+        room_type,
+        base_price,
+        floor
+      )
+    `,
+    )
+    .order("created_at", { ascending: false });
 
-    if (error) return { success: false, data: [], error: error.message };
-    return { success: true, data };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, data: [], error: msg };
+  if (error) throw new Error(error.message);
+
+  return data || [];
+}
+
+export async function getContractFormData() {
+  const supabase = await getSupabase();
+
+  const { data: activeContracts, error: activeContractsError } = await supabase
+    .from("contracts")
+    .select("tenant_id, room_id")
+    .eq("status", "active");
+
+  if (activeContractsError) {
+    throw new Error(activeContractsError.message);
   }
+
+  const usedTenantIds = (activeContracts || []).map((item) => item.tenant_id);
+  const usedRoomIds = (activeContracts || []).map((item) => item.room_id);
+
+  let tenantsQuery = supabase
+    .from("profiles")
+    .select("id, full_name, phone_number, email")
+    .eq("role", "tenant")
+    .order("full_name", { ascending: true });
+
+  if (usedTenantIds.length > 0) {
+    tenantsQuery = tenantsQuery.not("id", "in", `(${usedTenantIds.join(",")})`);
+  }
+
+  const { data: tenants, error: tenantsError } = await tenantsQuery;
+
+  if (tenantsError) {
+    throw new Error(tenantsError.message);
+  }
+
+  let roomsQuery = supabase
+    .from("rooms")
+    .select("id, room_number, room_type, base_price, floor, status")
+    .eq("status", "available")
+    .order("room_number", { ascending: true });
+
+  if (usedRoomIds.length > 0) {
+    roomsQuery = roomsQuery.not("id", "in", `(${usedRoomIds.join(",")})`);
+  }
+
+  const { data: rooms, error: roomsError } = await roomsQuery;
+
+  if (roomsError) {
+    throw new Error(roomsError.message);
+  }
+
+  return {
+    tenants: tenants || [],
+    rooms: rooms || [],
+  };
 }
 
-// ── 2. ទាញយក Contract តែមួយ ─────────────────────────────────────────────────
-export async function getContractByIdAction(id: string) {
-  try {
-    const supabase = await getSupabase();
-    const { data, error } = await supabase
+export async function upsertContract(id: string | null, formData: FormData) {
+  const supabase = await getSupabase();
+
+  const tenant_id = String(formData.get("tenant_id") || "");
+  const room_id = String(formData.get("room_id") || "");
+  const start_date = String(formData.get("start_date") || "");
+  const end_date = String(formData.get("end_date") || "");
+  const deposit_amount = Number(formData.get("deposit_amount"));
+  const status = String(formData.get("status") || "active");
+  const due_day = Number(formData.get("due_day"));
+
+  if (!tenant_id || !room_id || !start_date || !end_date) {
+    throw new Error("សូមបំពេញព័ត៌មានកិច្ចសន្យាឲ្យបានគ្រប់គ្រាន់");
+  }
+
+  if (new Date(end_date) <= new Date(start_date)) {
+    throw new Error("ថ្ងៃបញ្ចប់ត្រូវតែក្រោយថ្ងៃចាប់ផ្តើម");
+  }
+
+  const { data: tenant, error: tenantError } = await supabase
+    .from("profiles")
+    .select("id, role")
+    .eq("id", tenant_id)
+    .eq("role", "tenant")
+    .single();
+
+  if (tenantError || !tenant) {
+    throw new Error("រកមិនឃើញអ្នកជួលនេះទេ");
+  }
+
+  const { data: room, error: roomError } = await supabase
+    .from("rooms")
+    .select("id, status")
+    .eq("id", room_id)
+    .single();
+
+  if (roomError || !room) {
+    throw new Error("រកមិនឃើញបន្ទប់នេះទេ");
+  }
+
+  let oldRoomId: string | null = null;
+
+  if (id) {
+    const { data: oldContract, error: oldContractError } = await supabase
       .from("contracts")
-      .select(CONTRACT_SELECT)
+      .select("id, room_id")
       .eq("id", id)
       .single();
 
-    if (error) return { success: false, data: null, error: error.message };
-    return { success: true, data };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, data: null, error: msg };
-  }
-}
+    if (oldContractError || !oldContract) {
+      throw new Error("រកមិនឃើញកិច្ចសន្យានេះទេ");
+    }
 
-// ── 3. បង្កើត Contract ថ្មី ──────────────────────────────────────────────────
-export async function createContractAction(payload: unknown) {
-  // Server-side Zod validation
-  const parsed = contractFormSchema.safeParse(payload);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues.map((e) => e.message).join(", "),
-    };
+    oldRoomId = oldContract.room_id;
+
+    if (oldRoomId !== room_id && room.status !== "available") {
+      throw new Error("បន្ទប់ថ្មីនេះមិនទំនេរទេ");
+    }
+  } else {
+    if (room.status !== "available") {
+      throw new Error("បន្ទប់នេះមិនទំនេរទេ");
+    }
   }
 
-  const values = parsed.data;
+  const contractData = {
+    tenant_id,
+    room_id,
+    start_date,
+    end_date,
+    deposit_amount,
+    status,
+    due_day,
+  };
 
-  try {
-    const supabase = await getSupabase();
+  if (id) {
     const { data, error } = await supabase
       .from("contracts")
-      .insert({
-        tenant_id: values.tenantId,
-        room_id: values.roomId,
-        start_date: values.startDate || null,
-        end_date: values.endDate || null,
-        deposit_amount: values.depositAmount
-          ? parseFloat(values.depositAmount)
-          : null,
-        status: values.status,
-        due_day: values.dueDay ? parseInt(values.dueDay, 10) : null,
-      })
-      .select(CONTRACT_SELECT)
-      .single();
-
-    if (error) return { success: false, error: error.message };
-
-    revalidatePath("/admin/contracts");
-    return { success: true, data: data as unknown as Contract };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: msg };
-  }
-}
-
-// ── 4. កែប្រែ Contract ───────────────────────────────────────────────────────
-export async function updateContractAction(id: string, payload: unknown) {
-  // Server-side Zod validation
-  const parsed = contractFormSchema.safeParse(payload);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: parsed.error.issues.map((e) => e.message).join(", "),
-    };
-  }
-
-  const values = parsed.data;
-
-  try {
-    const supabase = await getSupabase();
-    const { data, error } = await supabase
-      .from("contracts")
-      .update({
-        tenant_id: values.tenantId,
-        room_id: values.roomId,
-        start_date: values.startDate || null,
-        end_date: values.endDate || null,
-        deposit_amount: values.depositAmount
-          ? parseFloat(values.depositAmount)
-          : null,
-        status: values.status,
-        due_day: values.dueDay ? parseInt(values.dueDay, 10) : null,
-      })
+      .update(contractData)
       .eq("id", id)
-      .select(CONTRACT_SELECT)
+      .select(
+        `
+        *,
+        profiles:tenant_id (
+          id,
+          full_name,
+          phone_number,
+          email
+        ),
+        rooms:room_id (
+          id,
+          room_number,
+          room_type,
+          base_price,
+          floor
+        )
+      `,
+      )
       .single();
 
-    if (error) return { success: false, error: error.message };
+    if (error) throw new Error(error.message);
 
-    revalidatePath("/admin/contracts");
-    return { success: true, data: data as unknown as Contract };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: msg };
-  }
-}
-
-// ── 5. លុប Contract ──────────────────────────────────────────────────────────
-export async function deleteContractAction(id: string) {
-  try {
-    const supabase = await getSupabase();
-    const { error } = await supabase.from("contracts").delete().eq("id", id);
-    if (error) return { success: false, error: error.message };
-
-    revalidatePath("/admin/contracts");
-    return { success: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, error: msg };
-  }
-}
-
-// ── 6. ទាញ Tenants + Rooms សម្រាប់ Dropdown ─────────────────────────────────
-export async function getContractFormOptionsAction() {
-  try {
-    const supabase = await getSupabase();
-    const [tenantsRes, roomsRes] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id, full_name, phone_number")
-        .eq("role", "tenant")
-        .order("full_name"),
-      supabase
+    if (oldRoomId && oldRoomId !== room_id) {
+      await supabase
         .from("rooms")
-        .select("id, room_number, room_type, base_price, status")
-        .order("room_number"),
-    ]);
+        .update({ status: "available" })
+        .eq("id", oldRoomId);
 
-    return {
-      success: true,
-      tenants: tenantsRes.data ?? [],
-      rooms: roomsRes.data ?? [],
-    };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, tenants: [], rooms: [], error: msg };
+      await supabase
+        .from("rooms")
+        .update({ status: "occupied" })
+        .eq("id", room_id);
+    }
+
+    revalidatePath("/admin/contracts");
+    revalidatePath("/admin/rooms");
+
+    return data;
   }
+
+  const { data, error } = await supabase
+    .from("contracts")
+    .insert([contractData])
+    .select(
+      `
+      *,
+      profiles:tenant_id (
+        id,
+        full_name,
+        phone_number,
+        email
+      ),
+      rooms:room_id (
+        id,
+        room_number,
+        room_type,
+        base_price,
+        floor
+      )
+    `,
+    )
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  await supabase.from("rooms").update({ status: "occupied" }).eq("id", room_id);
+
+  revalidatePath("/admin/contracts");
+  revalidatePath("/admin/rooms");
+
+  return data;
+}
+
+export async function deleteContract(id: string) {
+  const supabase = await getSupabase();
+
+  const { data: contract, error: contractError } = await supabase
+    .from("contracts")
+    .select("id, room_id")
+    .eq("id", id)
+    .single();
+
+  if (contractError || !contract) {
+    throw new Error("រកមិនឃើញកិច្ចសន្យានេះទេ");
+  }
+
+  const { data: bills, error: billsError } = await supabase
+    .from("bills")
+    .select("id")
+    .eq("contract_id", id)
+    .limit(1);
+
+  if (billsError) throw new Error(billsError.message);
+
+  if (bills && bills.length > 0) {
+    throw new Error("មិនអាចលុបកិច្ចសន្យានេះបានទេ ព្រោះមានវិក្កយបត្រពាក់ព័ន្ធ");
+  }
+
+  const { error } = await supabase.from("contracts").delete().eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  await supabase
+    .from("rooms")
+    .update({ status: "available" })
+    .eq("id", contract.room_id);
+
+  revalidatePath("/admin/contracts");
+  revalidatePath("/admin/rooms");
+}
+
+//
+export async function getActiveContracts() {
+  const supabase = await getSupabase();
+
+  const { data, error } = await supabase
+    .from("contracts")
+    .select(
+      `
+      id,
+      tenant_id,
+      room_id,
+      start_date,
+      end_date,
+      due_day,
+      status,
+      profiles:tenant_id (
+        id,
+        full_name,
+        phone_number,
+        email
+      ),
+      rooms:room_id (
+        id,
+        room_number,
+        room_type,
+        base_price,
+        floor,
+        status
+      )
+    `,
+    )
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  return data || [];
 }

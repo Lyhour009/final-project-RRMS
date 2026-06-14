@@ -5,9 +5,16 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "images.unsplash.com",
+        hostname: "mubtpggtbsewhyawjmhu.supabase.co",
+        port: "",
+        pathname: "/storage/v1/object/public/**",
       },
     ],
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
   },
 };
 

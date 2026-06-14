@@ -72,7 +72,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // Redirect logged-in users away from the login page if they try to visit it
-    if (pathname === "/login") {
+    if (pathname === "/") {
       url.pathname = role === "admin" ? "/admin/dashboard" : "/tenant/overview";
       return NextResponse.redirect(url);
     }

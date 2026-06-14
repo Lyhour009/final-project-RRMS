@@ -1,9 +1,9 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Bell } from "lucide-react";
 import { getUserProfile } from "@/lib/supabase/server"; // 👉 Imported our helper
 import { redirect } from "next/navigation"; // 👉 Imported redirect for security
+import { NotificationBell } from "@/components/notification/notification-bell";
 
 export default async function DashboardLayout({
   children,
@@ -48,10 +48,7 @@ export default async function DashboardLayout({
             {/* Right: actions + avatar */}
             <div className="flex items-center gap-2">
               {/* Notifications */}
-              <button className="relative flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors">
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-950" />
-              </button>
+              <NotificationBell />
 
               <ThemeToggle />
 
