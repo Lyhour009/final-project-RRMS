@@ -123,9 +123,9 @@ export default async function TenantPaymentsPage({
                 </select>
               </div>
 
-              <div className="rounded-xl border border-zinc-800 bg-[#0b0d19] p-4">
+              <div className="rounded-xl border border-zinc-800 bg-[#0b0d19] p-2">
                 <p className="text-sm text-zinc-500">ចំនួនត្រូវបង់</p>
-                <p className="text-2xl font-bold text-emerald-400 mt-1">
+                <p className="text-xl font-bold text-emerald-400 mt-1">
                   ${Number(selectedBill?.total_amount || 0).toFixed(2)}
                 </p>
               </div>
@@ -135,7 +135,7 @@ export default async function TenantPaymentsPage({
                 <select
                   name="payment_method"
                   defaultValue="aba"
-                  className="mt-1 h-10 w-full rounded-lg border border-zinc-800 bg-[#0b0d19] px-3 text-sm text-white"
+                  className=" h-10 w-full rounded-lg border border-zinc-800 bg-[#0b0d19] px-3 text-sm text-white"
                 >
                   <option value="aba">ABA</option>
                   <option value="acleda">ACLEDA</option>
@@ -162,7 +162,7 @@ export default async function TenantPaymentsPage({
               ) : (
                 <button
                   type="submit"
-                  className="rounded-lg bg-indigo-600 px-5 py-3 text-white font-semibold"
+                  className="rounded-lg bg-indigo-600 px-5 py-3 text-white font-semibold text-sm"
                 >
                   ខ្ញុំបានបង់ប្រាក់រួចហើយ
                 </button>

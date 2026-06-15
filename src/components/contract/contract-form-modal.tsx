@@ -97,49 +97,89 @@ export default function ContractModal({
   const statusValue = watch("status");
 
   useEffect(() => {
-    if (isOpen) {
-      if (contract) {
-        reset({
-          tenant_id: contract.tenant_id,
-          room_id: contract.room_id,
-          start_date: contract.start_date?.slice(0, 10) || "",
-          end_date: contract.end_date?.slice(0, 10) || "",
-          deposit_amount: contract.deposit_amount,
-          status: contract.status,
-          due_day: contract.due_day,
-        });
-      } else {
-        reset({
-          tenant_id: "",
-          room_id: "",
-          start_date: "",
-          end_date: "",
-          deposit_amount: 0,
-          status: "active",
-          due_day: 5,
-        });
-      }
+    if (!isOpen) return;
+
+    if (contract) {
+      reset({
+        tenant_id: contract.tenant_id || "",
+        room_id: contract.room_id || "",
+        start_date: contract.start_date?.slice(0, 10) || "",
+        end_date: contract.end_date?.slice(0, 10) || "",
+        deposit_amount: contract.deposit_amount || 0,
+        status: contract.status || "active",
+        due_day: contract.due_day || 5,
+      });
+    } else {
+      reset({
+        tenant_id: "",
+        room_id: "",
+        start_date: "",
+        end_date: "",
+        deposit_amount: 0,
+        status: "active",
+        due_day: 5,
+      });
     }
   }, [isOpen, contract, reset]);
 
-  const roomsForDropdown = useMemo(() => {
-    if (!isEditMode || !contract?.room_id) {
-      return rooms.filter((room) => room.status === "available");
+  const tenantsForDropdown = useMemo(() => {
+    if (!isEditMode || !contract?.tenant_id || !contract.profiles) {
+      return tenants;
     }
 
-    return rooms.filter(
-      (room) => room.status === "available" || room.id === contract.room_id,
-    );
+    const exists = tenants.some((tenant) => tenant.id === contract.tenant_id);
+
+    if (exists) return tenants;
+
+    return [
+      {
+        id: contract.profiles.id,
+        full_name: contract.profiles.full_name,
+        phone_number: contract.profiles.phone_number,
+        email: contract.profiles.email,
+      },
+      ...tenants,
+    ];
+  }, [tenants, isEditMode, contract]);
+
+  const roomsForDropdown = useMemo(() => {
+    const availableRooms = rooms.filter((room) => room.status === "available");
+
+    if (!isEditMode || !contract?.room_id || !contract.rooms) {
+      return availableRooms;
+    }
+
+    const exists = rooms.some((room) => room.id === contract.room_id);
+
+    if (exists) {
+      return rooms.filter(
+        (room) => room.status === "available" || room.id === contract.room_id,
+      );
+    }
+
+    return [
+      {
+        id: contract.rooms.id,
+        room_number: contract.rooms.room_number,
+        room_type: contract.rooms.room_type,
+        base_price: contract.rooms.base_price,
+        floor: contract.rooms.floor,
+        status: "occupied",
+      },
+      ...availableRooms,
+    ];
   }, [rooms, isEditMode, contract]);
 
-  const selectedTenant = tenants.find((tenant) => tenant.id === tenantIdValue);
+  const selectedTenant = tenantsForDropdown.find(
+    (tenant) => tenant.id === tenantIdValue,
+  );
+
   const selectedRoom = roomsForDropdown.find((room) => room.id === roomIdValue);
 
   const onSubmit = async (values: ContractFormValues) => {
     setLoading(true);
 
     const formData = new FormData();
-
     formData.append("tenant_id", values.tenant_id);
     formData.append("room_id", values.room_id);
     formData.append("start_date", values.start_date);
@@ -163,7 +203,7 @@ export default function ContractModal({
 
       onClose();
     } catch (error: any) {
-      toast.error(error.message || "មានបញ្ហាខុសបច្ចេកទេស");
+      toast.error(error?.message || "មានបញ្ហាខុសបច្ចេកទេស");
     } finally {
       setLoading(false);
     }
@@ -187,7 +227,7 @@ export default function ContractModal({
             <Select
               value={tenantIdValue}
               onValueChange={(value) =>
-                setValue("tenant_id", value ? value : "", {
+                setValue("tenant_id", value === "_none" ? "" : value, {
                   shouldValidate: true,
                 })
               }
@@ -197,18 +237,18 @@ export default function ContractModal({
                   className={selectedTenant ? "text-white" : "text-zinc-500"}
                 >
                   {selectedTenant
-                    ? `${selectedTenant.full_name} (${selectedTenant.phone_number})`
+                    ? `${selectedTenant.full_name} (${selectedTenant.phone_number || "គ្មានលេខទូរស័ព្ទ"})`
                     : "ជ្រើសរើសអ្នកជួល..."}
                 </span>
               </SelectTrigger>
 
               <SelectContent className="bg-[#131626] border-zinc-800 text-white w-fit">
-                {tenants.length === 0 ? (
+                {tenantsForDropdown.length === 0 ? (
                   <SelectItem value="_none" disabled>
                     មិនមានអ្នកជួលឡើយ
                   </SelectItem>
                 ) : (
-                  tenants.map((tenant) => (
+                  tenantsForDropdown.map((tenant) => (
                     <SelectItem
                       key={tenant.id}
                       value={tenant.id}
@@ -216,7 +256,7 @@ export default function ContractModal({
                     >
                       {tenant.full_name}{" "}
                       <span className="text-zinc-500">
-                        ({tenant.phone_number})
+                        ({tenant.phone_number || "គ្មានលេខទូរស័ព្ទ"})
                       </span>
                     </SelectItem>
                   ))
@@ -235,12 +275,12 @@ export default function ContractModal({
             <Select
               value={roomIdValue}
               onValueChange={(value) =>
-                setValue("room_id", value ? value : "", {
+                setValue("room_id", value === "_none" ? "" : value, {
                   shouldValidate: true,
                 })
               }
             >
-              <SelectTrigger className="bg-[#131626] border-zinc-800 text-white w-fit">
+              <SelectTrigger className="bg-[#131626] border-zinc-800 text-white">
                 <span className={selectedRoom ? "text-white" : "text-zinc-500"}>
                   {selectedRoom
                     ? `#${selectedRoom.room_number} — ${selectedRoom.room_type} (ជាន់ ${selectedRoom.floor}) — $${selectedRoom.base_price}`
@@ -279,13 +319,11 @@ export default function ContractModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-zinc-400">ថ្ងៃចាប់ផ្តើម</Label>
-
               <Input
                 type="date"
                 className="bg-[#131626] border-zinc-800 text-white"
                 {...register("start_date")}
               />
-
               {errors.start_date && (
                 <p className="text-xs text-red-400">
                   {errors.start_date.message}
@@ -295,13 +333,11 @@ export default function ContractModal({
 
             <div className="space-y-1.5">
               <Label className="text-zinc-400">ថ្ងៃបញ្ចប់</Label>
-
               <Input
                 type="date"
                 className="bg-[#131626] border-zinc-800 text-white"
                 {...register("end_date")}
               />
-
               {errors.end_date && (
                 <p className="text-xs text-red-400">
                   {errors.end_date.message}
@@ -313,7 +349,6 @@ export default function ContractModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-zinc-400">ប្រាក់កក់ ($)</Label>
-
               <Input
                 type="number"
                 min={0}
@@ -322,7 +357,6 @@ export default function ContractModal({
                 className="bg-[#131626] border-zinc-800 text-white"
                 {...register("deposit_amount", { valueAsNumber: true })}
               />
-
               {errors.deposit_amount && (
                 <p className="text-xs text-red-400">
                   {errors.deposit_amount.message}
@@ -332,7 +366,6 @@ export default function ContractModal({
 
             <div className="space-y-1.5">
               <Label className="text-zinc-400">ថ្ងៃបង់ប្រាក់/ខែ</Label>
-
               <Input
                 type="number"
                 min={1}
@@ -342,7 +375,6 @@ export default function ContractModal({
                 className="bg-[#131626] border-zinc-800 text-white"
                 {...register("due_day", { valueAsNumber: true })}
               />
-
               {errors.due_day && (
                 <p className="text-xs text-red-400">{errors.due_day.message}</p>
               )}
@@ -354,7 +386,7 @@ export default function ContractModal({
 
             <Select
               value={statusValue}
-              onValueChange={(value: string | null) =>
+              onValueChange={(value) =>
                 setValue("status", value as ContractStatus, {
                   shouldValidate: true,
                 })
@@ -372,15 +404,12 @@ export default function ContractModal({
                 <SelectItem className="text-xs" value="active">
                   សកម្ម (Active)
                 </SelectItem>
-
                 <SelectItem className="text-xs" value="pending">
                   កំពុងរង់ចាំ (Pending)
                 </SelectItem>
-
                 <SelectItem className="text-xs" value="expired">
                   អស់សុពលភាព (Expired)
                 </SelectItem>
-
                 <SelectItem className="text-xs" value="terminated">
                   បានបញ្ចប់ (Terminated)
                 </SelectItem>

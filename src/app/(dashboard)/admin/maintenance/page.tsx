@@ -10,6 +10,7 @@ import {
   getMaintenanceRequests,
   updateMaintenanceStatus,
 } from "@/actions/maintenances";
+import { ExportExcelButton } from "@/components/export/export-excel-button";
 
 function StatusBadge({ status }: { status: string }) {
   let className = "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
@@ -110,13 +111,30 @@ export default async function AdminMaintenancePage() {
     (item: any) => item.priority === "high",
   ).length;
 
+  const exportMaintenance = requests.map((item: any) => ({
+    Tenant: item.profiles?.full_name || "-",
+    Room: item.rooms?.room_number || "-",
+    Issue: item.issue_title,
+    Description: item.issue_description,
+    Priority: item.priority,
+    Status: item.status,
+    CreatedAt: item.created_at,
+    ResolvedAt: item.resolved_at || "-",
+  }));
+
   return (
     <div className="p-6 space-y-6 text-white">
-      <div>
-        <h1 className="text-2xl font-bold">🔧 គ្រប់គ្រងសំណើជួសជុល</h1>
-        <p className="text-sm text-zinc-500 mt-1">
-          ពិនិត្យ និងធ្វើបច្ចុប្បន្នភាពសំណើជួសជុលពីអ្នកជួល
-        </p>
+      <div className="flex text-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">🔧 គ្រប់គ្រងសំណើជួសជុល</h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            ពិនិត្យ និងធ្វើបច្ចុប្បន្នភាពសំណើជួសជុលពីអ្នកជួល
+          </p>
+        </div>
+        <ExportExcelButton
+          data={exportMaintenance}
+          fileName="maintenance-report"
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

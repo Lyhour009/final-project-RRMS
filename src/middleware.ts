@@ -15,12 +15,14 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
+
           supabaseResponse = NextResponse.next({
             request,
           });
+
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options),
           );
@@ -29,28 +31,31 @@ export async function middleware(request: NextRequest) {
     },
   );
 
-  // Refresh session if expired
+  // Refresh auth session
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const url = request.nextUrl.clone();
-  const { pathname } = url;
+  const pathname = url.pathname;
 
-  // 1. Identify routes based on your actual URL layout (ignoring the (dashboard) route group)
+  // Allow Home Page for everyone
+  if (pathname === "/") {
+    return supabaseResponse;
+  }
+
   const isAdminRoute = pathname.startsWith("/admin");
   const isTenantRoute = pathname.startsWith("/tenant");
   const isProtectedRoute = isAdminRoute || isTenantRoute;
 
-  // 2. Handle unauthenticated users trying to access protected dashboards
+  // Redirect unauthenticated users
   if (!user && isProtectedRoute) {
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // 3. Handle Role-Based Access Control (RBAC) for logged-in users
+  // Role-based access control
   if (user) {
-    // Fetch user profile role from your public.profiles table
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
@@ -59,21 +64,15 @@ export async function middleware(request: NextRequest) {
 
     const role = profile?.role;
 
-    // Prevent Tenants from entering Admin Routes
+    // Tenant cannot access admin pages
     if (role === "tenant" && isAdminRoute) {
       url.pathname = "/tenant/overview";
       return NextResponse.redirect(url);
     }
 
-    // Prevent Admins from entering Tenant Routes
+    // Admin cannot access tenant pages
     if (role === "admin" && isTenantRoute) {
-      url.pathname = "/admin/dashboard"; // Change this if your main admin landing page is different (e.g., "/admin")
-      return NextResponse.redirect(url);
-    }
-
-    // Redirect logged-in users away from the login page if they try to visit it
-    if (pathname === "/") {
-      url.pathname = role === "admin" ? "/admin/dashboard" : "/tenant/overview";
+      url.pathname = "/admin/dashboard";
       return NextResponse.redirect(url);
     }
   }
@@ -81,7 +80,6 @@ export async function middleware(request: NextRequest) {
   return supabaseResponse;
 }
 
-// Ensure middleware runs on all pages except static assets
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",

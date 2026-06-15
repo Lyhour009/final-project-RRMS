@@ -21,15 +21,8 @@ import {
 } from "@/components/ui/card";
 
 const loginSchema = z.object({
-  email: z
-    .string()
-    .email("សូមបញ្ចូលអ៊ីមែលឲ្យបានត្រឹមត្រូវ (Enter a valid email)"),
-  password: z
-    .string()
-    .min(
-      6,
-      "លេខកូដសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ ៦ ខ្ទង់ (Password must be at least 6 characters)",
-    ),
+  email: z.string().email("សូមបញ្ចូលអ៊ីមែលឲ្យបានត្រឹមត្រូវ"),
+  password: z.string().min(6, "លេខកូដសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ ៦ ខ្ទង់"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -62,13 +55,12 @@ export default function LoginPage() {
         });
 
       if (authError) {
-        console.error("Login error:", authError.message);
-        toast.error(authError.message);
+        toast.error("អ៊ីមែល ឬលេខកូដសម្ងាត់មិនត្រឹមត្រូវ");
         return;
       }
 
       if (!authData.user) {
-        toast.error("រកមិនឃើញអ្នកប្រើប្រាស់ទេ​ !");
+        toast.error("រកមិនឃើញអ្នកប្រើប្រាស់ទេ");
         return;
       }
 
@@ -79,8 +71,12 @@ export default function LoginPage() {
         .single();
 
       if (profileError || !profile) {
-        console.error("Profile error:", profileError);
-        toast.error("Profile not found. Please check profiles table.");
+        toast.error("រកមិនឃើញព័ត៌មានគណនីអ្នកប្រើប្រាស់");
+        return;
+      }
+
+      if (!profile.role) {
+        toast.error("គណនីនេះមិនទាន់មានតួនាទីទេ");
         return;
       }
 
@@ -88,14 +84,15 @@ export default function LoginPage() {
 
       if (profile.role === "admin") {
         router.push("/admin/dashboard");
-      } else {
+      } else if (profile.role === "tenant") {
         router.push("/tenant/dashboard");
+      } else {
+        toast.error("តួនាទីគណនីមិនត្រឹមត្រូវ");
       }
 
       router.refresh();
-    } catch (error) {
-      console.error("Unexpected login error:", error);
-      toast.error("មានបញ្ហាបច្ចេកទេសកើតឡើង (Unexpected Error)");
+    } catch {
+      toast.error("មានបញ្ហាបច្ចេកទេសកើតឡើង សូមព្យាយាមម្ដងទៀត");
     }
   };
 
@@ -182,12 +179,12 @@ export default function LoginPage() {
                     </span>
                   </Label>
 
-                  <button
+                  {/* <button
                     type="button"
                     className="text-[12px] text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
                   >
                     Forgot password?
-                  </button>
+                  </button> */}
                 </div>
 
                 <div className="relative">
