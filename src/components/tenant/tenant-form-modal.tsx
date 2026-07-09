@@ -121,15 +121,15 @@ export default function TenantModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0b0d19] text-white border-zinc-800 max-w-xl max-h-[90vh] overflow-y-auto rounded-xl">
+      <DialogContent className="bg-(--panel-inset) text-(--panel-text) border-(--panel-border) max-w-xl max-h-[90vh] overflow-y-auto rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-zinc-100">
+          <DialogTitle className="text-xl font-semibold text-(--panel-text)">
             {isEditMode ? "📝 កែប្រែអ្នកជួល" : "👤 បន្ថែមអ្នកជួលថ្មី"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
-          <div className="flex flex-col items-center justify-center border-2 border-dashed border-zinc-800 rounded-xl p-4 bg-[#131626]">
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-(--panel-border) rounded-xl p-4 bg-(--panel)">
             {preview ? (
               <div className="relative w-full h-44">
                 <img
@@ -153,13 +153,13 @@ export default function TenantModal({
               </div>
             ) : (
               <label className="cursor-pointer flex flex-col items-center py-6 w-full">
-                <UploadCloud size={40} className="text-zinc-500 mb-2" />
+                <UploadCloud size={40} className="text-(--panel-text-subtle) mb-2" />
 
-                <span className="text-sm text-zinc-400">
+                <span className="text-sm text-(--panel-text-muted)">
                   ផ្ទេរឡើងរូបអត្តសញ្ញាណប័ណ្ណ
                 </span>
 
-                <span className="text-xs text-zinc-500 mt-1">
+                <span className="text-xs text-(--panel-text-subtle) mt-1">
                   JPG, PNG, WEBP / អតិបរមា 5MB
                 </span>
 
@@ -189,10 +189,10 @@ export default function TenantModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">ឈ្មោះពេញ</Label>
+            <Label className="text-(--panel-text-muted)">ឈ្មោះពេញ</Label>
 
             <Input
-              className="bg-[#131626] border-zinc-800 text-white"
+              className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
               placeholder="ឧទាហរណ៍៖ សុខ សំណាង"
               {...register("full_name")}
             />
@@ -203,11 +203,11 @@ export default function TenantModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">អ៊ីមែល</Label>
+            <Label className="text-(--panel-text-muted)">អ៊ីមែល</Label>
 
             <Input
               type="email"
-              className="bg-[#131626] border-zinc-800 text-white"
+              className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
               placeholder="tenant@example.com"
               {...register("email")}
             />
@@ -218,10 +218,10 @@ export default function TenantModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">លេខទូរស័ព្ទ</Label>
+            <Label className="text-(--panel-text-muted)">លេខទូរស័ព្ទ</Label>
 
             <Input
-              className="bg-[#131626] border-zinc-800 text-white"
+              className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
               placeholder="ឧទាហរណ៍៖ 087640628"
               {...register("phone_number")}
             />
@@ -234,10 +234,10 @@ export default function TenantModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">
+            <Label className="text-(--panel-text-muted)">
               លេខកូដសម្ងាត់{" "}
               {isEditMode && (
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-(--panel-text-subtle)">
                   (ទុកទទេ បើមិនចង់ប្តូរ)
                 </span>
               )}
@@ -246,7 +246,7 @@ export default function TenantModal({
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
-                className="bg-[#131626] border-zinc-800 text-white pr-10"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text) pr-10"
                 placeholder={
                   isEditMode
                     ? "បញ្ចូលលេខកូដថ្មី ប្រសិនបើចង់ប្តូរ"
@@ -258,7 +258,7 @@ export default function TenantModal({
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-(--panel-text-muted) hover:text-(--panel-text)"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -269,12 +269,12 @@ export default function TenantModal({
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800/60">
+          <div className="flex justify-end gap-3 pt-3 border-t border-(--panel-border)/60">
             <Button
               type="button"
               variant="ghost"
               onClick={onClose}
-              className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+              className="text-(--panel-text-muted) hover:text-(--panel-text) hover:bg-(--panel-border)"
             >
               បោះបង់
             </Button>

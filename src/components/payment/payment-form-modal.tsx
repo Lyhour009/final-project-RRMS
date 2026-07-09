@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
@@ -88,7 +88,8 @@ export default function PaymentSubmitModal({
     reset,
     formState: { errors },
   } = useForm<PaymentFormValues>({
-    resolver: zodResolver(paymentSchema),
+    // See bill-form-modal.tsx for why this cast is needed and safe.
+    resolver: zodResolver(paymentSchema) as Resolver<PaymentFormValues>,
     defaultValues: {
       bill_id: "",
       amount: 0,
@@ -170,30 +171,30 @@ export default function PaymentSubmitModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-[#0b0d19] text-white border-zinc-800 max-w-xl max-h-[90vh] overflow-y-auto rounded-xl">
+      <DialogContent className="bg-(--panel-inset) text-(--panel-text) border-(--panel-border) max-w-xl max-h-[90vh] overflow-y-auto rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-zinc-100">
+          <DialogTitle className="text-xl font-semibold text-(--panel-text)">
             💳 បញ្ជាក់ការទូទាត់
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">វិក្កយបត្រ</Label>
+            <Label className="text-(--panel-text-muted)">វិក្កយបត្រ</Label>
 
             <Select
               value={selectedBillId}
-              onValueChange={(value) =>
-                setValue("bill_id", value, { shouldValidate: true })
+              onValueChange={(value: string | null) =>
+                value && setValue("bill_id", value, { shouldValidate: true })
               }
             >
-              <SelectTrigger className="bg-[#131626] border-zinc-800 text-white">
+              <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
                 <SelectValue placeholder="ជ្រើសរើសវិក្កយបត្រ">
                   {selectedBillLabel}
                 </SelectValue>
               </SelectTrigger>
 
-              <SelectContent className="bg-[#131626] border-zinc-800 text-white">
+              <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
                 {bills.length === 0 ? (
                   <SelectItem value="_none" disabled>
                     មិនមានវិក្កយបត្រមិនទាន់បង់ឡើយ
@@ -221,31 +222,31 @@ export default function PaymentSubmitModal({
           </div>
 
           {selectedBill && (
-            <div className="rounded-xl border border-zinc-800 bg-[#131626] p-4 space-y-1">
+            <div className="rounded-xl border border-(--panel-border) bg-(--panel) p-4 space-y-1">
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-400">អ្នកជួល</span>
-                <span className="font-medium text-zinc-100">
+                <span className="text-(--panel-text-muted)">អ្នកជួល</span>
+                <span className="font-medium text-(--panel-text)">
                   {selectedBill.profiles?.full_name || "-"}
                 </span>
               </div>
 
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-400">លេខទូរស័ព្ទ</span>
-                <span className="font-medium text-zinc-100">
+                <span className="text-(--panel-text-muted)">លេខទូរស័ព្ទ</span>
+                <span className="font-medium text-(--panel-text)">
                   {selectedBill.profiles?.phone_number || "-"}
                 </span>
               </div>
 
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-400">បន្ទប់</span>
-                <span className="font-medium text-zinc-100">
+                <span className="text-(--panel-text-muted)">បន្ទប់</span>
+                <span className="font-medium text-(--panel-text)">
                   #{selectedBill.contracts?.rooms?.room_number || "-"} —{" "}
                   {selectedBill.contracts?.rooms?.room_type || "-"}
                 </span>
               </div>
 
-              <div className="flex justify-between text-sm border-t border-zinc-800 pt-2 mt-2">
-                <span className="text-zinc-300 font-medium">ចំនួនត្រូវបង់</span>
+              <div className="flex justify-between text-sm border-t border-(--panel-border) pt-2 mt-2">
+                <span className="text-(--panel-text-muted) font-medium">ចំនួនត្រូវបង់</span>
                 <span className="font-bold text-emerald-400">
                   ${Number(selectedBill.total_amount || 0).toFixed(2)}
                 </span>
@@ -254,13 +255,13 @@ export default function PaymentSubmitModal({
           )}
 
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">ចំនួនទឹកប្រាក់</Label>
+            <Label className="text-(--panel-text-muted)">ចំនួនទឹកប្រាក់</Label>
 
             <Input
               type="number"
               min={0}
               step="0.01"
-              className="bg-[#131626] border-zinc-800 text-white"
+              className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
               {...register("amount", { valueAsNumber: true })}
             />
 
@@ -270,21 +271,21 @@ export default function PaymentSubmitModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">វិធីបង់ប្រាក់</Label>
+            <Label className="text-(--panel-text-muted)">វិធីបង់ប្រាក់</Label>
 
             <Select
               value={selectedMethod}
-              onValueChange={(value: PaymentMethod) =>
-                setValue("payment_method", value, { shouldValidate: true })
+              onValueChange={(value: PaymentMethod | null) =>
+                value && setValue("payment_method", value, { shouldValidate: true })
               }
             >
-              <SelectTrigger className="bg-[#131626] border-zinc-800 text-white">
+              <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
                 <SelectValue placeholder="ជ្រើសរើសវិធីបង់ប្រាក់">
                   {selectedMethod ? PAYMENT_METHOD_LABELS[selectedMethod] : ""}
                 </SelectValue>
               </SelectTrigger>
 
-              <SelectContent className="bg-[#131626] border-zinc-800 text-white">
+              <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
                 <SelectItem value="aba">ABA</SelectItem>
                 <SelectItem value="acleda">ACLEDA</SelectItem>
                 <SelectItem value="wing">Wing</SelectItem>
@@ -302,12 +303,12 @@ export default function PaymentSubmitModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">រូបភាពបញ្ជាក់ Optional</Label>
+            <Label className="text-(--panel-text-muted)">រូបភាពបញ្ជាក់ Optional</Label>
 
             <Input
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/webp"
-              className="bg-[#131626] border-zinc-800 text-white"
+              className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
               onChange={(e) => {
                 const file = e.target.files?.[0];
 
@@ -321,12 +322,12 @@ export default function PaymentSubmitModal({
               }}
             />
 
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-(--panel-text-subtle)">
               បើមាន screenshot នៃការបង់ប្រាក់ អាច upload បាន។ មិនបាច់ក៏បាន។
             </p>
 
             {proofPreview && (
-              <div className="mt-2 w-full h-40 rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900">
+              <div className="mt-2 w-full h-40 rounded-lg overflow-hidden border border-(--panel-border) bg-(--panel-hover)">
                 <img
                   src={proofPreview}
                   alt="Payment proof preview"
@@ -343,10 +344,10 @@ export default function PaymentSubmitModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">ចំណាំ</Label>
+            <Label className="text-(--panel-text-muted)">ចំណាំ</Label>
 
             <Input
-              className="bg-[#131626] border-zinc-800 text-white"
+              className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
               placeholder="ឧ. បានបង់តាម ABA"
               {...register("note")}
             />
@@ -364,13 +365,13 @@ export default function PaymentSubmitModal({
             </p>
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800/60">
+          <div className="flex justify-end gap-3 pt-3 border-t border-(--panel-border)/60">
             <Button
               type="button"
               variant="ghost"
               onClick={handleClose}
               disabled={loading}
-              className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+              className="text-(--panel-text-muted) hover:text-(--panel-text) hover:bg-(--panel-border)"
             >
               បោះបង់
             </Button>

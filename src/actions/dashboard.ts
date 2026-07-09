@@ -1,19 +1,13 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
-
-async function getSupabase() {
-  const cookieStore = await cookies();
-  return await createClient(cookieStore);
-}
+import { requireAdmin } from "@/lib/supabase/server";
 
 function monthKey(value: string) {
   return value ? value.slice(0, 7) : "-";
 }
 
 export async function getDashboardStats() {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const [
     roomsResult,

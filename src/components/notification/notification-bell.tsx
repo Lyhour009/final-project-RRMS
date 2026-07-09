@@ -71,14 +71,14 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-3 w-80 rounded-xl border border-zinc-800 bg-[#131626] shadow-xl z-50 overflow-hidden">
-          <div className="p-4 border-b border-zinc-800">
-            <h3 className="text-sm font-semibold text-white">ការជូនដំណឹង</h3>
+        <div className="absolute right-0 mt-3 w-80 rounded-xl border border-(--panel-border) bg-(--panel) shadow-xl z-50 overflow-hidden">
+          <div className="p-4 border-b border-(--panel-border)">
+            <h3 className="text-sm font-semibold text-(--panel-text)">ការជូនដំណឹង</h3>
           </div>
 
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <p className="p-4 text-sm text-zinc-500">មិនទាន់មានការជូនដំណឹង</p>
+              <p className="p-4 text-sm text-(--panel-text-subtle)">មិនទាន់មានការជូនដំណឹង</p>
             ) : (
               notifications.map((item) => {
                 const content = (
@@ -88,8 +88,8 @@ export function NotificationBell() {
                       !item.is_read ? "bg-blue-500/5" : ""
                     }`}
                   >
-                    <p className="text-sm text-white">{item.message}</p>
-                    <p className="text-xs text-zinc-500 mt-1">
+                    <p className="text-sm text-(--panel-text)">{item.message}</p>
+                    <p className="text-xs text-(--panel-text-subtle) mt-1">
                       {new Date(item.created_at).toLocaleString()}
                     </p>
                   </div>

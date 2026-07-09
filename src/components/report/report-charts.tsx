@@ -18,16 +18,19 @@ import {
 const COLORS = ["#22c55e", "#6366f1", "#f59e0b", "#ef4444"];
 const STATUS_COLORS = ["#22c55e", "#f59e0b", "#ef4444"];
 
+// Uses the same --panel-* theme tokens as the rest of the app (see
+// globals.css) instead of hardcoded hex, so these charts follow light/dark
+// mode instead of always rendering with dark-theme colors.
 const tickStyle = {
-  fill: "#a1a1aa",
+  fill: "var(--panel-text-muted)",
   fontSize: 11,
 };
 
 const tooltipStyle = {
-  background: "#0b0d19",
-  border: "1px solid #27272a",
+  background: "var(--panel)",
+  border: "1px solid var(--panel-border)",
   borderRadius: "10px",
-  color: "#fff",
+  color: "var(--panel-text)",
 };
 
 function ChartCard({
@@ -38,8 +41,8 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
-      <h2 className="text-base font-semibold text-white mb-4">{title}</h2>
+    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+      <h2 className="text-base font-semibold text-(--panel-text) mb-4">{title}</h2>
       <div className="dashboard-chart h-[280px]">{children}</div>
     </div>
   );
@@ -56,7 +59,7 @@ export function ReportsCharts({ charts }: { charts: any }) {
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#27272a"
+              stroke="var(--panel-border)"
               vertical={false}
             />
             <XAxis
@@ -67,8 +70,8 @@ export function ReportsCharts({ charts }: { charts: any }) {
             />
             <YAxis hide />
             <Tooltip
-              formatter={(value: number) => [
-                `$${Number(value).toFixed(2)}`,
+              formatter={(value) => [
+                `$${Number(value ?? 0).toFixed(2)}`,
                 "ចំណូល",
               ]}
               contentStyle={tooltipStyle}
@@ -110,7 +113,7 @@ export function ReportsCharts({ charts }: { charts: any }) {
             <BarChart data={charts.billStatus}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#27272a"
+                stroke="var(--panel-border)"
                 vertical={false}
               />
               <XAxis
@@ -138,7 +141,7 @@ export function ReportsCharts({ charts }: { charts: any }) {
             <BarChart data={charts.paymentStatus}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#27272a"
+                stroke="var(--panel-border)"
                 vertical={false}
               />
               <XAxis

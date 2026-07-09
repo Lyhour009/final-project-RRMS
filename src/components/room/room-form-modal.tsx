@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
@@ -51,7 +51,8 @@ export default function RoomModal({
     reset,
     formState: { errors },
   } = useForm<RoomFormValues>({
-    resolver: zodResolver(roomSchema),
+    // See bill-form-modal.tsx for why this cast is needed and safe.
+    resolver: zodResolver(roomSchema) as Resolver<RoomFormValues>,
     defaultValues: {
       room_number: "",
       room_type: "",
@@ -174,15 +175,15 @@ export default function RoomModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0b0d19] text-white border-zinc-800 max-w-xl max-h-[90vh] overflow-y-auto rounded-xl">
+      <DialogContent className="bg-(--panel-inset) text-(--panel-text) border-(--panel-border) max-w-xl max-h-[90vh] overflow-y-auto rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-zinc-100">
+          <DialogTitle className="text-xl font-semibold text-(--panel-text)">
             {isEditMode ? "📝 កែប្រែព័ត៌មានបន្ទប់" : "🏢 លម្អិតការបន្ថែមបន្ទប់"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
-          <div className="flex flex-col items-center justify-center border-2 border-dashed border-zinc-800 rounded-xl p-4 bg-[#131626]">
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-(--panel-border) rounded-xl p-4 bg-(--panel)">
             {preview ? (
               <div className="relative w-full h-44">
                 <img
@@ -204,9 +205,9 @@ export default function RoomModal({
               </div>
             ) : (
               <label className="cursor-pointer flex flex-col items-center py-6 w-full">
-                <UploadCloud size={40} className="text-zinc-500 mb-2" />
+                <UploadCloud size={40} className="text-(--panel-text-subtle) mb-2" />
 
-                <span className="text-sm text-zinc-400">
+                <span className="text-sm text-(--panel-text-muted)">
                   ផ្ទេរឡើងរូបភាព (Upload Image)
                 </span>
 
@@ -235,11 +236,11 @@ export default function RoomModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">លេខបន្ទប់</Label>
+              <Label className="text-(--panel-text-muted)">លេខបន្ទប់</Label>
 
               <Input
                 disabled={isEditMode}
-                className="bg-[#131626] border-zinc-800 text-white disabled:opacity-50 disabled:bg-zinc-900"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text) disabled:opacity-50 disabled:bg-(--panel-hover)"
                 placeholder="ឧទាហរណ៍៖ 006"
                 {...register("room_number")}
               />
@@ -252,13 +253,13 @@ export default function RoomModal({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">ចំនួនអ្នកស្នាក់នៅអតិបរមា</Label>
+              <Label className="text-(--panel-text-muted)">ចំនួនអ្នកស្នាក់នៅអតិបរមា</Label>
 
               <Input
                 type="number"
                 min={1}
                 step={1}
-                className="bg-[#131626] border-zinc-800 text-white"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
                 {...register("max_occupants", { valueAsNumber: true })}
               />
 
@@ -272,19 +273,19 @@ export default function RoomModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">ប្រភេទបន្ទប់</Label>
+              <Label className="text-(--panel-text-muted)">ប្រភេទបន្ទប់</Label>
 
               <Select
                 value={roomTypeValue}
-                onValueChange={(value) =>
-                  setValue("room_type", value, { shouldValidate: true })
+                onValueChange={(value: string | null) =>
+                  value && setValue("room_type", value, { shouldValidate: true })
                 }
               >
-                <SelectTrigger className="bg-[#131626] border-zinc-800 text-white">
+                <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
                   <SelectValue placeholder="ជ្រើសរើសប្រភេទបន្ទប់" />
                 </SelectTrigger>
 
-                <SelectContent className="bg-[#131626] border-zinc-800 text-white">
+                <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
                   <SelectItem className="text-xs" value="បន្ទប់គ្រែមួយ">
                     បន្ទប់គ្រែមួយ
                   </SelectItem>
@@ -311,19 +312,19 @@ export default function RoomModal({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">ស្ថានភាព</Label>
+              <Label className="text-(--panel-text-muted)">ស្ថានភាព</Label>
 
               <Select
                 value={statusValue}
-                onValueChange={(value: Room["status"]) =>
-                  setValue("status", value, { shouldValidate: true })
+                onValueChange={(value: Room["status"] | null) =>
+                  value && setValue("status", value, { shouldValidate: true })
                 }
               >
-                <SelectTrigger className="bg-[#131626] border-zinc-800 text-white">
+                <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
                   <SelectValue placeholder="ជ្រើសរើសស្ថានភាព" />
                 </SelectTrigger>
 
-                <SelectContent className="bg-[#131626] border-zinc-800 text-white">
+                <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
                   <SelectItem className="text-xs" value="available">
                     ទំនេរ (Available)
                   </SelectItem>
@@ -346,7 +347,7 @@ export default function RoomModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">ជាន់</Label>
+              <Label className="text-(--panel-text-muted)">ជាន់</Label>
 
               <Select
                 value={floorValue}
@@ -354,11 +355,11 @@ export default function RoomModal({
                   setValue("floor", Number(value), { shouldValidate: true })
                 }
               >
-                <SelectTrigger className="bg-[#131626] border-zinc-800 text-white">
+                <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
                   <SelectValue placeholder="ជ្រើសរើសជាន់" />
                 </SelectTrigger>
 
-                <SelectContent className="bg-[#131626] border-zinc-800 text-white text-xs">
+                <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text) text-xs">
                   <SelectItem className="text-xs" value="1">
                     ជាន់ផ្ទាល់ដី (ជាន់ទី ១)
                   </SelectItem>
@@ -387,13 +388,13 @@ export default function RoomModal({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">តម្លៃ/ខែ ($)</Label>
+              <Label className="text-(--panel-text-muted)">តម្លៃ/ខែ ($)</Label>
 
               <Input
                 type="number"
                 min={1}
                 step="0.01"
-                className="bg-[#131626] border-zinc-800 text-white"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
                 {...register("base_price", { valueAsNumber: true })}
               />
 
@@ -406,12 +407,12 @@ export default function RoomModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">
+            <Label className="text-(--panel-text-muted)">
               គ្រឿងបរិក្ខារ (វាយរួចចុច Enter)
             </Label>
 
             <Input
-              className="bg-[#131626] border-zinc-800 text-white"
+              className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
               placeholder="ឧទាហរណ៍៖ ម៉ាស៊ីនត្រជាក់, ទូទឹកកក"
               value={amenityInput}
               onChange={(e) => setAmenityInput(e.target.value)}
@@ -445,11 +446,11 @@ export default function RoomModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">ពិពណ៌នាបន្ទប់ (Description)</Label>
+            <Label className="text-(--panel-text-muted)">ពិពណ៌នាបន្ទប់ (Description)</Label>
 
             <textarea
               rows={5}
-              className="w-full rounded-md bg-[#131626] border border-zinc-800 text-white p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 resize-y"
+              className="w-full rounded-md bg-(--panel) border border-(--panel-border) text-(--panel-text) p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 resize-y"
               placeholder="ព័ត៌មានបន្ថែមពីបន្ទប់..."
               {...register("description")}
             />
@@ -461,12 +462,12 @@ export default function RoomModal({
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800/60">
+          <div className="flex justify-end gap-3 pt-3 border-t border-(--panel-border)/60">
             <Button
               type="button"
               variant="ghost"
               onClick={onClose}
-              className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+              className="text-(--panel-text-muted) hover:text-(--panel-text) hover:bg-(--panel-border)"
             >
               បោះបង់
             </Button>

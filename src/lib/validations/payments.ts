@@ -66,7 +66,7 @@ export const paymentSchema = z.object({
   payment_method: z.enum(
     ["cash", "aba", "acleda", "wing", "bank_transfer", "other"],
     {
-      required_error: "សូមជ្រើសរើសវិធីបង់ប្រាក់",
+      error: "សូមជ្រើសរើសវិធីបង់ប្រាក់",
     },
   ),
 

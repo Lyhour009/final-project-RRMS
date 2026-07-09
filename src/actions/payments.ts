@@ -1,19 +1,38 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/supabase/server";
 import { createNotification } from "@/actions/notifications";
 
 const PAYMENT_PROOF_BUCKET = "payment-proofs";
 
-async function getSupabase() {
-  const cookieStore = await cookies();
-  return await createClient(cookieStore);
-}
+// See bill-generator.ts for why this cast exists: no generated DB types,
+// so Supabase-js can't tell these FK joins resolve to a single row.
+type UnpaidBill = {
+  id: string;
+  contract_id: string;
+  tenant_id: string;
+  billing_month: string;
+  total_amount: number;
+  status: string;
+  profiles?: {
+    id: string;
+    full_name: string;
+    phone_number: string;
+    email?: string;
+  };
+  contracts?: {
+    id: string;
+    rooms?: {
+      id: string;
+      room_number: string;
+      room_type: string;
+    };
+  };
+};
 
 export async function getPayments() {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data, error } = await supabase
     .from("payments")
@@ -50,7 +69,7 @@ export async function getPayments() {
 }
 
 export async function getUnpaidBillsForPayment() {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data, error } = await supabase
     .from("bills")
@@ -83,11 +102,11 @@ export async function getUnpaidBillsForPayment() {
 
   if (error) throw new Error(error.message);
 
-  return data || [];
+  return (data || []) as unknown as UnpaidBill[];
 }
 
 export async function submitPayment(formData: FormData) {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const bill_id = String(formData.get("bill_id") || "");
   const amount = Number(formData.get("amount"));
@@ -202,7 +221,7 @@ export async function submitPayment(formData: FormData) {
 }
 
 export async function approvePayment(id: string) {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data: payment, error: paymentError } = await supabase
     .from("payments")
@@ -255,7 +274,7 @@ export async function approvePayment(id: string) {
 }
 
 export async function rejectPayment(id: string) {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data: payment, error: paymentError } = await supabase
     .from("payments")
@@ -295,7 +314,7 @@ export async function rejectPayment(id: string) {
 }
 
 export async function deletePayment(id: string) {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data: payment, error: paymentError } = await supabase
     .from("payments")

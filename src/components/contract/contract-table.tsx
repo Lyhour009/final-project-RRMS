@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Contract, ContractStatus } from "@/lib/validations/contracts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatKhmerDate } from "@/lib/utils";
+import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
 import {
   Edit2,
   Trash2,
@@ -12,6 +14,7 @@ import {
   CheckCircle,
   Clock,
   XCircle,
+  Loader2,
 } from "lucide-react";
 import ContractModal from "./contract-form-modal";
 import ContractDeleteModal from "./contract-delete-modal";
@@ -53,6 +56,8 @@ export function ContractTableWrapper({
   const [contracts, setContracts] = useState<Contract[]>(
     initialContracts || [],
   );
+  const [prevInitialContracts, setPrevInitialContracts] =
+    useState(initialContracts);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -66,9 +71,13 @@ export function ContractTableWrapper({
     null,
   );
 
-  useEffect(() => {
+  // Resync local state when the server passes a fresh `initialContracts` prop
+  // (e.g. after revalidatePath) without waiting for a post-commit effect —
+  // see https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  if (initialContracts !== prevInitialContracts) {
+    setPrevInitialContracts(initialContracts);
     setContracts(initialContracts || []);
-  }, [initialContracts]);
+  }
 
   const handleContractUpserted = (updatedContract: Contract) => {
     setContracts((prevContracts) => {
@@ -132,6 +141,13 @@ export function ContractTableWrapper({
     });
   }, [contracts, searchQuery, statusFilter]);
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const {
+    visibleItems: visibleContracts,
+    hasMore,
+    sentinelRef,
+  } = useInfiniteReveal(filteredContracts, scrollContainerRef);
+
   const handleAddNew = () => {
     setSelectedContract(null);
     setIsModalOpen(true);
@@ -147,15 +163,8 @@ export function ContractTableWrapper({
     setIsDeleteModalOpen(true);
   };
 
-  const formatDate = (date?: string) => {
-    if (!date) return "-";
-
-    return new Date(date).toLocaleDateString("km-KH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  const formatDate = (date?: string) =>
+    formatKhmerDate(date, { withDay: true });
 
   const statusBadgeClass = (status: ContractStatus) => {
     if (status === "active") {
@@ -167,18 +176,18 @@ export function ContractTableWrapper({
     }
 
     if (status === "expired") {
-      return "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
+      return "bg-zinc-500/10 text-(--panel-text-muted) border-zinc-500/20";
     }
 
     return "bg-red-500/10 text-red-400 border-red-500/20";
   };
 
   return (
-    <div className="space-y-6 text-white p-1">
+    <div className="space-y-6 text-(--panel-text) p-1">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border bg-[#131626] border-zinc-800/80 hover:border-zinc-700 transition-all">
+        <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80 hover:border-(--panel-border) transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 text-sm font-medium">
+            <span className="text-(--panel-text-muted) text-sm font-medium">
               កិច្ចសន្យាសរុប
             </span>
             <FileText size={20} className="text-indigo-400" />
@@ -186,9 +195,9 @@ export function ContractTableWrapper({
           <p className="text-3xl font-bold mt-2">{stats.total}</p>
         </div>
 
-        <div className="p-4 rounded-xl border bg-[#131626] border-zinc-800/80 hover:border-zinc-700 transition-all">
+        <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80 hover:border-(--panel-border) transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 text-sm font-medium">
+            <span className="text-(--panel-text-muted) text-sm font-medium">
               កំពុងសកម្ម
             </span>
             <CheckCircle size={20} className="text-emerald-400" />
@@ -198,9 +207,9 @@ export function ContractTableWrapper({
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border bg-[#131626] border-zinc-800/80 hover:border-zinc-700 transition-all">
+        <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80 hover:border-(--panel-border) transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 text-sm font-medium">រង់ចាំ</span>
+            <span className="text-(--panel-text-muted) text-sm font-medium">រង់ចាំ</span>
             <Clock size={20} className="text-amber-400" />
           </div>
           <p className="text-3xl font-bold mt-2 text-amber-400">
@@ -208,9 +217,9 @@ export function ContractTableWrapper({
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border bg-[#131626] border-zinc-800/80 hover:border-zinc-700 transition-all">
+        <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80 hover:border-(--panel-border) transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 text-sm font-medium">
+            <span className="text-(--panel-text-muted) text-sm font-medium">
               បញ្ចប់/ផុតកំណត់
             </span>
             <XCircle size={20} className="text-red-400" />
@@ -219,24 +228,24 @@ export function ContractTableWrapper({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-[#131626] p-4 rounded-xl border border-zinc-800/60">
+      <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-(--panel) p-4 rounded-xl border border-(--panel-border)/60">
         <div className="relative w-full sm:w-96">
           <Input
             placeholder="ស្វែងរកតាមឈ្មោះ លេខទូរស័ព្ទ ឬលេខបន្ទប់..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-4 bg-[#0b0d19] border-zinc-800 text-white placeholder-zinc-500"
+            className="pl-4 bg-(--panel-inset) border-(--panel-border) text-(--panel-text) placeholder-(--panel-text-subtle)"
           />
         </div>
 
-        <div className="flex items-center gap-1.5 bg-[#0b0d19] p-1 rounded-lg border border-zinc-800/60 w-full sm:w-auto overflow-x-auto">
+        <div className="flex items-center gap-1.5 bg-(--panel-inset) p-1 rounded-lg border border-(--panel-border)/60 w-full sm:w-auto overflow-x-auto">
           <button
             type="button"
             onClick={() => setStatusFilter("all")}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               statusFilter === "all"
                 ? "bg-indigo-600 text-white"
-                : "text-zinc-400 hover:text-white"
+                : "text-(--panel-text-muted) hover:text-(--panel-text)"
             }`}
           >
             ទាំងអស់
@@ -248,7 +257,7 @@ export function ContractTableWrapper({
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               statusFilter === "active"
                 ? "bg-emerald-600 text-white"
-                : "text-zinc-400 hover:text-emerald-400"
+                : "text-(--panel-text-muted) hover:text-emerald-400"
             }`}
           >
             សកម្ម
@@ -260,7 +269,7 @@ export function ContractTableWrapper({
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               statusFilter === "pending"
                 ? "bg-amber-600 text-white"
-                : "text-zinc-400 hover:text-amber-400"
+                : "text-(--panel-text-muted) hover:text-amber-400"
             }`}
           >
             រង់ចាំ
@@ -272,7 +281,7 @@ export function ContractTableWrapper({
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               statusFilter === "terminated"
                 ? "bg-red-600 text-white"
-                : "text-zinc-400 hover:text-red-400"
+                : "text-(--panel-text-muted) hover:text-red-400"
             }`}
           >
             បញ្ចប់
@@ -287,41 +296,44 @@ export function ContractTableWrapper({
         </Button>
       </div>
 
-      <div className="bg-[#131626] rounded-xl border border-zinc-800/60 overflow-hidden">
-        <div className="overflow-x-auto max-h-[460px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800">
+      <div className="bg-(--panel) rounded-xl border border-(--panel-border)/60 overflow-hidden">
+        <div
+          ref={scrollContainerRef}
+          className="overflow-x-auto max-h-[460px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800"
+        >
           <table className="w-full text-left border-collapse table-auto">
-            <thead className="sticky top-0 bg-[#131626] z-10 border-b border-zinc-800 text-zinc-400 text-xs uppercase">
+            <thead className="sticky top-0 bg-(--panel) z-10 border-b border-(--panel-border) text-(--panel-text-muted) text-xs uppercase">
               <tr>
-                <th className="p-4 bg-[#131626]">អ្នកជួល</th>
-                <th className="p-4 bg-[#131626]">បន្ទប់</th>
-                <th className="p-4 bg-[#131626]">ថ្ងៃចាប់ផ្តើម</th>
-                <th className="p-4 bg-[#131626]">ថ្ងៃបញ្ចប់</th>
-                <th className="p-4 bg-[#131626]">ប្រាក់កក់</th>
-                <th className="p-4 bg-[#131626]">ថ្ងៃបង់</th>
-                <th className="p-4 bg-[#131626]">ស្ថានភាព</th>
-                <th className="p-4 text-right bg-[#131626]">សកម្មភាព</th>
+                <th className="p-4 bg-(--panel)">អ្នកជួល</th>
+                <th className="p-4 bg-(--panel)">បន្ទប់</th>
+                <th className="p-4 bg-(--panel)">ថ្ងៃចាប់ផ្តើម</th>
+                <th className="p-4 bg-(--panel)">ថ្ងៃបញ្ចប់</th>
+                <th className="p-4 bg-(--panel)">ប្រាក់កក់</th>
+                <th className="p-4 bg-(--panel)">ថ្ងៃបង់</th>
+                <th className="p-4 bg-(--panel)">ស្ថានភាព</th>
+                <th className="p-4 text-right bg-(--panel)">សកម្មភាព</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-zinc-800/50 text-sm">
               {filteredContracts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-zinc-500">
+                  <td colSpan={8} className="p-8 text-center text-(--panel-text-subtle)">
                     មិនមានទិន្នន័យកិច្ចសន្យាឡើយ។
                   </td>
                 </tr>
               ) : (
-                filteredContracts.map((contract) => (
+                visibleContracts.map((contract) => (
                   <tr
                     key={contract.id}
-                    className="hover:bg-zinc-900/30 transition-colors"
+                    className="hover:bg-(--panel-hover)/30 transition-colors"
                   >
                     <td className="p-4">
                       <div>
-                        <p className="font-semibold text-zinc-200">
+                        <p className="font-semibold text-(--panel-text)">
                           {contract.profiles?.full_name || "-"}
                         </p>
-                        <p className="text-xs text-zinc-500">
+                        <p className="text-xs text-(--panel-text-subtle)">
                           {contract.profiles?.phone_number || "-"}
                         </p>
                       </div>
@@ -329,21 +341,21 @@ export function ContractTableWrapper({
 
                     <td className="p-4">
                       <div>
-                        <p className="font-semibold text-zinc-200">
+                        <p className="font-semibold text-(--panel-text)">
                           #{contract.rooms?.room_number || "-"}
                         </p>
-                        <p className="text-xs text-zinc-500">
+                        <p className="text-xs text-(--panel-text-subtle)">
                           {contract.rooms?.room_type || "-"} / ជាន់{" "}
                           {contract.rooms?.floor || "-"}
                         </p>
                       </div>
                     </td>
 
-                    <td className="p-4 text-zinc-400">
+                    <td className="p-4 text-(--panel-text-muted)">
                       {formatDate(contract.start_date)}
                     </td>
 
-                    <td className="p-4 text-zinc-400">
+                    <td className="p-4 text-(--panel-text-muted)">
                       {formatDate(contract.end_date)}
                     </td>
 
@@ -351,7 +363,7 @@ export function ContractTableWrapper({
                       ${Number(contract.deposit_amount || 0).toFixed(2)}
                     </td>
 
-                    <td className="p-4 text-zinc-400">
+                    <td className="p-4 text-(--panel-text-muted)">
                       ថ្ងៃទី {contract.due_day}
                     </td>
 
@@ -371,7 +383,7 @@ export function ContractTableWrapper({
                           size="icon"
                           variant="ghost"
                           onClick={() => handleEdit(contract)}
-                          className="h-8 w-8 text-zinc-400 hover:text-white"
+                          className="h-8 w-8 text-(--panel-text-muted) hover:text-(--panel-text)"
                         >
                           <Edit2 size={14} />
                         </Button>
@@ -380,7 +392,7 @@ export function ContractTableWrapper({
                           size="icon"
                           variant="ghost"
                           onClick={() => handleDeleteClick(contract)}
-                          className="h-8 w-8 text-zinc-400 hover:text-red-400"
+                          className="h-8 w-8 text-(--panel-text-muted) hover:text-red-400"
                         >
                           <Trash2 size={14} />
                         </Button>
@@ -388,6 +400,20 @@ export function ContractTableWrapper({
                     </td>
                   </tr>
                 ))
+              )}
+
+              {hasMore && (
+                <tr>
+                  <td colSpan={8} className="p-4 text-center">
+                    <div
+                      ref={sentinelRef}
+                      className="flex items-center justify-center gap-2 text-xs text-(--panel-text-subtle)"
+                    >
+                      <Loader2 size={14} className="animate-spin" />
+                      កំពុងផ្ទុកបន្ថែម...
+                    </div>
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

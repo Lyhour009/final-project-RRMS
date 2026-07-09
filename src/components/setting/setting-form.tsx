@@ -21,13 +21,13 @@ function Field({
 }) {
   return (
     <div>
-      <label className="text-xs font-medium text-zinc-500">{label}</label>
+      <label className="text-xs font-medium text-(--panel-text-subtle)">{label}</label>
       <input
         name={name}
         type={type}
         defaultValue={defaultValue ?? ""}
         placeholder={placeholder}
-        className="mt-1 h-10 w-full rounded-lg border border-zinc-800 bg-[#0b0d19] px-3 text-sm text-white outline-none focus:border-indigo-500/50 placeholder-zinc-600"
+        className="mt-1 h-10 w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 text-sm text-(--panel-text) outline-none focus:border-indigo-500/50 placeholder-(--panel-text-subtle)"
       />
     </div>
   );
@@ -47,10 +47,10 @@ export default function SettingsForm({ settings }: { settings: any }) {
   }, [state]);
 
   return (
-    <div className="p-6 space-y-5 text-white">
+    <div className="p-6 space-y-5 text-(--panel-text)">
       <div>
         <h1 className="text-2xl font-bold">⚙️ ការកំណត់ប្រព័ន្ធ</h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-(--panel-text-subtle) mt-1">
           កំណត់តម្លៃសេវា វិក្កយបត្រ និងព័ត៌មានទូទាត់ប្រាក់
         </p>
       </div>
@@ -59,11 +59,11 @@ export default function SettingsForm({ settings }: { settings: any }) {
 
       <form
         action={formAction}
-        className="rounded-2xl border border-zinc-800 bg-[#131626] p-5 space-y-5"
+        className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 space-y-5"
       >
         <input type="hidden" name="id" value={settings.id} />
 
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+        <div className="flex items-center justify-between border-b border-(--panel-border) pb-4">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-indigo-500/10 p-2 text-indigo-400">
               <Settings size={20} />
@@ -71,7 +71,7 @@ export default function SettingsForm({ settings }: { settings: any }) {
 
             <div>
               <h2 className="text-base font-semibold">ការកំណត់សំខាន់ៗ</h2>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-(--panel-text-subtle)">
                 ព័ត៌មានទាំងនេះត្រូវបានប្រើក្នុងការគណនាវិក្កយបត្រ
               </p>
             </div>
@@ -88,7 +88,7 @@ export default function SettingsForm({ settings }: { settings: any }) {
         </div>
 
         <div>
-          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-zinc-300">
+          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-(--panel-text-muted)">
             <Zap size={16} className="text-emerald-400" />
             តម្លៃសេវាកម្ម
           </div>
@@ -116,7 +116,7 @@ export default function SettingsForm({ settings }: { settings: any }) {
         </div>
 
         <div>
-          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-zinc-300">
+          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-(--panel-text-muted)">
             <Settings size={16} className="text-blue-400" />
             ការកំណត់វិក្កយបត្រ
           </div>
@@ -138,7 +138,7 @@ export default function SettingsForm({ settings }: { settings: any }) {
         </div>
 
         <div>
-          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-zinc-300">
+          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-(--panel-text-muted)">
             <CreditCard size={16} className="text-amber-400" />
             ការណែនាំការទូទាត់
           </div>
@@ -147,7 +147,7 @@ export default function SettingsForm({ settings }: { settings: any }) {
             name="payment_instruction"
             defaultValue={settings.payment_instruction ?? ""}
             rows={4}
-            className="w-full rounded-lg border border-zinc-800 bg-[#0b0d19] px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/50 placeholder-zinc-600"
+            className="w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 py-2 text-sm text-(--panel-text) outline-none focus:border-indigo-500/50 placeholder-(--panel-text-subtle)"
           />
         </div>
 

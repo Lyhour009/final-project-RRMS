@@ -1,16 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/supabase/server";
 
-async function getSupabase() {
-  const cookieStore = await cookies();
-  return await createClient(cookieStore);
-}
+// See bill-generator.ts for why this cast exists: no generated DB types,
+// so Supabase-js can't tell `rooms:room_id` resolves to a single row.
+type ContractWithRoom = {
+  id: string;
+  tenant_id: string;
+  room_id: string;
+  rooms: { id: string; base_price: number } | null;
+};
 
 export async function getBills() {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data, error } = await supabase
     .from("bills")
@@ -48,7 +51,7 @@ export async function getBills() {
 }
 
 export async function upsertBill(id: string | null, formData: FormData) {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const contract_id = String(formData.get("contract_id") || "");
   const billingMonthRaw = String(formData.get("billing_month") || "");
@@ -74,7 +77,7 @@ export async function upsertBill(id: string | null, formData: FormData) {
     throw new Error("កុងទ័រភ្លើងចុងត្រូវធំជាង ឬស្មើកុងទ័រភ្លើងដើម");
   }
 
-  const { data: contract, error: contractError } = await supabase
+  const { data: contractData, error: contractError } = await supabase
     .from("contracts")
     .select(
       `
@@ -89,6 +92,8 @@ export async function upsertBill(id: string | null, formData: FormData) {
     )
     .eq("id", contract_id)
     .single();
+
+  const contract = contractData as unknown as ContractWithRoom | null;
 
   if (contractError || !contract) {
     throw new Error("រកមិនឃើញកិច្ចសន្យានេះទេ");
@@ -126,7 +131,7 @@ export async function upsertBill(id: string | null, formData: FormData) {
     throw new Error("រកមិនឃើញ Settings សម្រាប់គណនាតម្លៃទឹក/ភ្លើង");
   }
 
-  const roomFee = Number((contract.rooms as any)?.base_price || 0);
+  const roomFee = Number(contract.rooms?.base_price || 0);
 
   const waterUsed = water_meter_end - water_meter_start;
   const elecUsed = elec_meter_end - elec_meter_start;
@@ -234,7 +239,7 @@ export async function upsertBill(id: string | null, formData: FormData) {
 }
 
 export async function deleteBill(id: string) {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data: payments, error: paymentsError } = await supabase
     .from("payments")

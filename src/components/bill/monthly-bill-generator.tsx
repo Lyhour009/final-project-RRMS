@@ -1,43 +1,69 @@
+"use client";
+
+import { useActionState, useEffect } from "react";
 import { CalendarPlus } from "lucide-react";
+import { toast } from "sonner";
 import { generateMonthlyBills } from "@/actions/bill-generator";
 
+type GenerateState = { created: number; skipped: number } | null;
+
+async function generateMonthlyBillsAction(
+  _prevState: GenerateState,
+  formData: FormData,
+): Promise<GenerateState> {
+  return generateMonthlyBills(formData);
+}
+
 export function MonthlyBillGenerator() {
+  const [state, formAction, pending] = useActionState(
+    generateMonthlyBillsAction,
+    null,
+  );
+
+  useEffect(() => {
+    if (!state) return;
+    toast.success(
+      `បង្កើតវិក្កយបត្រ ${state.created} ថ្មី, រំលង ${state.skipped}`,
+    );
+  }, [state]);
+
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
       <div className="flex items-center gap-3 mb-4">
         <div className="rounded-xl bg-indigo-500/10 p-2 text-indigo-400">
           <CalendarPlus size={20} />
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-(--panel-text)">
             បង្កើតវិក្កយបត្រប្រចាំខែ
           </h2>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-(--panel-text-subtle)">
             បង្កើតវិក្កយបត្រសម្រាប់កិច្ចសន្យាសកម្មទាំងអស់
           </p>
         </div>
       </div>
 
       <form
-        action={generateMonthlyBills}
+        action={formAction}
         className="flex flex-col md:flex-row md:items-end gap-3"
       >
         <div className="w-fit">
-          <label className="text-sm text-zinc-400">ជ្រើសរើសខែ</label>
+          <label className="text-sm text-(--panel-text-muted)">ជ្រើសរើសខែ</label>
           <input
             type="month"
             name="billing_month"
             required
-            className="mt-1 h-10 w-full rounded-lg border border-zinc-800 bg-[#0b0d19] px-3 text-sm text-white"
+            className="mt-1 h-10 w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 text-sm text-(--panel-text)"
           />
         </div>
 
         <button
           type="submit"
-          className="h-10 rounded-lg bg-indigo-600 px-6 text-sm font-medium text-white hover:bg-indigo-700 md:mb-0"
+          disabled={pending}
+          className="h-10 rounded-lg bg-indigo-600 px-6 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 md:mb-0"
         >
-          បង្កើតវិក្កយបត្រ
+          {pending ? "កំពុងបង្កើត..." : "បង្កើតវិក្កយបត្រ"}
         </button>
       </form>
 

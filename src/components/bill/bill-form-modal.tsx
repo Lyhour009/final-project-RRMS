@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
@@ -93,7 +93,11 @@ export default function BillModal({
     reset,
     formState: { errors },
   } = useForm<BillFormValues>({
-    resolver: zodResolver(billSchema),
+    // zod's `z.coerce.number()` has a wider input type (`unknown`) than its
+    // output type (`number`); react-hook-form's Resolver only accepts one
+    // generic, so the two can't line up without help. The cast is safe —
+    // zodResolver's runtime behavior doesn't change, only the type.
+    resolver: zodResolver(billSchema) as Resolver<BillFormValues>,
     defaultValues: {
       contract_id: "",
       billing_month: "",
@@ -199,26 +203,26 @@ export default function BillModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0b0d19] text-white border-zinc-800 max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl">
+      <DialogContent className="bg-(--panel-inset) text-(--panel-text) border-(--panel-border) max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-zinc-100">
+          <DialogTitle className="text-xl font-semibold text-(--panel-text)">
             {isEditMode ? "📝 កែប្រែវិក្កយបត្រ" : "🧾 បន្ថែមវិក្កយបត្រថ្មី"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">កិច្ចសន្យា</Label>
+            <Label className="text-(--panel-text-muted)">កិច្ចសន្យា</Label>
 
             <Select
               value={contractIdValue}
-              onValueChange={(value) =>
-                setValue("contract_id", value, { shouldValidate: true })
+              onValueChange={(value: string | null) =>
+                value && setValue("contract_id", value, { shouldValidate: true })
               }
             >
-              <SelectTrigger className="bg-[#131626] border-zinc-800 text-white">
+              <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
                 <span
-                  className={selectedContract ? "text-white" : "text-zinc-500"}
+                  className={selectedContract ? "text-(--panel-text)" : "text-(--panel-text-subtle)"}
                 >
                   {selectedContract
                     ? `${selectedContract.profiles?.full_name || "-"} — បន្ទប់ #${
@@ -228,7 +232,7 @@ export default function BillModal({
                 </span>
               </SelectTrigger>
 
-              <SelectContent className="bg-[#131626] border-zinc-800 text-white w-fit">
+              <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text) w-fit">
                 {contracts.length === 0 ? (
                   <SelectItem value="_none" disabled>
                     មិនមានកិច្ចសន្យាសកម្មឡើយ
@@ -259,30 +263,30 @@ export default function BillModal({
           </div>
 
           {selectedContract && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 rounded-xl border border-zinc-800 bg-[#131626] p-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 rounded-xl border border-(--panel-border) bg-(--panel) p-3">
               <div>
-                <p className="text-xs text-zinc-500">អ្នកជួល</p>
-                <p className="text-sm font-medium text-zinc-100">
+                <p className="text-xs text-(--panel-text-subtle)">អ្នកជួល</p>
+                <p className="text-sm font-medium text-(--panel-text)">
                   {selectedContract.profiles?.full_name || "-"}
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-(--panel-text-subtle)">
                   {selectedContract.profiles?.phone_number || "-"}
                 </p>
               </div>
 
               <div>
-                <p className="text-xs text-zinc-500">បន្ទប់</p>
-                <p className="text-sm font-medium text-zinc-100">
+                <p className="text-xs text-(--panel-text-subtle)">បន្ទប់</p>
+                <p className="text-sm font-medium text-(--panel-text)">
                   #{selectedContract.rooms?.room_number || "-"}
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-(--panel-text-subtle)">
                   {selectedContract.rooms?.room_type || "-"} / ជាន់{" "}
                   {selectedContract.rooms?.floor || "-"}
                 </p>
               </div>
 
               <div>
-                <p className="text-xs text-zinc-500">តម្លៃបន្ទប់</p>
+                <p className="text-xs text-(--panel-text-subtle)">តម្លៃបន្ទប់</p>
                 <p className="text-sm font-semibold text-emerald-400">
                   ${Number(selectedContract.rooms?.base_price || 0).toFixed(2)}
                 </p>
@@ -292,11 +296,11 @@ export default function BillModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">ខែវិក្កយបត្រ</Label>
+              <Label className="text-(--panel-text-muted)">ខែវិក្កយបត្រ</Label>
 
               <Input
                 type="month"
-                className="bg-[#131626] border-zinc-800 text-white"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
                 {...register("billing_month")}
               />
 
@@ -308,19 +312,19 @@ export default function BillModal({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">ស្ថានភាព</Label>
+              <Label className="text-(--panel-text-muted)">ស្ថានភាព</Label>
 
               <Select
                 value={statusValue}
-                onValueChange={(value: BillStatus) =>
-                  setValue("status", value, { shouldValidate: true })
+                onValueChange={(value: BillStatus | null) =>
+                  value && setValue("status", value, { shouldValidate: true })
                 }
               >
-                <SelectTrigger className="bg-[#131626] border-zinc-800 text-white">
+                <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
                   <span>{STATUS_LABELS[statusValue]}</span>
                 </SelectTrigger>
 
-                <SelectContent className="bg-[#131626] border-zinc-800 text-white w-fit">
+                <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text) w-fit">
                   <SelectItem className="text-xs" value="unpaid">
                     មិនទាន់បង់ (Unpaid)
                   </SelectItem>
@@ -341,12 +345,12 @@ export default function BillModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">កុងទ័រទឹកដើម</Label>
+              <Label className="text-(--panel-text-muted)">កុងទ័រទឹកដើម</Label>
               <Input
                 type="number"
                 min={0}
                 step="0.01"
-                className="bg-[#131626] border-zinc-800 text-white"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
                 {...register("water_meter_start", { valueAsNumber: true })}
               />
               {errors.water_meter_start && (
@@ -357,12 +361,12 @@ export default function BillModal({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">កុងទ័រទឹកចុង</Label>
+              <Label className="text-(--panel-text-muted)">កុងទ័រទឹកចុង</Label>
               <Input
                 type="number"
                 min={0}
                 step="0.01"
-                className="bg-[#131626] border-zinc-800 text-white"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
                 {...register("water_meter_end", { valueAsNumber: true })}
               />
               {errors.water_meter_end && (
@@ -375,12 +379,12 @@ export default function BillModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">កុងទ័រភ្លើងដើម</Label>
+              <Label className="text-(--panel-text-muted)">កុងទ័រភ្លើងដើម</Label>
               <Input
                 type="number"
                 min={0}
                 step="0.01"
-                className="bg-[#131626] border-zinc-800 text-white"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
                 {...register("elec_meter_start", { valueAsNumber: true })}
               />
               {errors.elec_meter_start && (
@@ -391,12 +395,12 @@ export default function BillModal({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">កុងទ័រភ្លើងចុង</Label>
+              <Label className="text-(--panel-text-muted)">កុងទ័រភ្លើងចុង</Label>
               <Input
                 type="number"
                 min={0}
                 step="0.01"
-                className="bg-[#131626] border-zinc-800 text-white"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
                 {...register("elec_meter_end", { valueAsNumber: true })}
               />
               {errors.elec_meter_end && (
@@ -407,46 +411,46 @@ export default function BillModal({
             </div>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-[#131626] p-4 space-y-2">
+          <div className="rounded-xl border border-(--panel-border) bg-(--panel) p-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-zinc-400">ថ្លៃបន្ទប់</span>
-              <span className="font-semibold text-zinc-100">
+              <span className="text-(--panel-text-muted)">ថ្លៃបន្ទប់</span>
+              <span className="font-semibold text-(--panel-text)">
                 ${calculation.roomFee.toFixed(2)}
               </span>
             </div>
 
             <div className="flex justify-between text-sm">
-              <span className="text-zinc-400">
+              <span className="text-(--panel-text-muted)">
                 ថ្លៃទឹក ({calculation.waterUsed} × ${settings?.water_rate})
               </span>
-              <span className="font-semibold text-zinc-100">
+              <span className="font-semibold text-(--panel-text)">
                 ${calculation.waterFee.toFixed(2)}
               </span>
             </div>
 
             <div className="flex justify-between text-sm">
-              <span className="text-zinc-400">
+              <span className="text-(--panel-text-muted)">
                 ថ្លៃភ្លើង ({calculation.elecUsed} × ${settings?.electric_rate})
               </span>
-              <span className="font-semibold text-zinc-100">
+              <span className="font-semibold text-(--panel-text)">
                 ${calculation.elecFee.toFixed(2)}
               </span>
             </div>
 
-            <div className="border-t border-zinc-800 pt-2 flex justify-between">
-              <span className="text-zinc-300 font-medium">សរុប</span>
+            <div className="border-t border-(--panel-border) pt-2 flex justify-between">
+              <span className="text-(--panel-text-muted) font-medium">សរុប</span>
               <span className="text-lg font-bold text-emerald-400">
                 ${calculation.totalAmount.toFixed(2)}
               </span>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800/60">
+          <div className="flex justify-end gap-3 pt-3 border-t border-(--panel-border)/60">
             <Button
               type="button"
               variant="ghost"
               onClick={onClose}
-              className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+              className="text-(--panel-text-muted) hover:text-(--panel-text) hover:bg-(--panel-border)"
             >
               បោះបង់
             </Button>

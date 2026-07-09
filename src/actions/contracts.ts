@@ -1,16 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
-
-async function getSupabase() {
-  const cookieStore = await cookies();
-  return await createClient(cookieStore);
-}
+import { requireAdmin } from "@/lib/supabase/server";
 
 export async function getContracts() {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data, error } = await supabase
     .from("contracts")
@@ -40,7 +34,7 @@ export async function getContracts() {
 }
 
 export async function getContractFormData() {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data: activeContracts, error: activeContractsError } = await supabase
     .from("contracts")
@@ -93,7 +87,7 @@ export async function getContractFormData() {
 }
 
 export async function upsertContract(id: string | null, formData: FormData) {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const tenant_id = String(formData.get("tenant_id") || "");
   const room_id = String(formData.get("room_id") || "");
@@ -245,7 +239,7 @@ export async function upsertContract(id: string | null, formData: FormData) {
 }
 
 export async function deleteContract(id: string) {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data: contract, error: contractError } = await supabase
     .from("contracts")
@@ -282,9 +276,34 @@ export async function deleteContract(id: string) {
   revalidatePath("/admin/rooms");
 }
 
-//
+// See bill-generator.ts for why this cast exists: no generated DB types,
+// so Supabase-js can't tell these FK joins resolve to a single row.
+type ActiveContract = {
+  id: string;
+  tenant_id: string;
+  room_id: string;
+  start_date: string;
+  end_date: string;
+  due_day: number;
+  status: string;
+  profiles?: {
+    id: string;
+    full_name: string;
+    phone_number: string;
+    email?: string;
+  };
+  rooms?: {
+    id: string;
+    room_number: string;
+    room_type: string;
+    base_price: number;
+    floor: number;
+    status: string;
+  };
+};
+
 export async function getActiveContracts() {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data, error } = await supabase
     .from("contracts")
@@ -318,5 +337,5 @@ export async function getActiveContracts() {
 
   if (error) throw new Error(error.message);
 
-  return data || [];
+  return (data || []) as unknown as ActiveContract[];
 }

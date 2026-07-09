@@ -5,7 +5,7 @@ import {
 } from "@/actions/tenants/maintenances";
 
 function StatusBadge({ status }: { status: string }) {
-  let className = "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
+  let className = "bg-zinc-500/10 text-(--panel-text-muted) border-zinc-500/20";
 
   if (status === "pending") {
     className = "bg-amber-500/10 text-amber-400 border-amber-500/20";
@@ -35,7 +35,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function PriorityBadge({ priority }: { priority: string }) {
-  let className = "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
+  let className = "bg-zinc-500/10 text-(--panel-text-muted) border-zinc-500/20";
 
   if (priority === "low") {
     className = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
@@ -78,69 +78,69 @@ export default async function TenantMaintenancePage() {
   ).length;
 
   return (
-    <div className="p-6 space-y-6 text-white">
+    <div className="p-6 space-y-6 text-(--panel-text)">
       <div>
         <h1 className="text-2xl font-bold">🔧 សំណើជួសជុល</h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-(--panel-text-subtle) mt-1">
           បង្កើតសំណើជួសជុល និងតាមដានស្ថានភាពសំណើរបស់អ្នក
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-4">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
           <Clock className="text-amber-400 mb-2" size={20} />
-          <p className="text-sm text-zinc-400">រង់ចាំ</p>
+          <p className="text-sm text-(--panel-text-muted)">រង់ចាំ</p>
           <p className="text-2xl font-bold">{pending}</p>
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-4">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
           <AlertTriangle className="text-blue-400 mb-2" size={20} />
-          <p className="text-sm text-zinc-400">កំពុងធ្វើ</p>
+          <p className="text-sm text-(--panel-text-muted)">កំពុងធ្វើ</p>
           <p className="text-2xl font-bold">{inProgress}</p>
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-4">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
           <CheckCircle className="text-emerald-400 mb-2" size={20} />
-          <p className="text-sm text-zinc-400">រួចរាល់</p>
+          <p className="text-sm text-(--panel-text-muted)">រួចរាល់</p>
           <p className="text-2xl font-bold">{resolved}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
           <h2 className="text-lg font-semibold mb-4">បង្កើតសំណើថ្មី</h2>
 
           {!contract ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-(--panel-text-subtle)">
               អ្នកមិនទាន់មានបន្ទប់សកម្មទេ មិនអាចបង្កើតសំណើជួសជុលបាន។
             </p>
           ) : (
             <form action={createTenantMaintenanceRequest}>
-              <div className="rounded-xl border border-zinc-800 bg-[#0b0d19] p-3">
-                <p className="text-xs text-zinc-500">បន្ទប់របស់អ្នក</p>
+              <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3">
+                <p className="text-xs text-(--panel-text-subtle)">បន្ទប់របស់អ្នក</p>
                 <p className="text-sm font-medium">
                   #{contract.rooms?.room_number} — {contract.rooms?.room_type}
                 </p>
               </div>
 
               <div>
-                <label className="text-sm text-zinc-400">ចំណងជើងបញ្ហា</label>
+                <label className="text-sm text-(--panel-text-muted)">ចំណងជើងបញ្ហា</label>
                 <input
                   name="issue_title"
                   required
                   minLength={2}
                   placeholder="ឧ. ម៉ាស៊ីនត្រជាក់ខូច"
-                  className="mt-1 h-10 w-full rounded-lg border border-zinc-800 bg-[#0b0d19] px-3 text-sm text-white placeholder-zinc-600"
+                  className="mt-1 h-10 w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 text-sm text-(--panel-text) placeholder-(--panel-text-subtle)"
                 />
               </div>
 
               <div>
-                <label className="text-sm text-zinc-400">អាទិភាព</label>
+                <label className="text-sm text-(--panel-text-muted)">អាទិភាព</label>
                 <select
                   name="priority"
                   required
                   defaultValue="medium"
-                  className="mt-1 h-10 w-full rounded-lg border border-zinc-800 bg-[#0b0d19] px-3 text-sm text-white"
+                  className="mt-1 h-10 w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 text-sm text-(--panel-text)"
                 >
                   <option value="low">ទាប</option>
                   <option value="medium">មធ្យម</option>
@@ -149,14 +149,14 @@ export default async function TenantMaintenancePage() {
               </div>
 
               <div>
-                <label className="text-sm text-zinc-400">ការពិពណ៌នា</label>
+                <label className="text-sm text-(--panel-text-muted)">ការពិពណ៌នា</label>
                 <textarea
                   name="issue_description"
                   required
                   minLength={5}
                   rows={5}
                   placeholder="ពិពណ៌នាបញ្ហាឲ្យបានច្បាស់..."
-                  className="mt-1 w-full rounded-lg border border-zinc-800 bg-[#0b0d19] px-3 py-2 text-sm text-white placeholder-zinc-600"
+                  className="mt-1 w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 py-2 text-sm text-(--panel-text) placeholder-(--panel-text-subtle)"
                 />
               </div>
 
@@ -170,32 +170,32 @@ export default async function TenantMaintenancePage() {
           )}
         </div>
 
-        <div className="xl:col-span-2 rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+        <div className="xl:col-span-2 rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
           <h2 className="text-lg font-semibold mb-4">ប្រវត្តិសំណើជួសជុល</h2>
 
           <div className="space-y-3">
             {requests.length === 0 ? (
-              <p className="text-sm text-zinc-500">មិនទាន់មានសំណើជួសជុល</p>
+              <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានសំណើជួសជុល</p>
             ) : (
               requests.map((item: any) => (
                 <div
                   key={item.id}
-                  className="rounded-xl border border-zinc-800 bg-[#0b0d19] p-4"
+                  className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-4"
                 >
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
                         <Wrench size={16} className="text-indigo-400" />
-                        <p className="text-sm font-semibold text-white">
+                        <p className="text-sm font-semibold text-(--panel-text)">
                           {item.issue_title}
                         </p>
                       </div>
 
-                      <p className="text-sm text-zinc-500 mt-2">
+                      <p className="text-sm text-(--panel-text-subtle) mt-2">
                         {item.issue_description}
                       </p>
 
-                      <p className="text-xs text-zinc-600 mt-2">
+                      <p className="text-xs text-(--panel-text-subtle) mt-2">
                         បន្ទប់ #{item.rooms?.room_number || "-"} ·{" "}
                         {item.created_at?.slice(0, 10)}
                       </p>

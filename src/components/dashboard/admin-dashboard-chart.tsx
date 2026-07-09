@@ -19,17 +19,26 @@ import {
 const ROOM_COLORS = ["#22c55e", "#6366f1", "#f59e0b"];
 const STATUS_COLORS = ["#22c55e", "#f59e0b", "#ef4444"];
 
+// These use the same --panel-* theme tokens as the rest of the app (see
+// globals.css) instead of hardcoded hex, so the charts actually follow
+// light/dark mode instead of always rendering with dark-theme colors.
 const tickStyle = {
-  fill: "#a1a1aa",
+  fill: "var(--panel-text-muted)",
   fontSize: 10,
   fontFamily: "var(--font-khmer), Inter, system-ui, sans-serif",
 };
 
 const tooltipStyle = {
-  background: "#0b0d19",
-  border: "1px solid #27272a",
+  background: "var(--panel)",
+  border: "1px solid var(--panel-border)",
   borderRadius: "10px",
-  color: "#fff",
+  color: "var(--panel-text)",
+};
+
+const legendStyle = {
+  color: "var(--panel-text-muted)",
+  fontSize: "11px",
+  fontFamily: "var(--font-khmer), Inter, system-ui, sans-serif",
 };
 
 function ChartCard({
@@ -42,10 +51,10 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
       <div className="mb-4">
-        <h2 className="text-base font-semibold text-white">{title}</h2>
-        <p className="text-xs text-zinc-500 mt-1">{description}</p>
+        <h2 className="text-base font-semibold text-(--panel-text)">{title}</h2>
+        <p className="text-xs text-(--panel-text-subtle) mt-1">{description}</p>
       </div>
 
       <div className="dashboard-chart h-[300px] w-full">{children}</div>
@@ -55,7 +64,7 @@ function ChartCard({
 
 function EmptyChart() {
   return (
-    <div className="h-full flex items-center justify-center text-sm text-zinc-500">
+    <div className="h-full flex items-center justify-center text-sm text-(--panel-text-subtle)">
       មិនទាន់មានទិន្នន័យ
     </div>
   );
@@ -74,13 +83,18 @@ export function AdminDashboardCharts({
 }) {
   const totalRooms = roomStatus.reduce((sum, item) => sum + item.value, 0);
   const hasRevenueData = revenueByMonth.some((item) => item.revenue > 0);
+  // A line needs 2+ points to draw an actual line — with only one month of
+  // history, `<LineChart>` renders a single floating dot with nothing
+  // connecting it, which reads as broken rather than "not much data yet".
+  // A bar reads as a complete, deliberate chart even with just one value.
+  const hasTrendData = hasRevenueData && revenueByMonth.length >= 2;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
       <ChartCard title="ចំណូលតាមខែ" description="ចំណូលពីវិក្កយបត្រដែលបានបង់">
         {!hasRevenueData ? (
           <EmptyChart />
-        ) : (
+        ) : hasTrendData ? (
           <ResponsiveContainer width="100%" height={280}>
             <LineChart
               data={revenueByMonth}
@@ -88,7 +102,7 @@ export function AdminDashboardCharts({
             >
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#27272a"
+                stroke="var(--panel-border)"
                 vertical={false}
               />
 
@@ -103,11 +117,11 @@ export function AdminDashboardCharts({
               <YAxis hide />
 
               <Tooltip
-                formatter={(value: number) => [
-                  `$${Number(value).toFixed(2)}`,
+                formatter={(value) => [
+                  `$${Number(value ?? 0).toFixed(2)}`,
                   "ចំណូល",
                 ]}
-                labelStyle={{ color: "#fff" }}
+                labelStyle={{ color: "var(--panel-text)" }}
                 contentStyle={tooltipStyle}
               />
 
@@ -121,6 +135,47 @@ export function AdminDashboardCharts({
               />
             </LineChart>
           </ResponsiveContainer>
+        ) : (
+          <div className="flex h-full flex-col">
+            <ResponsiveContainer width="100%" height={230}>
+              <BarChart
+                data={revenueByMonth}
+                margin={{ top: 20, right: 24, left: 4, bottom: 10 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--panel-border)"
+                  vertical={false}
+                />
+
+                <XAxis
+                  dataKey="month"
+                  tick={tickStyle}
+                  tickLine={false}
+                  axisLine={false}
+                  dy={8}
+                />
+
+                <YAxis hide />
+
+                <Tooltip
+                  formatter={(value) => [
+                    `$${Number(value ?? 0).toFixed(2)}`,
+                    "ចំណូល",
+                  ]}
+                  labelStyle={{ color: "var(--panel-text)" }}
+                  contentStyle={tooltipStyle}
+                  cursor={{ fill: "var(--panel-hover)" }}
+                />
+
+                <Bar dataKey="revenue" radius={[8, 8, 0, 0]} barSize={56} fill="#22c55e" />
+              </BarChart>
+            </ResponsiveContainer>
+
+            <p className="text-center text-xs text-(--panel-text-subtle) -mt-2">
+              និន្នាការនឹងបង្ហាញនៅពេលមានទិន្នន័យលើសពី ១ ខែ
+            </p>
+          </div>
         )}
       </ChartCard>
       <ChartCard title="ស្ថានភាពបន្ទប់" description="ទំនេរ / មិនទំនេរ / ជួសជុល">
@@ -142,7 +197,7 @@ export function AdminDashboardCharts({
                   <Cell
                     key={index}
                     fill={ROOM_COLORS[index % ROOM_COLORS.length]}
-                    stroke="#131626"
+                    stroke="var(--panel)"
                     strokeWidth={3}
                   />
                 ))}
@@ -153,7 +208,7 @@ export function AdminDashboardCharts({
                 y="45%"
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fill="#ffffff"
+                fill="var(--panel-text)"
                 fontSize={24}
                 fontWeight={700}
               >
@@ -165,7 +220,7 @@ export function AdminDashboardCharts({
                 y="56%"
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fill="#a1a1aa"
+                fill="var(--panel-text-muted)"
                 fontSize={11}
               >
                 បន្ទប់សរុប
@@ -173,14 +228,7 @@ export function AdminDashboardCharts({
 
               <Tooltip contentStyle={tooltipStyle} />
 
-              <Legend
-                iconType="circle"
-                wrapperStyle={{
-                  color: "#a1a1aa",
-                  fontSize: "11px",
-                  fontFamily: "var(--font-khmer), Inter, system-ui, sans-serif",
-                }}
-              />
+              <Legend iconType="circle" wrapperStyle={legendStyle} />
             </PieChart>
           </ResponsiveContainer>
         )}
@@ -193,7 +241,7 @@ export function AdminDashboardCharts({
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#27272a"
+              stroke="var(--panel-border)"
               vertical={false}
             />
 
@@ -214,7 +262,7 @@ export function AdminDashboardCharts({
             />
 
             <Tooltip
-              cursor={{ fill: "rgba(255,255,255,0.04)" }}
+              cursor={{ fill: "var(--panel-hover)" }}
               contentStyle={tooltipStyle}
             />
 
@@ -241,7 +289,7 @@ export function AdminDashboardCharts({
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#27272a"
+              stroke="var(--panel-border)"
               vertical={false}
             />
 
@@ -262,7 +310,7 @@ export function AdminDashboardCharts({
             />
 
             <Tooltip
-              cursor={{ fill: "rgba(255,255,255,0.04)" }}
+              cursor={{ fill: "var(--panel-hover)" }}
               contentStyle={tooltipStyle}
             />
 

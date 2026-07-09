@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   CheckCircle,
@@ -10,11 +10,13 @@ import {
   XCircle,
   Eye,
   Plus,
+  Loader2,
 } from "lucide-react";
 
 import { Payment, PaymentStatus } from "@/lib/validations/payments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
 import PaymentSubmitModal from "./payment-form-modal";
 import {
   approvePayment,
@@ -58,14 +60,20 @@ export function PaymentTableWrapper({
   unpaidBills,
 }: PaymentTableProps) {
   const [payments, setPayments] = useState<Payment[]>(initialPayments || []);
+  const [prevInitialPayments, setPrevInitialPayments] =
+    useState(initialPayments);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Resync local state when the server passes a fresh `initialPayments` prop
+  // (e.g. after revalidatePath) without waiting for a post-commit effect —
+  // see https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  if (initialPayments !== prevInitialPayments) {
+    setPrevInitialPayments(initialPayments);
     setPayments(initialPayments || []);
-  }, [initialPayments]);
+  }
 
   const stats = useMemo(() => {
     return {
@@ -99,6 +107,13 @@ export function PaymentTableWrapper({
       return matchesSearch && matchesStatus;
     });
   }, [payments, searchQuery, statusFilter]);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const {
+    visibleItems: visiblePayments,
+    hasMore,
+    sentinelRef,
+  } = useInfiniteReveal(filteredPayments, scrollContainerRef);
 
   const handlePaymentSubmitted = (payment: Payment) => {
     setPayments((prev) => [payment, ...prev]);
@@ -175,11 +190,11 @@ export function PaymentTableWrapper({
   };
 
   return (
-    <div className="space-y-6 text-white p-1">
+    <div className="space-y-6 text-(--panel-text) p-1">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border bg-[#131626] border-zinc-800/80">
+        <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 text-sm font-medium">
+            <span className="text-(--panel-text-muted) text-sm font-medium">
               ការទូទាត់សរុប
             </span>
             <CreditCard size={20} className="text-indigo-400" />
@@ -187,9 +202,9 @@ export function PaymentTableWrapper({
           <p className="text-3xl font-bold mt-2">{stats.total}</p>
         </div>
 
-        <div className="p-4 rounded-xl border bg-[#131626] border-zinc-800/80">
+        <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 text-sm font-medium">រង់ចាំ</span>
+            <span className="text-(--panel-text-muted) text-sm font-medium">រង់ចាំ</span>
             <Clock size={20} className="text-amber-400" />
           </div>
           <p className="text-3xl font-bold mt-2 text-amber-400">
@@ -197,9 +212,9 @@ export function PaymentTableWrapper({
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border bg-[#131626] border-zinc-800/80">
+        <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 text-sm font-medium">បានអនុម័ត</span>
+            <span className="text-(--panel-text-muted) text-sm font-medium">បានអនុម័ត</span>
             <CheckCircle size={20} className="text-emerald-400" />
           </div>
           <p className="text-3xl font-bold mt-2 text-emerald-400">
@@ -207,9 +222,9 @@ export function PaymentTableWrapper({
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border bg-[#131626] border-zinc-800/80">
+        <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 text-sm font-medium">បានបដិសេធ</span>
+            <span className="text-(--panel-text-muted) text-sm font-medium">បានបដិសេធ</span>
             <XCircle size={20} className="text-red-400" />
           </div>
           <p className="text-3xl font-bold mt-2 text-red-400">
@@ -218,15 +233,15 @@ export function PaymentTableWrapper({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-[#131626] p-4 rounded-xl border border-zinc-800/60">
+      <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-(--panel) p-4 rounded-xl border border-(--panel-border)/60">
         <Input
           placeholder="ស្វែងរកតាមឈ្មោះ លេខទូរស័ព្ទ ឬលេខបន្ទប់..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full sm:w-96 bg-[#0b0d19] border-zinc-800 text-white placeholder-zinc-500"
+          className="w-full sm:w-96 bg-(--panel-inset) border-(--panel-border) text-(--panel-text) placeholder-(--panel-text-subtle)"
         />
 
-        <div className="flex items-center gap-1.5 bg-[#0b0d19] p-1 rounded-lg border border-zinc-800/60 w-full sm:w-auto overflow-x-auto">
+        <div className="flex items-center gap-1.5 bg-(--panel-inset) p-1 rounded-lg border border-(--panel-border)/60 w-full sm:w-auto overflow-x-auto">
           {["all", "pending", "approved", "rejected"].map((status) => (
             <button
               key={status}
@@ -235,7 +250,7 @@ export function PaymentTableWrapper({
               className={`px-3 py-1.5 text-xs font-medium rounded-md ${
                 statusFilter === status
                   ? "bg-indigo-600 text-white"
-                  : "text-zinc-400 hover:text-white"
+                  : "text-(--panel-text-muted) hover:text-(--panel-text)"
               }`}
             >
               {status === "all"
@@ -253,10 +268,10 @@ export function PaymentTableWrapper({
         </Button>
       </div>
 
-      <div className="bg-[#131626] rounded-xl border border-zinc-800/60 overflow-hidden">
-        <div className="overflow-x-auto max-h-[460px] overflow-y-auto">
+      <div className="bg-(--panel) rounded-xl border border-(--panel-border)/60 overflow-hidden">
+        <div ref={scrollContainerRef} className="overflow-x-auto max-h-[460px] overflow-y-auto">
           <table className="w-full text-left border-collapse table-auto">
-            <thead className="sticky top-0 bg-[#131626] z-10 border-b border-zinc-800 text-zinc-400 text-xs uppercase">
+            <thead className="sticky top-0 bg-(--panel) z-10 border-b border-(--panel-border) text-(--panel-text-muted) text-xs uppercase">
               <tr>
                 <th className="p-4">អ្នកជួល</th>
                 <th className="p-4">បន្ទប់</th>
@@ -271,26 +286,26 @@ export function PaymentTableWrapper({
             <tbody className="divide-y divide-zinc-800/50 text-sm">
               {filteredPayments.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-zinc-500">
+                  <td colSpan={7} className="p-8 text-center text-(--panel-text-subtle)">
                     មិនមានទិន្នន័យការទូទាត់ឡើយ។
                   </td>
                 </tr>
               ) : (
-                filteredPayments.map((payment) => (
+                visiblePayments.map((payment) => (
                   <tr
                     key={payment.id}
-                    className="hover:bg-zinc-900/30 transition-colors"
+                    className="hover:bg-(--panel-hover)/30 transition-colors"
                   >
                     <td className="p-4">
-                      <p className="font-semibold text-zinc-200">
+                      <p className="font-semibold text-(--panel-text)">
                         {payment.profiles?.full_name || "-"}
                       </p>
-                      <p className="text-xs text-zinc-500">
+                      <p className="text-xs text-(--panel-text-subtle)">
                         {payment.profiles?.phone_number || "-"}
                       </p>
                     </td>
 
-                    <td className="p-4 text-zinc-400">
+                    <td className="p-4 text-(--panel-text-muted)">
                       #{payment.bills?.contracts?.rooms?.room_number || "-"}
                     </td>
 
@@ -298,7 +313,7 @@ export function PaymentTableWrapper({
                       ${Number(payment.amount || 0).toFixed(2)}
                     </td>
 
-                    <td className="p-4 text-zinc-400 uppercase">
+                    <td className="p-4 text-(--panel-text-muted) uppercase">
                       {payment.payment_method}
                     </td>
 
@@ -313,7 +328,7 @@ export function PaymentTableWrapper({
                           <Eye size={14} /> មើល
                         </a>
                       ) : (
-                        <span className="text-zinc-600">គ្មាន</span>
+                        <span className="text-(--panel-text-subtle)">គ្មាន</span>
                       )}
                     </td>
 
@@ -357,7 +372,7 @@ export function PaymentTableWrapper({
                             variant="ghost"
                             onClick={() => handleDelete(payment)}
                             disabled={loadingId === payment.id}
-                            className="h-8 w-8 text-zinc-400 hover:text-red-400"
+                            className="h-8 w-8 text-(--panel-text-muted) hover:text-red-400"
                           >
                             <Trash2 size={14} />
                           </Button>
@@ -366,6 +381,20 @@ export function PaymentTableWrapper({
                     </td>
                   </tr>
                 ))
+              )}
+
+              {hasMore && (
+                <tr>
+                  <td colSpan={7} className="p-4 text-center">
+                    <div
+                      ref={sentinelRef}
+                      className="flex items-center justify-center gap-2 text-xs text-(--panel-text-subtle)"
+                    >
+                      <Loader2 size={14} className="animate-spin" />
+                      កំពុងផ្ទុកបន្ថែម...
+                    </div>
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

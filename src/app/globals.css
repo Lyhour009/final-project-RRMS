@@ -49,6 +49,19 @@
 }
 
 :root {
+  /* Panel tokens: used by the dashboard's dark-styled cards/tables/modals so
+     they render sensibly in light mode too, without changing the existing
+     dark-mode look (see the matching values under .dark below). */
+  --panel: #ffffff;
+  --panel-inset: oklch(0.984 0.003 247.858); /* slate-50 */
+  --panel-sidebar: #ffffff;
+  --panel-hover: oklch(0.968 0.007 247.896); /* slate-100 */
+  --panel-border: oklch(0.928 0.006 264.531); /* slate-200 */
+  --panel-border-subtle: oklch(0.968 0.007 247.896); /* slate-100 */
+  --panel-text: oklch(0.208 0.042 265.755); /* slate-900 */
+  --panel-text-muted: oklch(0.446 0.03 256.802); /* slate-600 */
+  --panel-text-subtle: oklch(0.551 0.027 264.364); /* slate-500 */
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -84,6 +97,17 @@
 }
 
 .dark {
+  /* Same values the app used before it had light-mode support at all. */
+  --panel: #131626;
+  --panel-inset: #0b0d19;
+  --panel-sidebar: #0f1629;
+  --panel-hover: #18181b; /* zinc-900 */
+  --panel-border: #27272a; /* zinc-800 */
+  --panel-border-subtle: rgb(255 255 255 / 0.07);
+  --panel-text: #ffffff;
+  --panel-text-muted: #a1a1aa; /* zinc-400 */
+  --panel-text-subtle: #71717a; /* zinc-500 */
+
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);

@@ -1,23 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/server";
 import { createNotification } from "@/actions/notifications";
 
-async function getSupabase() {
-  const cookieStore = await cookies();
-  return await createClient(cookieStore);
-}
-
 export async function getTenantPaymentsData() {
-  const supabase = await getSupabase();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("សូមចូលប្រើប្រាស់ជាមុនសិន");
+  const { supabase, user } = await requireUser();
 
   const tenantId = user.id;
 
@@ -63,8 +51,6 @@ export async function getTenantPaymentsData() {
 
   if (settingsError) throw new Error(settingsError.message);
 
-  console.log("TENANT SETTINGS:", settings);
-
   return {
     unpaidBills: unpaidBills || [],
     payments: payments || [],
@@ -73,13 +59,7 @@ export async function getTenantPaymentsData() {
 }
 
 export async function submitTenantPayment(formData: FormData) {
-  const supabase = await getSupabase();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("សូមចូលប្រើប្រាស់ជាមុនសិន");
+  const { supabase, user } = await requireUser();
 
   const tenantId = user.id;
 
@@ -130,6 +110,8 @@ export async function submitTenantPayment(formData: FormData) {
     },
   ]);
 
+  if (error) throw new Error(error.message);
+
   const { data: admins } = await supabase
     .from("profiles")
     .select("id")
@@ -143,7 +125,7 @@ export async function submitTenantPayment(formData: FormData) {
       link: "/admin/payments",
     });
   }
-  if (error) throw new Error(error.message);
+
   revalidatePath("/admin/payments");
   revalidatePath("/tenant/payments");
   revalidatePath("/tenant/bills");

@@ -13,7 +13,7 @@ import {
 import { ExportExcelButton } from "@/components/export/export-excel-button";
 
 function StatusBadge({ status }: { status: string }) {
-  let className = "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
+  let className = "bg-zinc-500/10 text-(--panel-text-muted) border-zinc-500/20";
 
   if (status === "pending") {
     className = "bg-amber-500/10 text-amber-400 border-amber-500/20";
@@ -43,7 +43,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function PriorityBadge({ priority }: { priority: string }) {
-  let className = "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
+  let className = "bg-zinc-500/10 text-(--panel-text-muted) border-zinc-500/20";
 
   if (priority === "low") {
     className = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
@@ -84,13 +84,13 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-4">
+    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-zinc-400">{title}</p>
+        <p className="text-sm text-(--panel-text-muted)">{title}</p>
         <div className={color}>{icon}</div>
       </div>
 
-      <p className="text-2xl font-bold text-white mt-2">{value}</p>
+      <p className="text-2xl font-bold text-(--panel-text) mt-2">{value}</p>
     </div>
   );
 }
@@ -123,11 +123,11 @@ export default async function AdminMaintenancePage() {
   }));
 
   return (
-    <div className="p-6 space-y-6 text-white">
+    <div className="p-6 space-y-6 text-(--panel-text)">
       <div className="flex text-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">🔧 គ្រប់គ្រងសំណើជួសជុល</h1>
-          <p className="text-sm text-zinc-500 mt-1">
+          <p className="text-sm text-(--panel-text-subtle) mt-1">
             ពិនិត្យ និងធ្វើបច្ចុប្បន្នភាពសំណើជួសជុលពីអ្នកជួល
           </p>
         </div>
@@ -167,31 +167,31 @@ export default async function AdminMaintenancePage() {
         />
       </div>
 
-      <div className="bg-[#131626] rounded-xl border border-zinc-800/60 overflow-hidden">
-        <div className="p-4 border-b border-zinc-800/60">
-          <h2 className="text-base font-semibold text-white">
+      <div className="bg-(--panel) rounded-xl border border-(--panel-border)/60 overflow-hidden">
+        <div className="p-4 border-b border-(--panel-border)/60">
+          <h2 className="text-base font-semibold text-(--panel-text)">
             សំណើជួសជុលទាំងអស់
           </h2>
         </div>
 
         <div className="overflow-x-auto max-h-[460px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800">
           <table className="w-full text-left border-collapse table-auto">
-            <thead className="sticky top-0 bg-[#131626] z-10 border-b border-zinc-800 text-zinc-400 text-xs uppercase">
+            <thead className="sticky top-0 bg-(--panel) z-10 border-b border-(--panel-border) text-(--panel-text-muted) text-xs uppercase">
               <tr>
-                <th className="p-4 bg-[#131626]">អ្នកជួល</th>
-                <th className="p-4 bg-[#131626]">បន្ទប់</th>
-                <th className="p-4 bg-[#131626]">បញ្ហា</th>
-                <th className="p-4 bg-[#131626]">អាទិភាព</th>
-                <th className="p-4 bg-[#131626]">ស្ថានភាព</th>
-                <th className="p-4 bg-[#131626]">កាលបរិច្ឆេទ</th>
-                <th className="p-4 text-right bg-[#131626]">សកម្មភាព</th>
+                <th className="p-4 bg-(--panel)">អ្នកជួល</th>
+                <th className="p-4 bg-(--panel)">បន្ទប់</th>
+                <th className="p-4 bg-(--panel)">បញ្ហា</th>
+                <th className="p-4 bg-(--panel)">អាទិភាព</th>
+                <th className="p-4 bg-(--panel)">ស្ថានភាព</th>
+                <th className="p-4 bg-(--panel)">កាលបរិច្ឆេទ</th>
+                <th className="p-4 text-right bg-(--panel)">សកម្មភាព</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-zinc-800/50 text-sm">
               {requests.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-zinc-500">
+                  <td colSpan={7} className="p-8 text-center text-(--panel-text-subtle)">
                     មិនទាន់មានសំណើជួសជុល
                   </td>
                 </tr>
@@ -199,26 +199,26 @@ export default async function AdminMaintenancePage() {
                 requests.map((item: any) => (
                   <tr
                     key={item.id}
-                    className="hover:bg-zinc-900/30 transition-colors"
+                    className="hover:bg-(--panel-hover)/30 transition-colors"
                   >
                     <td className="p-4">
-                      <p className="font-semibold text-zinc-200">
+                      <p className="font-semibold text-(--panel-text)">
                         {item.profiles?.full_name || "-"}
                       </p>
-                      <p className="text-xs text-zinc-500 mt-0.5">
+                      <p className="text-xs text-(--panel-text-subtle) mt-0.5">
                         {item.profiles?.phone_number || "-"}
                       </p>
                     </td>
 
-                    <td className="p-4 text-zinc-300">
+                    <td className="p-4 text-(--panel-text-muted)">
                       #{item.rooms?.room_number || "-"}
                     </td>
 
                     <td className="p-4 max-w-md">
-                      <p className="font-medium text-zinc-200">
+                      <p className="font-medium text-(--panel-text)">
                         {item.issue_title}
                       </p>
-                      <p className="text-xs text-zinc-500 mt-1 line-clamp-2">
+                      <p className="text-xs text-(--panel-text-subtle) mt-1 line-clamp-2">
                         {item.issue_description}
                       </p>
                     </td>
@@ -231,7 +231,7 @@ export default async function AdminMaintenancePage() {
                       <StatusBadge status={item.status} />
                     </td>
 
-                    <td className="p-4 text-zinc-400">
+                    <td className="p-4 text-(--panel-text-muted)">
                       {item.created_at?.slice(0, 10)}
                     </td>
 

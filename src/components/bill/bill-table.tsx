@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Bill, BillStatus } from "@/lib/validations/bills";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatKhmerDate } from "@/lib/utils";
+import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
 import {
   Edit2,
   Trash2,
@@ -12,6 +14,7 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import BillModal from "./bill-form-modal";
 import BillDeleteModal from "./bill-delete-modal";
@@ -64,6 +67,7 @@ export function BillTableWrapper({
   settings,
 }: BillTableProps) {
   const [bills, setBills] = useState<Bill[]>(initialBills || []);
+  const [prevInitialBills, setPrevInitialBills] = useState(initialBills);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -73,9 +77,13 @@ export function BillTableWrapper({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [billToDelete, setBillToDelete] = useState<Bill | null>(null);
 
-  useEffect(() => {
+  // Resync local state when the server passes a fresh `initialBills` prop
+  // (e.g. after revalidatePath) without waiting for a post-commit effect —
+  // see https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  if (initialBills !== prevInitialBills) {
+    setPrevInitialBills(initialBills);
     setBills(initialBills || []);
-  }, [initialBills]);
+  }
 
   const handleBillUpserted = (updatedBill: Bill) => {
     setBills((prevBills) => {
@@ -136,6 +144,12 @@ export function BillTableWrapper({
     });
   }, [bills, searchQuery, statusFilter]);
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { visibleItems: visibleBills, hasMore, sentinelRef } = useInfiniteReveal(
+    filteredBills,
+    scrollContainerRef,
+  );
+
   const handleAddNew = () => {
     setSelectedBill(null);
     setIsModalOpen(true);
@@ -151,18 +165,7 @@ export function BillTableWrapper({
     setIsDeleteModalOpen(true);
   };
 
-  const formatMonth = (value?: string) => {
-    if (!value) return "-";
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) return value;
-
-    return date.toLocaleDateString("km-KH", {
-      year: "numeric",
-      month: "long",
-    });
-  };
+  const formatMonth = (value?: string) => formatKhmerDate(value);
 
   const statusBadgeClass = (status: BillStatus) => {
     if (status === "paid") {
@@ -177,11 +180,11 @@ export function BillTableWrapper({
   };
 
   return (
-    <div className="space-y-6 text-white p-1">
+    <div className="space-y-6 text-(--panel-text) p-1">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border bg-[#131626] border-zinc-800/80">
+        <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 text-sm font-medium">
+            <span className="text-(--panel-text-muted) text-sm font-medium">
               វិក្កយបត្រសរុប
             </span>
             <Receipt size={20} className="text-indigo-400" />
@@ -189,9 +192,9 @@ export function BillTableWrapper({
           <p className="text-3xl font-bold mt-2">{stats.total}</p>
         </div>
 
-        <div className="p-4 rounded-xl border bg-[#131626] border-zinc-800/80">
+        <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 text-sm font-medium">
+            <span className="text-(--panel-text-muted) text-sm font-medium">
               មិនទាន់បង់
             </span>
             <Clock size={20} className="text-amber-400" />
@@ -201,9 +204,9 @@ export function BillTableWrapper({
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border bg-[#131626] border-zinc-800/80">
+        <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 text-sm font-medium">បានបង់</span>
+            <span className="text-(--panel-text-muted) text-sm font-medium">បានបង់</span>
             <CheckCircle size={20} className="text-emerald-400" />
           </div>
           <p className="text-3xl font-bold mt-2 text-emerald-400">
@@ -211,9 +214,9 @@ export function BillTableWrapper({
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border bg-[#131626] border-zinc-800/80">
+        <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 text-sm font-medium">
+            <span className="text-(--panel-text-muted) text-sm font-medium">
               ហួសកាលកំណត់
             </span>
             <AlertTriangle size={20} className="text-red-400" />
@@ -224,24 +227,24 @@ export function BillTableWrapper({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-[#131626] p-4 rounded-xl border border-zinc-800/60">
+      <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-(--panel) p-4 rounded-xl border border-(--panel-border)/60">
         <div className="relative w-full sm:w-96">
           <Input
             placeholder="ស្វែងរកតាមឈ្មោះ លេខទូរស័ព្ទ លេខបន្ទប់ ឬខែ..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-4 bg-[#0b0d19] border-zinc-800 text-white placeholder-zinc-500"
+            className="pl-4 bg-(--panel-inset) border-(--panel-border) text-(--panel-text) placeholder-(--panel-text-subtle)"
           />
         </div>
 
-        <div className="flex items-center gap-1.5 bg-[#0b0d19] p-1 rounded-lg border border-zinc-800/60 w-full sm:w-auto overflow-x-auto">
+        <div className="flex items-center gap-1.5 bg-(--panel-inset) p-1 rounded-lg border border-(--panel-border)/60 w-full sm:w-auto overflow-x-auto">
           <button
             type="button"
             onClick={() => setStatusFilter("all")}
             className={`px-3 py-1.5 text-xs font-medium rounded-md ${
               statusFilter === "all"
                 ? "bg-indigo-600 text-white"
-                : "text-zinc-400 hover:text-white"
+                : "text-(--panel-text-muted) hover:text-(--panel-text)"
             }`}
           >
             ទាំងអស់
@@ -253,7 +256,7 @@ export function BillTableWrapper({
             className={`px-3 py-1.5 text-xs font-medium rounded-md ${
               statusFilter === "unpaid"
                 ? "bg-amber-600 text-white"
-                : "text-zinc-400 hover:text-amber-400"
+                : "text-(--panel-text-muted) hover:text-amber-400"
             }`}
           >
             មិនទាន់បង់
@@ -265,7 +268,7 @@ export function BillTableWrapper({
             className={`px-3 py-1.5 text-xs font-medium rounded-md ${
               statusFilter === "paid"
                 ? "bg-emerald-600 text-white"
-                : "text-zinc-400 hover:text-emerald-400"
+                : "text-(--panel-text-muted) hover:text-emerald-400"
             }`}
           >
             បានបង់
@@ -277,7 +280,7 @@ export function BillTableWrapper({
             className={`px-3 py-1.5 text-xs font-medium rounded-md ${
               statusFilter === "overdue"
                 ? "bg-red-600 text-white"
-                : "text-zinc-400 hover:text-red-400"
+                : "text-(--panel-text-muted) hover:text-red-400"
             }`}
           >
             ហួសកាលកំណត់
@@ -292,67 +295,70 @@ export function BillTableWrapper({
         </Button>
       </div>
 
-      <div className="bg-[#131626] rounded-xl border border-zinc-800/60 overflow-hidden">
-        <div className="overflow-x-auto max-h-[460px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800">
+      <div className="bg-(--panel) rounded-xl border border-(--panel-border)/60 overflow-hidden">
+        <div
+          ref={scrollContainerRef}
+          className="overflow-x-auto max-h-[460px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800"
+        >
           <table className="w-full text-left border-collapse table-auto">
-            <thead className="sticky top-0 bg-[#131626] z-10 border-b border-zinc-800 text-zinc-400 text-xs uppercase">
+            <thead className="sticky top-0 bg-(--panel) z-10 border-b border-(--panel-border) text-(--panel-text-muted) text-xs uppercase">
               <tr>
-                <th className="p-4 bg-[#131626]">អ្នកជួល</th>
-                <th className="p-4 bg-[#131626]">បន្ទប់</th>
-                <th className="p-4 bg-[#131626]">ខែ</th>
-                <th className="p-4 bg-[#131626]">ថ្លៃបន្ទប់</th>
-                <th className="p-4 bg-[#131626]">ទឹក</th>
-                <th className="p-4 bg-[#131626]">ភ្លើង</th>
-                <th className="p-4 bg-[#131626]">សរុប</th>
-                <th className="p-4 bg-[#131626]">ស្ថានភាព</th>
-                <th className="p-4 text-right bg-[#131626]">សកម្មភាព</th>
+                <th className="p-4 bg-(--panel)">អ្នកជួល</th>
+                <th className="p-4 bg-(--panel)">បន្ទប់</th>
+                <th className="p-4 bg-(--panel)">ខែ</th>
+                <th className="p-4 bg-(--panel)">ថ្លៃបន្ទប់</th>
+                <th className="p-4 bg-(--panel)">ទឹក</th>
+                <th className="p-4 bg-(--panel)">ភ្លើង</th>
+                <th className="p-4 bg-(--panel)">សរុប</th>
+                <th className="p-4 bg-(--panel)">ស្ថានភាព</th>
+                <th className="p-4 text-right bg-(--panel)">សកម្មភាព</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-zinc-800/50 text-sm">
               {filteredBills.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="p-8 text-center text-zinc-500">
+                  <td colSpan={9} className="p-8 text-center text-(--panel-text-subtle)">
                     មិនមានទិន្នន័យវិក្កយបត្រឡើយ។
                   </td>
                 </tr>
               ) : (
-                filteredBills.map((bill) => (
+                visibleBills.map((bill) => (
                   <tr
                     key={bill.id}
-                    className="hover:bg-zinc-900/30 transition-colors text-sm"
+                    className="hover:bg-(--panel-hover)/30 transition-colors text-sm"
                   >
                     <td className="p-4">
-                      <p className="font-semibold text-zinc-200">
+                      <p className="font-semibold text-(--panel-text)">
                         {bill.profiles?.full_name || "-"}
                       </p>
-                      <p className="text-xs text-zinc-500">
+                      <p className="text-xs text-(--panel-text-subtle)">
                         {bill.profiles?.phone_number || "-"}
                       </p>
                     </td>
 
                     <td className="p-4">
-                      <p className="font-semibold text-zinc-200">
+                      <p className="font-semibold text-(--panel-text)">
                         #{bill.contracts?.rooms?.room_number || "-"}
                       </p>
-                      <p className="text-xs text-zinc-500">
+                      <p className="text-xs text-(--panel-text-subtle)">
                         {bill.contracts?.rooms?.room_type || "-"}
                       </p>
                     </td>
 
-                    <td className="p-4 text-zinc-400">
+                    <td className="p-4 text-(--panel-text-muted)">
                       {formatMonth(bill.billing_month)}
                     </td>
 
-                    <td className="p-4 text-zinc-400">
+                    <td className="p-4 text-(--panel-text-muted)">
                       ${Number(bill.room_fee || 0).toFixed(2)}
                     </td>
 
-                    <td className="p-4 text-zinc-400">
+                    <td className="p-4 text-(--panel-text-muted)">
                       ${Number(bill.water_fee || 0).toFixed(2)}
                     </td>
 
-                    <td className="p-4 text-zinc-400">
+                    <td className="p-4 text-(--panel-text-muted)">
                       ${Number(bill.elec_fee || 0).toFixed(2)}
                     </td>
 
@@ -376,7 +382,7 @@ export function BillTableWrapper({
                           size="icon"
                           variant="ghost"
                           onClick={() => handleEdit(bill)}
-                          className="h-8 w-8 text-zinc-400 hover:text-white"
+                          className="h-8 w-8 text-(--panel-text-muted) hover:text-(--panel-text)"
                         >
                           <Edit2 size={14} />
                         </Button>
@@ -385,7 +391,7 @@ export function BillTableWrapper({
                           size="icon"
                           variant="ghost"
                           onClick={() => handleDeleteClick(bill)}
-                          className="h-8 w-8 text-zinc-400 hover:text-red-400"
+                          className="h-8 w-8 text-(--panel-text-muted) hover:text-red-400"
                         >
                           <Trash2 size={14} />
                         </Button>
@@ -393,6 +399,20 @@ export function BillTableWrapper({
                     </td>
                   </tr>
                 ))
+              )}
+
+              {hasMore && (
+                <tr>
+                  <td colSpan={9} className="p-4 text-center">
+                    <div
+                      ref={sentinelRef}
+                      className="flex items-center justify-center gap-2 text-xs text-(--panel-text-subtle)"
+                    >
+                      <Loader2 size={14} className="animate-spin" />
+                      កំពុងផ្ទុកបន្ថែម...
+                    </div>
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

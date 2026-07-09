@@ -15,20 +15,20 @@ function StatCard({
   color?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-4">
+    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
       <div className="flex items-center justify-between">
-        <p className="text-[13px] text-zinc-400">{title}</p>
+        <p className="text-[13px] text-(--panel-text-muted)">{title}</p>
         <div className={color}>{icon}</div>
       </div>
 
-      <p className="mt-3 text-2xl font-bold text-white">{value}</p>
-      <p className="mt-1 text-xs text-zinc-500">{subtitle}</p>
+      <p className="mt-3 text-2xl font-bold text-(--panel-text)">{value}</p>
+      <p className="mt-1 text-xs text-(--panel-text-subtle)">{subtitle}</p>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
-  let className = "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
+  let className = "bg-zinc-500/10 text-(--panel-text-muted) border-zinc-500/20";
 
   if (["paid", "approved", "active"].includes(status)) {
     className = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
@@ -77,10 +77,10 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <span className="text-sm text-zinc-500">{label}</span>
+      <span className="text-sm text-(--panel-text-subtle)">{label}</span>
       <span
         className={`text-sm font-medium ${
-          highlight ? "text-emerald-400" : "text-zinc-100"
+          highlight ? "text-emerald-400" : "text-(--panel-text)"
         }`}
       >
         {value}
@@ -97,12 +97,12 @@ export default async function TenantOverviewPage() {
   const currentBill = data.currentBill;
 
   return (
-    <div className="p-6 space-y-6 text-white">
+    <div className="p-6 space-y-6 text-(--panel-text)">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           👋 សួស្តី, {data.profile.full_name}
         </h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-(--panel-text-subtle) mt-1">
           ផ្ទាំងសង្ខេបព័ត៌មានបន្ទប់ កិច្ចសន្យា និងការទូទាត់របស់អ្នក
         </p>
       </div>
@@ -152,18 +152,18 @@ export default async function TenantOverviewPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="rounded-ll border border-zinc-800 bg-[#131626] p-5 xl:col-span-2">
+        <div className="rounded-ll border border-(--panel-border) bg-(--panel) p-5 xl:col-span-2">
           <h2 className="text-lg font-semibold mb-4">
             🏠 ព័ត៌មានបន្ទប់ និងកិច្ចសន្យា
           </h2>
 
           {!contract ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-(--panel-text-subtle)">
               អ្នកមិនទាន់មានកិច្ចសន្យាសកម្មទេ។
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-zinc-800 bg-[#0b0d19] p-4">
+              <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-4">
                 {room?.images?.[0] ? (
                   <img
                     src={room.images[0]}
@@ -171,18 +171,18 @@ export default async function TenantOverviewPage() {
                     className=" h-[400px] w-full rounded-lg object-cover mb-4"
                   />
                 ) : (
-                  <div className=" h-[400px] w-full rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-sm text-zinc-600 mb-4">
+                  <div className=" h-[400px] w-full rounded-lg bg-(--panel-hover) border border-(--panel-border) flex items-center justify-center text-sm text-(--panel-text-subtle) mb-4">
                     No Room Image
                   </div>
                 )}
 
-                <p className="text-lg font-bold text-white">
+                <p className="text-lg font-bold text-(--panel-text)">
                   បន្ទប់ #{room?.room_number}
                 </p>
-                <p className="text-sm text-zinc-500 mt-1">{room?.room_type}</p>
+                <p className="text-sm text-(--panel-text-subtle) mt-1">{room?.room_type}</p>
               </div>
 
-              <div className="rounded-xl border border-zinc-800 bg-[#0b0d19] p-4 space-y-3">
+              <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-4 space-y-3">
                 <InfoRow
                   label="ស្ថានភាព"
                   value={<StatusBadge status={contract.status} />}
@@ -203,13 +203,13 @@ export default async function TenantOverviewPage() {
           )}
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
           <h2 className="text-lg font-semibold mb-4">
             💰 វិក្កយបត្របច្ចុប្បន្ន
           </h2>
 
           {!currentBill ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-(--panel-text-subtle)">
               មិនមានវិក្កយបត្រមិនទាន់បង់ទេ។
             </p>
           ) : (
@@ -231,7 +231,7 @@ export default async function TenantOverviewPage() {
                 value={`$${Number(currentBill.elec_fee || 0).toFixed(2)}`}
               />
 
-              <div className="border-t border-zinc-800 pt-3 flex justify-between">
+              <div className="border-t border-(--panel-border) pt-3 flex justify-between">
                 <span className="text-sm font-medium">សរុប</span>
                 <span className="text-lg font-bold text-emerald-400">
                   ${Number(currentBill.total_amount || 0).toFixed(2)}
@@ -248,23 +248,23 @@ export default async function TenantOverviewPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
           <h2 className="text-lg font-semibold mb-4">🧾 វិក្កយបត្រថ្មីៗ</h2>
 
           <div className="space-y-3">
             {data.recentBills.length === 0 ? (
-              <p className="text-sm text-zinc-500">មិនទាន់មានវិក្កយបត្រ</p>
+              <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានវិក្កយបត្រ</p>
             ) : (
               data.recentBills.map((bill: any) => (
                 <div
                   key={bill.id}
-                  className="flex items-center justify-between rounded-xl border border-zinc-800 bg-[#0b0d19] p-3"
+                  className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
                 >
                   <div>
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-sm font-medium text-(--panel-text)">
                       ខែ {formatMonth(bill.billing_month)}
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-(--panel-text-subtle)">
                       ${Number(bill.total_amount || 0).toFixed(2)}
                     </p>
                   </div>
@@ -276,23 +276,23 @@ export default async function TenantOverviewPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
           <h2 className="text-lg font-semibold mb-4">💳 ការទូទាត់ថ្មីៗ</h2>
 
           <div className="space-y-3">
             {data.recentPayments.length === 0 ? (
-              <p className="text-sm text-zinc-500">មិនទាន់មានការទូទាត់</p>
+              <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានការទូទាត់</p>
             ) : (
               data.recentPayments.map((payment: any) => (
                 <div
                   key={payment.id}
-                  className="flex items-center justify-between rounded-xl border border-zinc-800 bg-[#0b0d19] p-3"
+                  className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
                 >
                   <div>
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-sm font-medium text-(--panel-text)">
                       ${Number(payment.amount || 0).toFixed(2)}
                     </p>
-                    <p className="text-xs text-zinc-500 uppercase">
+                    <p className="text-xs text-(--panel-text-subtle) uppercase">
                       {payment.payment_method}
                     </p>
                   </div>

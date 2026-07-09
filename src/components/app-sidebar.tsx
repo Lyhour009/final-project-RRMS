@@ -136,19 +136,19 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
   return (
     <Sidebar
       variant="sidebar"
-      className="border-r-0 *:data-[sidebar=sidebar]:bg-[#0f1629] *:data-[sidebar=sidebar]:border-r *:data-[sidebar=sidebar]:border-white/5"
+      className="border-r-0 *:data-[sidebar=sidebar]:bg-(--panel-sidebar) *:data-[sidebar=sidebar]:border-r *:data-[sidebar=sidebar]:border-(--panel-border-subtle)"
     >
       {/* ── Brand ─────────────────────────────────── */}
       <SidebarHeader className="px-4 py-5">
         <div className="flex items-center gap-3">
           {/* Logo badge */}
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-indigo-500 to-sky-500 shadow-lg shadow-indigo-500/30">
-            <Building2 className="h-4.5 w-4.5 text-white" />
+            <Building2 className="h-4.5 w-4.5 text-(--panel-text)" />
           </div>
 
           {/* Name + role */}
           <div className="leading-none">
-            <p className="text-[15px] font-bold tracking-tight text-slate-100">
+            <p className="text-[15px] font-bold tracking-tight text-(--panel-text)">
               RRMS
             </p>
             <p className="mt-0.5 text-[12px]  uppercase  text-indigo-400/70 font-bold">
@@ -179,8 +179,8 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
                       className={cn(
                         "group relative flex w-full items-center gap-3 rounded-xl px-4 py-2 text-[13.5px] font-medium transition-all duration-150",
                         isActive
-                          ? "bg-indigo-500/20 text-white ring-1 ring-indigo-500/30"
-                          : "text-slate-400 hover:bg-white/5 hover:text-slate-200",
+                          ? "bg-indigo-500/20 text-indigo-700 dark:text-white ring-1 ring-indigo-500/30"
+                          : "text-(--panel-text-muted) hover:bg-(--panel-hover) hover:text-(--panel-text)",
                       )}
                     >
                       <item.icon
@@ -188,7 +188,7 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
                           "h-4 w-4 shrink-0 transition-colors",
                           isActive
                             ? "text-indigo-400"
-                            : "text-slate-500 group-hover:text-slate-300",
+                            : "text-(--panel-text-subtle) group-hover:text-(--panel-text-muted)",
                         )}
                       />
                       <span className="flex-1">{item.title}</span>
@@ -209,20 +209,20 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
       {/* ── Footer ────────────────────────────────── */}
       <SidebarFooter className="px-3 pb-4">
         {/* Divider */}
-        <div className="mb-3 h-px bg-linear-to-r from-transparent via-white/10 to-transparent" />
+        <div className="mb-3 h-px bg-(--panel-border-subtle)" />
 
         {/* User card */}
-        <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/3 px-4 py-2 backdrop-blur-sm">
+        <div className="flex items-center gap-3 rounded-xl border border-(--panel-border-subtle) bg-(--panel-hover) px-4 py-2 backdrop-blur-sm">
           <Avatar className="h-8 w-8 rounded-lg">
             <AvatarFallback className="rounded-lg bg-linear-to-br from-indigo-500 to-sky-500 text-[11px] font-bold text-white">
               {userInitials}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-semibold capitalize text-slate-200">
+            <p className="truncate text-[13px] font-semibold capitalize text-(--panel-text)">
               {displayName}
             </p>
-            <p className="truncate text-[12px] text-slate-500">{userEmail}</p>
+            <p className="truncate text-[12px] text-(--panel-text-subtle)">{userEmail}</p>
           </div>
         </div>
 

@@ -1,17 +1,12 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 const QR_BUCKET = "room-images";
-async function getSupabase() {
-  const cookieStore = await cookies();
-  return await createClient(cookieStore);
-}
 
 export async function getSettings() {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data, error } = await supabase
     .from("settings")
@@ -25,8 +20,8 @@ export async function getSettings() {
   return data;
 }
 
-export async function updateSettings(prevState: any, formData: FormData) {
-  const supabase = await getSupabase();
+export async function updateSettings(prevState: unknown, formData: FormData) {
+  const { supabase } = await requireAdmin();
 
   const id = String(formData.get("id") || "");
 
@@ -58,8 +53,8 @@ export async function updateSettings(prevState: any, formData: FormData) {
   };
 }
 
-export async function uploadPaymentQr(prevState: any, formData: FormData) {
-  const supabase = await getSupabase();
+export async function uploadPaymentQr(prevState: unknown, formData: FormData) {
+  const { supabase } = await requireAdmin();
 
   const qrFile = formData.get("qr_image") as File | null;
 
@@ -85,6 +80,10 @@ export async function uploadPaymentQr(prevState: any, formData: FormData) {
     .upload(fileName, qrFile, {
       upsert: false,
     });
+
+  if (uploadError) {
+    return { success: false, message: "Upload QR Code បរាជ័យ: " + uploadError.message };
+  }
 
   const {
     data: { publicUrl },

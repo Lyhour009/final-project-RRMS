@@ -6,7 +6,7 @@ export default async function AdminSettingsPage() {
 
   if (!settings) {
     return (
-      <div className="p-6 text-white">
+      <div className="p-6 text-(--panel-text)">
         <h1 className="text-2xl font-bold">⚙️ ការកំណត់ប្រព័ន្ធ</h1>
         <p className="mt-4 text-sm text-red-400">
           មិនមាន Settings row ក្នុង Database ទេ។

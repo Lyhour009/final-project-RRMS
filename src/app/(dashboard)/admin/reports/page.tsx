@@ -25,14 +25,14 @@ function ReportCard({
   color: string;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-zinc-400">{title}</p>
+        <p className="text-sm text-(--panel-text-muted)">{title}</p>
         <div className={color}>{icon}</div>
       </div>
 
-      <p className="mt-3 text-2xl font-bold text-white">{value}</p>
-      <p className="mt-1 text-xs text-zinc-500">{subtitle}</p>
+      <p className="mt-3 text-2xl font-bold text-(--panel-text)">{value}</p>
+      <p className="mt-1 text-xs text-(--panel-text-subtle)">{subtitle}</p>
     </div>
   );
 }
@@ -41,10 +41,10 @@ export default async function AdminReportsPage() {
   const data = await getReportsData();
 
   return (
-    <div className="p-6 space-y-6 text-white">
+    <div className="p-6 space-y-6 text-(--panel-text)">
       <div>
         <h1 className="text-2xl font-bold">📊 របាយការណ៍</h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-(--panel-text-subtle) mt-1">
           សង្ខេបចំណូល វិក្កយបត្រ បន្ទប់ ការទូទាត់ និងសំណើជួសជុល
         </p>
       </div>

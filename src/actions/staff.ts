@@ -1,13 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
+"use server";
 
-async function getSupabase() {
-  const cookiesStore = await cookies();
-  return await createClient(cookiesStore);
-}
+import { requireAdmin } from "@/lib/supabase/server";
 
 export async function getStaffAction() {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
   const { data, error } = await supabase
     .from("profiles")
     .select("id, full_name")

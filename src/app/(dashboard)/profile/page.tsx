@@ -18,12 +18,12 @@ function InfoCard({
   value: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-[#0b0d19] p-4">
-      <div className="flex items-center gap-2 text-zinc-500 text-xs mb-2">
+    <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-4">
+      <div className="flex items-center gap-2 text-(--panel-text-subtle) text-xs mb-2">
         {icon}
         {label}
       </div>
-      <div className="text-sm font-medium text-white">{value}</div>
+      <div className="text-sm font-medium text-(--panel-text)">{value}</div>
     </div>
   );
 }
@@ -48,23 +48,23 @@ export default async function ProfilePage() {
   const profile = await getMyProfile();
 
   return (
-    <div className="p-6 space-y-6 text-white">
+    <div className="p-6 space-y-6 text-(--panel-text)">
       <div>
         <h1 className="text-2xl font-bold">👤 គណនីរបស់ខ្ញុំ</h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-(--panel-text-subtle) mt-1">
           ព័ត៌មានគណនី និងអត្តសញ្ញាណរបស់អ្នក
         </p>
       </div>
 
-      <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
-        <div className="flex items-center gap-4 border-b border-zinc-800 pb-5">
+      <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+        <div className="flex items-center gap-4 border-b border-(--panel-border) pb-5">
           <div className="h-16 w-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-xl font-bold">
             {profile.full_name?.slice(0, 2).toUpperCase() || "US"}
           </div>
 
           <div>
             <h2 className="text-xl font-bold">{profile.full_name || "User"}</h2>
-            <p className="text-sm text-zinc-500">{profile.email}</p>
+            <p className="text-sm text-(--panel-text-subtle)">{profile.email}</p>
             <div className="mt-2">
               <RoleBadge role={profile.role} />
             </div>
@@ -104,14 +104,14 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+      <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
         <div className="mb-4 flex items-center gap-2">
           <IdCard size={20} className="text-indigo-400" />
           <h2 className="text-lg font-semibold">រូបភាពអត្តសញ្ញាណប័ណ្ណ</h2>
         </div>
 
         {!profile.id_card_images || profile.id_card_images.length === 0 ? (
-          <div className="rounded-xl border border-zinc-800 bg-[#0b0d19] p-8 text-center text-sm text-zinc-500">
+          <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-8 text-center text-sm text-(--panel-text-subtle)">
             មិនទាន់មានរូបភាពអត្តសញ្ញាណប័ណ្ណ
           </div>
         ) : (
@@ -121,7 +121,7 @@ export default async function ProfilePage() {
                 key={index}
                 href={image}
                 target="_blank"
-                className="block rounded-xl border border-zinc-800 bg-[#0b0d19] overflow-hidden"
+                className="block rounded-xl border border-(--panel-border) bg-(--panel-inset) overflow-hidden"
               >
                 <img
                   src={image}

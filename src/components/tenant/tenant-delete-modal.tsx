@@ -50,7 +50,7 @@ export default function TenantDeleteModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[420px] bg-[#131626] border-zinc-800 text-white rounded-xl">
+      <DialogContent className="sm:max-w-[420px] bg-(--panel) border-(--panel-border) text-(--panel-text) rounded-xl">
         <DialogHeader className="flex flex-col items-center text-center space-y-3">
           <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
             <AlertTriangle size={24} />
@@ -60,7 +60,7 @@ export default function TenantDeleteModal({
             តើអ្នកពិតជាចង់លុបអ្នកជួលនេះមែនទេ?
           </DialogTitle>
 
-          <DialogDescription className="text-zinc-400 text-sm">
+          <DialogDescription className="text-(--panel-text-muted) text-sm">
             សកម្មភាពនេះមិនអាចត្រឡប់ថយក្រោយវិញបានឡើយ។ ទិន្នន័យអ្នកជួល{" "}
             <span className="text-red-400 font-semibold">
               {tenant.full_name}
@@ -75,7 +75,7 @@ export default function TenantDeleteModal({
             variant="ghost"
             onClick={onClose}
             disabled={isDeleting}
-            className="w-full sm:w-auto bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white"
+            className="w-full sm:w-auto bg-(--panel-hover) border border-(--panel-border) text-(--panel-text-muted) hover:bg-(--panel-border) hover:text-(--panel-text)"
           >
             បោះបង់
           </Button>

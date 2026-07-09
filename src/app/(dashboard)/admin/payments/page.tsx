@@ -19,14 +19,14 @@ export default async function PaymentsPage() {
   }));
 
   return (
-    <div className="p-6 space-y-6 text-white">
+    <div className="p-6 space-y-6 text-(--panel-text)">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
             💳 គ្រប់គ្រងការទូទាត់
           </h1>
 
-          <p className="text-sm text-zinc-400 mt-1">
+          <p className="text-sm text-(--panel-text-muted) mt-1">
             ពិនិត្យ អនុម័ត ឬបដិសេធការទូទាត់របស់អ្នកជួល
           </p>
         </div>

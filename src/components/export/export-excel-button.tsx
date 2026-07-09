@@ -27,7 +27,7 @@ export function ExportExcelButton({
     <button
       type="button"
       onClick={exportExcel}
-      className="inline-flex h-10 items-center gap-2 rounded-lg border border-zinc-800 bg-[#131626] px-4 text-sm font-medium text-zinc-200 hover:bg-zinc-900"
+      className="inline-flex h-10 items-center gap-2 rounded-lg border border-(--panel-border) bg-(--panel) px-4 text-sm font-medium text-(--panel-text) hover:bg-(--panel-hover)"
     >
       <Download size={16} />
       Export Excel

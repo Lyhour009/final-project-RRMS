@@ -98,7 +98,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "bg-slate-900/60 border border-white/[0.07] rounded-xl",
+        "bg-(--panel) border border-(--panel-border-subtle) rounded-xl",
         className,
       )}
     >
@@ -121,12 +121,12 @@ export function CardHeader({
   href?: string;
 }) {
   return (
-    <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+    <div className="flex items-center justify-between px-5 py-4 border-b border-(--panel-border-subtle)">
       <div className="flex items-center gap-2.5">
         <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center">
           <Icon className="w-3.5 h-3.5 text-indigo-400" />
         </div>
-        <span className="text-sm font-semibold text-white">{title}</span>
+        <span className="text-sm font-semibold text-(--panel-text)">{title}</span>
       </div>
       {href && (
         <Link
@@ -167,13 +167,13 @@ export function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-slate-900/60 border border-white/[0.07] rounded-xl overflow-hidden">
-      <div className="px-6 py-4 border-b border-white/[0.06] flex items-center gap-3">
+    <div className="bg-(--panel) border border-(--panel-border-subtle) rounded-xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-(--panel-border-subtle) flex items-center gap-3">
         <div className="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center">
           <Icon className="w-4 h-4 text-indigo-400" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-white">{title}</h3>
+          <h3 className="text-sm font-semibold text-(--panel-text)">{title}</h3>
           <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
         </div>
       </div>

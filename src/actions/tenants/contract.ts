@@ -1,21 +1,33 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/server";
 
-async function getSupabase() {
-  const cookieStore = await cookies();
-  return await createClient(cookieStore);
-}
+// See bill-generator.ts (actions folder) for why this cast exists: no
+// generated DB types, so Supabase-js can't tell `rooms:room_id` resolves
+// to a single row.
+type TenantContract = {
+  id: string;
+  start_date: string;
+  end_date: string;
+  deposit_amount: number;
+  status: string;
+  due_day: number;
+  created_at: string;
+  rooms: {
+    id: string;
+    room_number: string;
+    room_type: string;
+    base_price: number;
+    floor: number;
+    status: string;
+    description: string | null;
+    amenities: string[] | null;
+    images: string[] | null;
+  } | null;
+};
 
 export async function getTenantContract() {
-  const supabase = await getSupabase();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("សូមចូលប្រើប្រាស់ជាមុនសិន");
+  const { supabase, user } = await requireUser();
 
   const { data, error } = await supabase
     .from("contracts")
@@ -47,5 +59,5 @@ export async function getTenantContract() {
 
   if (error) throw new Error(error.message);
 
-  return data;
+  return data as unknown as TenantContract | null;
 }

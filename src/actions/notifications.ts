@@ -1,12 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
-
-async function getSupabase() {
-  const cookieStore = await cookies();
-  return await createClient(cookieStore);
-}
+import { createActionClient, getAuthenticatedUser } from "@/lib/supabase/server";
 
 export async function createNotification({
   userId,
@@ -19,7 +13,7 @@ export async function createNotification({
   message: string;
   link?: string;
 }) {
-  const supabase = await getSupabase();
+  const supabase = await createActionClient();
 
   const { error } = await supabase.from("notifications").insert([
     {
@@ -36,38 +30,22 @@ export async function createNotification({
   }
 }
 
-export async function getNotifications(userId: string) {
-  const supabase = await getSupabase();
-
-  const { data, error } = await supabase
-    .from("notifications")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  if (error) throw new Error(error.message);
-
-  return data || [];
-}
-
 export async function markNotificationAsRead(id: string) {
-  const supabase = await getSupabase();
+  const { supabase, user } = await getAuthenticatedUser();
+
+  if (!user) return;
 
   await supabase
     .from("notifications")
     .update({
       is_read: true,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", user.id);
 }
 
 export async function getMyNotifications() {
-  const supabase = await getSupabase();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getAuthenticatedUser();
 
   if (!user) return [];
 

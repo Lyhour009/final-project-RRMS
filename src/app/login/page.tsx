@@ -31,6 +31,7 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
   const [showPassword, setShowPassword] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const {
     register,
@@ -44,6 +45,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     reset({ email: "", password: "" });
+    setMounted(true);
   }, [reset]);
 
   const onLoginSubmit = async (data: LoginFormData) => {
@@ -226,7 +228,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !mounted}
                 className="w-full h-9 mt-1 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm shadow-md shadow-blue-500/20 transition-all"
               >
                 {isSubmitting ? (

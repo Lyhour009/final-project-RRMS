@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
+import { requireAdmin } from "@/lib/supabase/server";
 
+// This client uses the Supabase SERVICE ROLE key, which bypasses Row Level
+// Security entirely — it's required for auth.admin.* (create/update/delete
+// a user's login) and to list every tenant profile regardless of RLS.
+// Because RLS can't protect these calls, every exported function below
+// must call requireAdmin() first; do not add a new export here without it.
 function getSupabaseAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,6 +23,7 @@ function getSupabaseAdmin() {
 }
 
 export async function getTenants() {
+  await requireAdmin();
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
@@ -31,6 +38,7 @@ export async function getTenants() {
 }
 
 export async function upsertTenant(id: string | null, formData: FormData) {
+  await requireAdmin();
   const supabase = getSupabaseAdmin();
 
   const full_name = String(formData.get("full_name") || "").trim();
@@ -153,6 +161,7 @@ export async function upsertTenant(id: string | null, formData: FormData) {
 }
 
 export async function deleteTenant(id: string) {
+  await requireAdmin();
   const supabase = getSupabaseAdmin();
 
   const checkTables = ["contracts", "bills", "maintenance_requests"];

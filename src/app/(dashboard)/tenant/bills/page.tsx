@@ -2,7 +2,7 @@ import { CreditCard, Receipt } from "lucide-react";
 import { getTenantBillsData } from "@/actions/tenants/bills";
 
 function StatusBadge({ status }: { status: string }) {
-  let className = "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
+  let className = "bg-zinc-500/10 text-(--panel-text-muted) border-zinc-500/20";
 
   if (status === "paid" || status === "approved") {
     className = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
@@ -54,56 +54,56 @@ export default async function TenantBillsPage() {
     : null;
 
   return (
-    <div className="p-6 space-y-6 text-white">
+    <div className="p-6 space-y-6 text-(--panel-text)">
       <div>
         <h1 className="text-2xl font-bold">🧾 វិក្កយបត្ររបស់ខ្ញុំ</h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-(--panel-text-subtle) mt-1">
           មើលវិក្កយបត្រ ប្រវត្តិ និងព័ត៌មានបង់ប្រាក់
         </p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+        <div className="xl:col-span-2 rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">វិក្កយបត្របច្ចុប្បន្ន</h2>
             <Receipt className="text-indigo-400" size={22} />
           </div>
 
           {!currentBill ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-(--panel-text-subtle)">
               មិនមានវិក្កយបត្រមិនទាន់បង់ទេ។
             </p>
           ) : (
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-zinc-500">ខែ</span>
+                <span className="text-sm text-(--panel-text-subtle)">ខែ</span>
                 <span className="text-sm font-medium">
                   {formatMonth(currentBill.billing_month)}
                 </span>
               </div>
 
               <div className="flex justify-between">
-                <span className="text-sm text-zinc-500">ថ្លៃបន្ទប់</span>
+                <span className="text-sm text-(--panel-text-subtle)">ថ្លៃបន្ទប់</span>
                 <span className="text-lg">
                   ${Number(currentBill.room_fee || 0).toFixed(2)}
                 </span>
               </div>
 
               <div className="flex justify-between">
-                <span className="text-sm text-zinc-500">ថ្លៃទឹក</span>
+                <span className="text-sm text-(--panel-text-subtle)">ថ្លៃទឹក</span>
                 <span className="text-lg">
                   ${Number(currentBill.water_fee || 0).toFixed(2)}
                 </span>
               </div>
 
               <div className="flex justify-between">
-                <span className="text-sm text-zinc-500">ថ្លៃភ្លើង</span>
+                <span className="text-sm text-(--panel-text-subtle)">ថ្លៃភ្លើង</span>
                 <span className="text-lg">
                   ${Number(currentBill.elec_fee || 0).toFixed(2)}
                 </span>
               </div>
 
-              <div className="border-t border-zinc-800 pt-3 flex justify-between">
+              <div className="border-t border-(--panel-border) pt-3 flex justify-between">
                 <span className="text-sm font-medium">សរុប</span>
                 <span className="text-xl font-bold text-emerald-400">
                   ${Number(currentBill.total_amount || 0).toFixed(2)}
@@ -111,7 +111,7 @@ export default async function TenantBillsPage() {
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-sm text-zinc-500">ស្ថានភាព</span>
+                <span className="text-sm text-(--panel-text-subtle)">ស្ថានភាព</span>
                 <StatusBadge status={currentBill.status} />
               </div>
 
@@ -124,7 +124,7 @@ export default async function TenantBillsPage() {
           )}
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">QR បង់ប្រាក់</h2>
             <CreditCard className="text-emerald-400" size={22} />
@@ -134,15 +134,15 @@ export default async function TenantBillsPage() {
             <img
               src={settings.payment_qr_url}
               alt="Payment QR"
-              className="w-full rounded-xl border border-zinc-800 bg-white p-3"
+              className="w-full rounded-xl border border-(--panel-border) bg-white p-3"
             />
           ) : (
-            <div className="h-60 rounded-xl border border-zinc-800 bg-[#0b0d19] flex items-center justify-center text-sm text-zinc-600">
+            <div className="h-60 rounded-xl border border-(--panel-border) bg-(--panel-inset) flex items-center justify-center text-sm text-(--panel-text-subtle)">
               មិនទាន់មាន QR Code
             </div>
           )}
 
-          <p className="text-xs text-zinc-500 mt-3 leading-relaxed">
+          <p className="text-xs text-(--panel-text-subtle) mt-3 leading-relaxed">
             {settings?.payment_instruction ||
               "សូមស្កេន QR Code ដើម្បីបង់ប្រាក់ បន្ទាប់មកចុចបញ្ជាក់ការទូទាត់។"}
           </p>
@@ -158,23 +158,23 @@ export default async function TenantBillsPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+      <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
         <h2 className="text-lg font-semibold mb-4">ប្រវត្តិវិក្កយបត្រ</h2>
 
         <div className="space-y-3">
           {bills.length === 0 ? (
-            <p className="text-sm text-zinc-500">មិនទាន់មានវិក្កយបត្រ</p>
+            <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានវិក្កយបត្រ</p>
           ) : (
             bills.map((bill: any) => (
               <div
                 key={bill.id}
-                className="flex items-center justify-between rounded-xl border border-zinc-800 bg-[#0b0d19] p-3"
+                className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
               >
                 <div>
                   <p className="text-sm font-medium">
                     ខែ {formatMonth(bill.billing_month)}
                   </p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-(--panel-text-subtle)">
                     ថ្លៃបន្ទប់ ${Number(bill.room_fee || 0).toFixed(2)} · ទឹក $
                     {Number(bill.water_fee || 0).toFixed(2)} · ភ្លើង $
                     {Number(bill.elec_fee || 0).toFixed(2)}

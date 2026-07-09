@@ -1,30 +1,46 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/server";
 import { createNotification } from "@/actions/notifications";
 import { maintenanceSchema } from "@/lib/validations/tenant/maintenance";
 
-async function getSupabase() {
-  const cookieStore = await cookies();
-  return await createClient(cookieStore);
-}
+// See bill-generator.ts (actions folder) for why this cast exists: no
+// generated DB types, so Supabase-js can't tell `rooms:room_id` resolves
+// to a single row.
+type MaintenanceRequestWithRoom = {
+  id: string;
+  tenant_id: string;
+  room_id: string;
+  issue_title: string;
+  issue_description: string;
+  status: string;
+  priority: string;
+  created_at: string;
+  resolved_at: string | null;
+  rooms?: {
+    id: string;
+    room_number: string;
+    room_type: string;
+  };
+};
+
+type ActiveContractWithRoom = {
+  id: string;
+  room_id: string;
+  rooms?: {
+    id: string;
+    room_number: string;
+    room_type: string;
+  };
+};
 
 export async function getTenantMaintenanceData() {
-  const supabase = await getSupabase();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("សូមចូលប្រើប្រាស់ជាមុនសិន");
-  }
+  const { supabase, user } = await requireUser();
 
   const tenantId = user.id;
 
-  const { data: contract, error: contractError } = await supabase
+  const { data: contractData, error: contractError } = await supabase
     .from("contracts")
     .select(
       `
@@ -40,6 +56,8 @@ export async function getTenantMaintenanceData() {
     .eq("tenant_id", tenantId)
     .eq("status", "active")
     .maybeSingle();
+
+  const contract = contractData as unknown as ActiveContractWithRoom | null;
 
   if (contractError) {
     throw new Error(contractError.message);
@@ -74,20 +92,12 @@ export async function getTenantMaintenanceData() {
 
   return {
     contract,
-    requests: requests || [],
+    requests: (requests || []) as unknown as MaintenanceRequestWithRoom[],
   };
 }
 
 export async function createTenantMaintenanceRequest(formData: FormData) {
-  const supabase = await getSupabase();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("សូមចូលប្រើប្រាស់ជាមុនសិន");
-  }
+  const { supabase, user } = await requireUser();
 
   const tenantId = user.id;
 
@@ -135,12 +145,19 @@ export async function createTenantMaintenanceRequest(formData: FormData) {
     throw new Error(requestError.message);
   }
 
-  await createNotification({
-    userId: "2bc3716f-da30-4187-a3d7-6d3c90b1ed9c", // Admin ID
-    type: "maintenance_created",
-    message: `មានសំណើជួសជុលថ្មី៖ ${issue_title}`,
-    link: "/admin/maintenance",
-  });
+  const { data: admins } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("role", "admin");
+
+  for (const admin of admins || []) {
+    await createNotification({
+      userId: admin.id,
+      type: "maintenance_created",
+      message: `មានសំណើជួសជុលថ្មី៖ ${issue_title}`,
+      link: "/admin/maintenance",
+    });
+  }
 
   revalidatePath("/tenant/maintenance");
   revalidatePath("/admin/maintenance");

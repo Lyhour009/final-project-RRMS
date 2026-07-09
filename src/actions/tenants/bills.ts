@@ -1,21 +1,9 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
-
-async function getSupabase() {
-  const cookieStore = await cookies();
-  return await createClient(cookieStore);
-}
+import { requireUser } from "@/lib/supabase/server";
 
 export async function getTenantBillsData() {
-  const supabase = await getSupabase();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("សូមចូលប្រើប្រាស់ជាមុនសិន");
+  const { supabase, user } = await requireUser();
 
   const tenantId = user.id;
 

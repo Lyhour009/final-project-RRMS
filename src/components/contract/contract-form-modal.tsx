@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
@@ -80,7 +80,8 @@ export default function ContractModal({
     reset,
     formState: { errors },
   } = useForm<ContractFormValues>({
-    resolver: zodResolver(contractSchema),
+    // See bill-form-modal.tsx for why this cast is needed and safe.
+    resolver: zodResolver(contractSchema) as Resolver<ContractFormValues>,
     defaultValues: {
       tenant_id: "",
       room_id: "",
@@ -211,9 +212,9 @@ export default function ContractModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0b0d19] text-white border-zinc-800 max-w-xl max-h-[90vh] overflow-y-auto rounded-xl">
+      <DialogContent className="bg-(--panel-inset) text-(--panel-text) border-(--panel-border) max-w-xl max-h-[90vh] overflow-y-auto rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-zinc-100">
+          <DialogTitle className="text-xl font-semibold text-(--panel-text)">
             {isEditMode
               ? "📝 កែប្រែកិច្ចសន្យាជួល"
               : "📋 បន្ថែមកិច្ចសន្យាជួលថ្មី"}
@@ -222,19 +223,19 @@ export default function ContractModal({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">អ្នកជួល</Label>
+            <Label className="text-(--panel-text-muted)">អ្នកជួល</Label>
 
             <Select
               value={tenantIdValue}
-              onValueChange={(value) =>
-                setValue("tenant_id", value === "_none" ? "" : value, {
+              onValueChange={(value: string | null) =>
+                setValue("tenant_id", !value || value === "_none" ? "" : value, {
                   shouldValidate: true,
                 })
               }
             >
-              <SelectTrigger className="bg-[#131626] border-zinc-800 text-white">
+              <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
                 <span
-                  className={selectedTenant ? "text-white" : "text-zinc-500"}
+                  className={selectedTenant ? "text-(--panel-text)" : "text-(--panel-text-subtle)"}
                 >
                   {selectedTenant
                     ? `${selectedTenant.full_name} (${selectedTenant.phone_number || "គ្មានលេខទូរស័ព្ទ"})`
@@ -242,7 +243,7 @@ export default function ContractModal({
                 </span>
               </SelectTrigger>
 
-              <SelectContent className="bg-[#131626] border-zinc-800 text-white w-fit">
+              <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text) w-fit">
                 {tenantsForDropdown.length === 0 ? (
                   <SelectItem value="_none" disabled>
                     មិនមានអ្នកជួលឡើយ
@@ -255,7 +256,7 @@ export default function ContractModal({
                       className="text-xs"
                     >
                       {tenant.full_name}{" "}
-                      <span className="text-zinc-500">
+                      <span className="text-(--panel-text-subtle)">
                         ({tenant.phone_number || "គ្មានលេខទូរស័ព្ទ"})
                       </span>
                     </SelectItem>
@@ -270,25 +271,25 @@ export default function ContractModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">បន្ទប់</Label>
+            <Label className="text-(--panel-text-muted)">បន្ទប់</Label>
 
             <Select
               value={roomIdValue}
-              onValueChange={(value) =>
-                setValue("room_id", value === "_none" ? "" : value, {
+              onValueChange={(value: string | null) =>
+                setValue("room_id", !value || value === "_none" ? "" : value, {
                   shouldValidate: true,
                 })
               }
             >
-              <SelectTrigger className="bg-[#131626] border-zinc-800 text-white">
-                <span className={selectedRoom ? "text-white" : "text-zinc-500"}>
+              <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
+                <span className={selectedRoom ? "text-(--panel-text)" : "text-(--panel-text-subtle)"}>
                   {selectedRoom
                     ? `#${selectedRoom.room_number} — ${selectedRoom.room_type} (ជាន់ ${selectedRoom.floor}) — $${selectedRoom.base_price}`
                     : "ជ្រើសរើសបន្ទប់..."}
                 </span>
               </SelectTrigger>
 
-              <SelectContent className="bg-[#131626] border-zinc-800 text-white w-fit">
+              <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text) w-fit">
                 {roomsForDropdown.length === 0 ? (
                   <SelectItem value="_none" disabled>
                     មិនមានបន្ទប់ទំនេរឡើយ
@@ -318,10 +319,10 @@ export default function ContractModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">ថ្ងៃចាប់ផ្តើម</Label>
+              <Label className="text-(--panel-text-muted)">ថ្ងៃចាប់ផ្តើម</Label>
               <Input
                 type="date"
-                className="bg-[#131626] border-zinc-800 text-white"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
                 {...register("start_date")}
               />
               {errors.start_date && (
@@ -332,10 +333,10 @@ export default function ContractModal({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">ថ្ងៃបញ្ចប់</Label>
+              <Label className="text-(--panel-text-muted)">ថ្ងៃបញ្ចប់</Label>
               <Input
                 type="date"
-                className="bg-[#131626] border-zinc-800 text-white"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
                 {...register("end_date")}
               />
               {errors.end_date && (
@@ -348,13 +349,13 @@ export default function ContractModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">ប្រាក់កក់ ($)</Label>
+              <Label className="text-(--panel-text-muted)">ប្រាក់កក់ ($)</Label>
               <Input
                 type="number"
                 min={0}
                 step="0.01"
                 placeholder="ឧ. 400"
-                className="bg-[#131626] border-zinc-800 text-white"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
                 {...register("deposit_amount", { valueAsNumber: true })}
               />
               {errors.deposit_amount && (
@@ -365,14 +366,14 @@ export default function ContractModal({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-zinc-400">ថ្ងៃបង់ប្រាក់/ខែ</Label>
+              <Label className="text-(--panel-text-muted)">ថ្ងៃបង់ប្រាក់/ខែ</Label>
               <Input
                 type="number"
                 min={1}
                 max={31}
                 step={1}
                 placeholder="ឧ. 5"
-                className="bg-[#131626] border-zinc-800 text-white"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
                 {...register("due_day", { valueAsNumber: true })}
               />
               {errors.due_day && (
@@ -382,7 +383,7 @@ export default function ContractModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-zinc-400">ស្ថានភាព</Label>
+            <Label className="text-(--panel-text-muted)">ស្ថានភាព</Label>
 
             <Select
               value={statusValue}
@@ -392,15 +393,15 @@ export default function ContractModal({
                 })
               }
             >
-              <SelectTrigger className="bg-[#131626] border-zinc-800 text-white">
-                <span className={statusValue ? "text-white" : "text-zinc-500"}>
+              <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
+                <span className={statusValue ? "text-(--panel-text)" : "text-(--panel-text-subtle)"}>
                   {statusValue
                     ? STATUS_LABELS[statusValue]
                     : "ជ្រើសរើសស្ថានភាព"}
                 </span>
               </SelectTrigger>
 
-              <SelectContent className="bg-[#131626] border-zinc-800 text-white w-fit">
+              <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text) w-fit">
                 <SelectItem className="text-xs" value="active">
                   សកម្ម (Active)
                 </SelectItem>
@@ -421,12 +422,12 @@ export default function ContractModal({
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-zinc-800/60">
+          <div className="flex justify-end gap-3 pt-3 border-t border-(--panel-border)/60">
             <Button
               type="button"
               variant="ghost"
               onClick={onClose}
-              className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+              className="text-(--panel-text-muted) hover:text-(--panel-text) hover:bg-(--panel-border)"
             >
               បោះបង់
             </Button>

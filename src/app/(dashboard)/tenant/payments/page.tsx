@@ -5,7 +5,7 @@ import {
 } from "@/actions/tenants/payments";
 
 function StatusBadge({ status }: { status: string }) {
-  let className = "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
+  let className = "bg-zinc-500/10 text-(--panel-text-muted) border-zinc-500/20";
 
   if (status === "approved") {
     className = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
@@ -67,52 +67,52 @@ export default async function TenantPaymentsPage({
   );
 
   return (
-    <div className="p-6 space-y-6 text-white">
+    <div className="p-6 space-y-6 text-(--panel-text)">
       <div>
         <h1 className="text-2xl font-bold">💳 ការទូទាត់របស់ខ្ញុំ</h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-(--panel-text-subtle) mt-1">
           បញ្ជាក់ការទូទាត់ និងមើលប្រវត្តិការទូទាត់របស់អ្នក
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-4">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
           <Clock className="text-amber-400 mb-2" size={20} />
-          <p className="text-sm text-zinc-400">រង់ចាំ</p>
+          <p className="text-sm text-(--panel-text-muted)">រង់ចាំ</p>
           <p className="text-2xl font-bold">{pendingCount}</p>
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-4">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
           <CheckCircle className="text-emerald-400 mb-2" size={20} />
-          <p className="text-sm text-zinc-400">បានអនុម័ត</p>
+          <p className="text-sm text-(--panel-text-muted)">បានអនុម័ត</p>
           <p className="text-2xl font-bold">{approvedCount}</p>
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-4">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
           <XCircle className="text-red-400 mb-2" size={20} />
-          <p className="text-sm text-zinc-400">បានបដិសេធ</p>
+          <p className="text-sm text-(--panel-text-muted)">បានបដិសេធ</p>
           <p className="text-2xl font-bold">{rejectedCount}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+        <div className="xl:col-span-2 rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
           <h2 className="text-lg font-semibold mb-4">បញ្ជាក់ការទូទាត់</h2>
 
           {unpaidBills.length === 0 ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-(--panel-text-subtle)">
               មិនមានវិក្កយបត្រមិនទាន់បង់ទេ។
             </p>
           ) : (
             <form action={submitTenantPayment} className="space-y-4">
               <div>
-                <label className="text-sm text-zinc-400">
+                <label className="text-sm text-(--panel-text-muted)">
                   ជ្រើសរើសវិក្កយបត្រ
                 </label>
                 <select
                   name="bill_id"
                   defaultValue={selectedBill?.id}
-                  className="mt-1 h-10 w-full rounded-lg border border-zinc-800 bg-[#0b0d19] px-3 text-sm text-white"
+                  className="mt-1 h-10 w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 text-sm text-(--panel-text)"
                 >
                   {unpaidBills.map((bill: any) => (
                     <option key={bill.id} value={bill.id}>
@@ -123,19 +123,19 @@ export default async function TenantPaymentsPage({
                 </select>
               </div>
 
-              <div className="rounded-xl border border-zinc-800 bg-[#0b0d19] p-2">
-                <p className="text-sm text-zinc-500">ចំនួនត្រូវបង់</p>
+              <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-2">
+                <p className="text-sm text-(--panel-text-subtle)">ចំនួនត្រូវបង់</p>
                 <p className="text-xl font-bold text-emerald-400 mt-1">
                   ${Number(selectedBill?.total_amount || 0).toFixed(2)}
                 </p>
               </div>
 
               <div>
-                <label className="text-sm text-zinc-400">វិធីបង់ប្រាក់</label>
+                <label className="text-sm text-(--panel-text-muted)">វិធីបង់ប្រាក់</label>
                 <select
                   name="payment_method"
                   defaultValue="aba"
-                  className=" h-10 w-full rounded-lg border border-zinc-800 bg-[#0b0d19] px-3 text-sm text-white"
+                  className=" h-10 w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 text-sm text-(--panel-text)"
                 >
                   <option value="aba">ABA</option>
                   <option value="acleda">ACLEDA</option>
@@ -147,11 +147,11 @@ export default async function TenantPaymentsPage({
               </div>
 
               <div>
-                <label className="text-sm text-zinc-400">ចំណាំ</label>
+                <label className="text-sm text-(--panel-text-muted)">ចំណាំ</label>
                 <input
                   name="note"
                   placeholder="ឧ. បានបង់តាម ABA"
-                  className="mt-1 h-10 w-full rounded-lg border border-zinc-800 bg-[#0b0d19] px-3 text-sm text-white placeholder-zinc-600"
+                  className="mt-1 h-10 w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 text-sm text-(--panel-text) placeholder-(--panel-text-subtle)"
                 />
               </div>
 
@@ -171,7 +171,7 @@ export default async function TenantPaymentsPage({
           )}
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">QR Code</h2>
             <CreditCard className="text-emerald-400" size={20} />
@@ -181,38 +181,38 @@ export default async function TenantPaymentsPage({
             <img
               src={settings.payment_qr_url}
               alt="Payment QR"
-              className="w-full rounded-xl border border-zinc-800 bg-white p-3"
+              className="w-full rounded-xl border border-(--panel-border) bg-white p-3"
             />
           ) : (
-            <div className="h-56 rounded-xl border border-zinc-800 bg-[#0b0d19] flex items-center justify-center text-sm text-zinc-600">
+            <div className="h-56 rounded-xl border border-(--panel-border) bg-(--panel-inset) flex items-center justify-center text-sm text-(--panel-text-subtle)">
               មិនទាន់មាន QR Code
             </div>
           )}
 
-          <p className="text-xs text-zinc-500 mt-3 leading-relaxed">
+          <p className="text-xs text-(--panel-text-subtle) mt-3 leading-relaxed">
             {settings?.payment_instruction ||
               "សូមស្កេន QR Code បន្ទាប់មកចុចបញ្ជាក់ការទូទាត់។"}
           </p>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
+      <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
         <h2 className="text-lg font-semibold mb-4">ប្រវត្តិការទូទាត់</h2>
 
         <div className="space-y-3">
           {payments.length === 0 ? (
-            <p className="text-sm text-zinc-500">មិនទាន់មានការទូទាត់</p>
+            <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានការទូទាត់</p>
           ) : (
             payments.map((payment: any) => (
               <div
                 key={payment.id}
-                className="flex items-center justify-between rounded-xl border border-zinc-800 bg-[#0b0d19] p-3"
+                className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
               >
                 <div>
                   <p className="text-sm font-medium">
                     ${Number(payment.amount || 0).toFixed(2)}
                   </p>
-                  <p className="text-xs text-zinc-500 uppercase">
+                  <p className="text-xs text-(--panel-text-subtle) uppercase">
                     {payment.payment_method} · ខែ{" "}
                     {formatMonth(payment.bills?.billing_month)}
                   </p>

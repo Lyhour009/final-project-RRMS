@@ -1,17 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/supabase/server";
 import { createNotification } from "@/actions/notifications";
 
-async function getSupabase() {
-  const cookieStore = await cookies();
-  return await createClient(cookieStore);
-}
-
 export async function getMaintenanceRequests() {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data, error } = await supabase
     .from("maintenance_requests")
@@ -47,7 +41,7 @@ export async function getMaintenanceRequests() {
 }
 
 export async function updateMaintenanceStatus(id: string, status: string) {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data: request } = await supabase
     .from("maintenance_requests")
@@ -76,8 +70,6 @@ export async function updateMaintenanceStatus(id: string, status: string) {
     updateData.resolved_at = null;
   }
 
-  await supabase.from("maintenance_requests").update(updateData).eq("id", id);
-
   const { error } = await supabase
     .from("maintenance_requests")
     .update(updateData)
@@ -91,7 +83,7 @@ export async function updateMaintenanceStatus(id: string, status: string) {
 }
 
 export async function deleteMaintenanceRequest(id: string) {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { error } = await supabase
     .from("maintenance_requests")

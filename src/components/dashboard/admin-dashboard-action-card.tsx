@@ -26,18 +26,18 @@ function ActionCard({
         <div className="rounded-xl bg-black/20 p-3">{icon}</div>
         <div>
           <p className="text-sm font-semibold">{title}</p>
-          <p className="text-2xl font-bold text-white mt-1">{value}</p>
+          <p className="text-2xl font-bold text-(--panel-text) mt-1">{value}</p>
         </div>
       </div>
-      <p className="text-xs text-zinc-400 mt-3">{description}</p>
+      <p className="text-xs text-(--panel-text-muted) mt-3">{description}</p>
     </div>
   );
 }
 
 export function DashboardActionCards({ cards }: { cards: any }) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-[#131626] p-5">
-      <h2 className="text-lg font-semibold text-white mb-4">
+    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+      <h2 className="text-lg font-semibold text-(--panel-text) mb-4">
         ការងារត្រូវតាមដាន
       </h2>
 

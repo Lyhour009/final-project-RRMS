@@ -1,16 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
-
-async function getSupabase() {
-  const cookiesStore = await cookies();
-  return await createClient(cookiesStore);
-}
+import { requireAdmin } from "@/lib/supabase/server";
 
 export async function getRooms() {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data, error } = await supabase
     .from("rooms")
@@ -23,7 +17,7 @@ export async function getRooms() {
 }
 
 export async function upsertRoom(id: string | null, formData: FormData) {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const room_number = String(formData.get("room_number") || "").trim();
   const room_type = String(formData.get("room_type") || "").trim();
@@ -100,7 +94,7 @@ export async function upsertRoom(id: string | null, formData: FormData) {
 }
 
 export async function deleteRoom(id: string) {
-  const supabase = await getSupabase();
+  const { supabase } = await requireAdmin();
 
   const { data: contracts, error: contractError } = await supabase
     .from("contracts")
