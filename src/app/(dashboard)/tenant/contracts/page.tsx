@@ -25,6 +25,12 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+const ROOM_STATUS_LABELS: Record<string, string> = {
+  available: "ទំនេរ",
+  occupied: "មិនទំនេរ",
+  maintenance: "ជួសជុល",
+};
+
 function getContractProgress(startDate: string, endDate: string) {
   const start = new Date(startDate).getTime();
   const end = new Date(endDate).getTime();
@@ -129,7 +135,10 @@ export default async function TenantContractPage() {
                 <InfoRow label="លេខបន្ទប់" value={`#${room?.room_number}`} />
                 <InfoRow label="ប្រភេទបន្ទប់" value={room?.room_type || "-"} />
                 <InfoRow label="ជាន់" value={room?.floor || "-"} />
-                <InfoRow label="ស្ថានភាពបន្ទប់" value={room?.status || "-"} />
+                <InfoRow
+                  label="ស្ថានភាពបន្ទប់"
+                  value={room?.status ? ROOM_STATUS_LABELS[room.status] || room.status : "-"}
+                />
               </div>
             </div>
           </div>

@@ -106,7 +106,7 @@ export default async function TenantMaintenancePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
         <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
           <h2 className="text-lg font-semibold mb-4">បង្កើតសំណើថ្មី</h2>
 

@@ -62,7 +62,7 @@ export default async function TenantBillsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
         <div className="xl:col-span-2 rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">វិក្កយបត្របច្ចុប្បន្ន</h2>

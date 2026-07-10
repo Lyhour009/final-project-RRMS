@@ -152,8 +152,8 @@ export default async function TenantOverviewPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="rounded-ll border border-(--panel-border) bg-(--panel) p-5 xl:col-span-2">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 xl:col-span-2">
           <h2 className="text-lg font-semibold mb-4">
             🏠 ព័ត៌មានបន្ទប់ និងកិច្ចសន្យា
           </h2>
@@ -163,17 +163,17 @@ export default async function TenantOverviewPage() {
               អ្នកមិនទាន់មានកិច្ចសន្យាសកម្មទេ។
             </p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-4">
                 {room?.images?.[0] ? (
                   <img
                     src={room.images[0]}
                     alt="Room"
-                    className=" h-[400px] w-full rounded-lg object-cover mb-4"
+                    className="h-56 w-full rounded-lg object-cover mb-4"
                   />
                 ) : (
-                  <div className=" h-[400px] w-full rounded-lg bg-(--panel-hover) border border-(--panel-border) flex items-center justify-center text-sm text-(--panel-text-subtle) mb-4">
-                    No Room Image
+                  <div className="h-56 w-full rounded-lg bg-(--panel-hover) border border-(--panel-border) flex items-center justify-center text-sm text-(--panel-text-subtle) mb-4">
+                    មិនទាន់មានរូបភាពបន្ទប់
                   </div>
                 )}
 
