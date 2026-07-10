@@ -85,7 +85,7 @@ export default async function AdminReportsPage() {
         <ReportCard
           title="វិក្កយបត្របានបង់"
           value={data.summary.paidBills}
-          subtitle="Paid bills"
+          subtitle="វិក្កយបត្រដែលបានបង់រួច"
           icon={<FileText size={22} />}
           color="text-emerald-400"
         />
@@ -93,7 +93,7 @@ export default async function AdminReportsPage() {
         <ReportCard
           title="វិក្កយបត្រហួសកំណត់"
           value={data.summary.overdueBills}
-          subtitle="Overdue bills"
+          subtitle="វិក្កយបត្រហួសកាលកំណត់"
           icon={<AlertTriangle size={22} />}
           color="text-red-400"
         />
@@ -101,7 +101,7 @@ export default async function AdminReportsPage() {
         <ReportCard
           title="ការទូទាត់សរុប"
           value={data.summary.totalPayments}
-          subtitle="Payment records"
+          subtitle="កំណត់ត្រាការទូទាត់"
           icon={<BarChart3 size={22} />}
           color="text-indigo-400"
         />
@@ -109,7 +109,7 @@ export default async function AdminReportsPage() {
         <ReportCard
           title="បន្ទប់សរុប"
           value={data.summary.totalRooms}
-          subtitle="All rooms"
+          subtitle="បន្ទប់ទាំងអស់"
           icon={<Building2 size={22} />}
           color="text-blue-400"
         />

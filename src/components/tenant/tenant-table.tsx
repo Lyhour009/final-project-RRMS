@@ -14,6 +14,7 @@ import {
   Phone,
   Mail,
   Image as ImageIcon,
+  ImageOff,
   Loader2,
 } from "lucide-react";
 import TenantModal from "./tenant-form-modal";
@@ -216,8 +217,8 @@ export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[10px] text-(--panel-text-subtle)">
-                            N/A
+                          <div className="flex h-full w-full items-center justify-center text-(--panel-text-subtle)">
+                            <ImageOff size={16} />
                           </div>
                         )}
                       </div>

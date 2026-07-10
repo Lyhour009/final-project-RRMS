@@ -14,6 +14,7 @@ import {
   UserCheck,
   AlertTriangle,
   Loader2,
+  ImageOff,
 } from "lucide-react";
 import RoomModal from "./room-form-modal";
 import RoomDeleteModal from "./room-delete-modal";
@@ -127,7 +128,7 @@ export default function RoomTable({ initialRooms }: RoomTableProps) {
         <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80 hover:border-(--panel-border) transition-all">
           <div className="flex items-center justify-between">
             <span className="text-(--panel-text-muted) text-sm font-medium">
-              ទំនេរ (Available)
+              ទំនេរ
             </span>
             <CheckCircle size={20} className="text-emerald-400" />
           </div>
@@ -139,11 +140,11 @@ export default function RoomTable({ initialRooms }: RoomTableProps) {
         <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80 hover:border-(--panel-border) transition-all">
           <div className="flex items-center justify-between">
             <span className="text-(--panel-text-muted) text-sm font-medium">
-              មិនទំនេរ (Occupied)
+              មិនទំនេរ
             </span>
-            <UserCheck size={20} className="text-pink-400" />
+            <UserCheck size={20} className="text-blue-400" />
           </div>
-          <p className="text-3xl font-bold mt-2 text-pink-400">
+          <p className="text-3xl font-bold mt-2 text-blue-400">
             {stats.occupied}
           </p>
         </div>
@@ -151,7 +152,7 @@ export default function RoomTable({ initialRooms }: RoomTableProps) {
         <div className="p-4 rounded-xl border bg-(--panel) border-(--panel-border)/80 hover:border-(--panel-border) transition-all">
           <div className="flex items-center justify-between">
             <span className="text-(--panel-text-muted) text-sm font-medium">
-              ជួសជុល (Maintenance)
+              ជួសជុល
             </span>
             <AlertTriangle size={20} className="text-amber-400" />
           </div>
@@ -201,8 +202,8 @@ export default function RoomTable({ initialRooms }: RoomTableProps) {
             onClick={() => setStatusFilter("occupied")}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               statusFilter === "occupied"
-                ? "bg-pink-600 text-white"
-                : "text-(--panel-text-muted) hover:text-pink-400"
+                ? "bg-blue-600 text-white"
+                : "text-(--panel-text-muted) hover:text-blue-400"
             }`}
           >
             មិនទំនេរ
@@ -269,8 +270,8 @@ export default function RoomTable({ initialRooms }: RoomTableProps) {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[10px] text-(--panel-text-subtle)">
-                            No Image
+                          <div className="w-full h-full flex items-center justify-center text-(--panel-text-subtle)">
+                            <ImageOff size={16} />
                           </div>
                         )}
                       </div>
@@ -294,7 +295,7 @@ export default function RoomTable({ initialRooms }: RoomTableProps) {
                           room.status === "available"
                             ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                             : room.status === "occupied"
-                              ? "bg-pink-500/10 text-pink-400 border-pink-500/20"
+                              ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
                               : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                         }`}
                       >

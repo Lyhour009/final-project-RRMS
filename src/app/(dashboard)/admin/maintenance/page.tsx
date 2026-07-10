@@ -248,7 +248,7 @@ export default async function AdminMaintenancePage() {
                             }}
                           >
                             <button className="h-8 rounded-lg bg-blue-600 px-3 text-xs font-medium text-white hover:bg-blue-700">
-                              In Progress
+                              កំពុងធ្វើ
                             </button>
                           </form>
                         )}
@@ -264,7 +264,7 @@ export default async function AdminMaintenancePage() {
                             }}
                           >
                             <button className="h-8 rounded-lg bg-emerald-600 px-3 text-xs font-medium text-white hover:bg-emerald-700">
-                              Resolve
+                              រួចរាល់
                             </button>
                           </form>
                         )}

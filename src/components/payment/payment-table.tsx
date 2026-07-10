@@ -13,7 +13,11 @@ import {
   Loader2,
 } from "lucide-react";
 
-import { Payment, PaymentStatus } from "@/lib/validations/payments";
+import {
+  Payment,
+  PaymentStatus,
+  PAYMENT_METHOD_LABELS,
+} from "@/lib/validations/payments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
@@ -313,8 +317,8 @@ export function PaymentTableWrapper({
                       ${Number(payment.amount || 0).toFixed(2)}
                     </td>
 
-                    <td className="p-4 text-(--panel-text-muted) uppercase">
-                      {payment.payment_method}
+                    <td className="p-4 text-(--panel-text-muted)">
+                      {PAYMENT_METHOD_LABELS[payment.payment_method]}
                     </td>
 
                     <td className="p-4">
@@ -352,7 +356,7 @@ export function PaymentTableWrapper({
                               disabled={loadingId === payment.id}
                               className="bg-emerald-600 hover:bg-emerald-700 text-white"
                             >
-                              Approve
+                              អនុម័ត
                             </Button>
 
                             <Button
@@ -361,7 +365,7 @@ export function PaymentTableWrapper({
                               disabled={loadingId === payment.id}
                               className="bg-red-600 hover:bg-red-700 text-white"
                             >
-                              Reject
+                              បដិសេធ
                             </Button>
                           </>
                         )}

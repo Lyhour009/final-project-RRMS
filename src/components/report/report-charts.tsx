@@ -5,6 +5,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Legend,
   Line,
   LineChart,
   Pie,
@@ -15,8 +16,15 @@ import {
   YAxis,
 } from "recharts";
 
-const COLORS = ["#22c55e", "#6366f1", "#f59e0b", "#ef4444"];
+// available / occupied / maintenance — matches the status colors used in
+// the room table (green/blue/amber), not the default chart palette.
+const ROOM_STATUS_COLORS = ["#22c55e", "#3b82f6", "#f59e0b"];
 const STATUS_COLORS = ["#22c55e", "#f59e0b", "#ef4444"];
+
+const legendStyle = {
+  fontSize: 12,
+  color: "var(--panel-text-muted)",
+};
 
 // Uses the same --panel-* theme tokens as the rest of the app (see
 // globals.css) instead of hardcoded hex, so these charts follow light/dark
@@ -100,10 +108,14 @@ export function ReportsCharts({ charts }: { charts: any }) {
                 paddingAngle={4}
               >
                 {charts.roomStatus.map((_: any, index: number) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={index}
+                    fill={ROOM_STATUS_COLORS[index % ROOM_STATUS_COLORS.length]}
+                  />
                 ))}
               </Pie>
               <Tooltip contentStyle={tooltipStyle} />
+              <Legend wrapperStyle={legendStyle} />
             </PieChart>
           </ResponsiveContainer>
         </ChartCard>

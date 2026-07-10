@@ -1,3 +1,5 @@
+import { PAYMENT_METHOD_LABELS } from "@/lib/validations/payments";
+
 function StatusBadge({
   status,
 }: {
@@ -109,8 +111,8 @@ export function RecentDashboardTables({ recent }: { recent: any }) {
                   <p className="text-sm font-medium text-(--panel-text)">
                     {payment.profiles?.full_name || "-"}
                   </p>
-                  <p className="text-xs text-(--panel-text-subtle) uppercase">
-                    {payment.payment_method}
+                  <p className="text-xs text-(--panel-text-subtle)">
+                    {PAYMENT_METHOD_LABELS[payment.payment_method as keyof typeof PAYMENT_METHOD_LABELS] || payment.payment_method}
                   </p>
                 </div>
 

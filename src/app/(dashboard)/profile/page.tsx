@@ -39,7 +39,7 @@ function RoleBadge({ role }: { role: string }) {
           : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
       }`}
     >
-      {isAdmin ? "Admin" : "Tenant"}
+      {isAdmin ? "អ្នកគ្រប់គ្រង" : "អ្នកជួល"}
     </span>
   );
 }
@@ -59,11 +59,11 @@ export default async function ProfilePage() {
       <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
         <div className="flex items-center gap-4 border-b border-(--panel-border) pb-5">
           <div className="h-16 w-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-xl font-bold">
-            {profile.full_name?.slice(0, 2).toUpperCase() || "US"}
+            {profile.full_name?.slice(0, 2).toUpperCase() || "-"}
           </div>
 
           <div>
-            <h2 className="text-xl font-bold">{profile.full_name || "User"}</h2>
+            <h2 className="text-xl font-bold">{profile.full_name || "-"}</h2>
             <p className="text-sm text-(--panel-text-subtle)">{profile.email}</p>
             <div className="mt-2">
               <RoleBadge role={profile.role} />

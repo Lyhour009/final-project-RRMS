@@ -19,6 +19,15 @@ export type PaymentMethod =
   | "bank_transfer"
   | "other";
 
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  aba: "ABA",
+  acleda: "ACLEDA",
+  wing: "Wing",
+  bank_transfer: "Bank Transfer",
+  cash: "Cash",
+  other: "ផ្សេងៗ",
+};
+
 export interface Payment {
   id: string;
   bill_id: string;

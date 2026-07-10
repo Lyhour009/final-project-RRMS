@@ -29,6 +29,7 @@ import {
   PaymentFormValues,
   Payment,
   PaymentMethod,
+  PAYMENT_METHOD_LABELS,
 } from "@/lib/validations/payments";
 
 import { submitPayment } from "@/actions/payments";
@@ -61,15 +62,6 @@ interface PaymentSubmitModalProps {
   bills: BillOption[];
   onSuccess?: (payment: Payment) => void;
 }
-
-const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  aba: "ABA",
-  acleda: "ACLEDA",
-  wing: "Wing",
-  bank_transfer: "Bank Transfer",
-  cash: "Cash",
-  other: "ផ្សេងៗ",
-};
 
 export default function PaymentSubmitModal({
   isOpen,

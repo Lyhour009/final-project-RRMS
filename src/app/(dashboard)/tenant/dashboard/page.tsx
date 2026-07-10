@@ -1,5 +1,6 @@
 import { CreditCard, DollarSign, FileText, Home } from "lucide-react";
 import { getTenantDashboardData } from "@/actions/tenants/dashboard";
+import { PAYMENT_METHOD_LABELS } from "@/lib/validations/payments";
 
 function StatCard({
   title,
@@ -292,8 +293,8 @@ export default async function TenantOverviewPage() {
                     <p className="text-sm font-medium text-(--panel-text)">
                       ${Number(payment.amount || 0).toFixed(2)}
                     </p>
-                    <p className="text-xs text-(--panel-text-subtle) uppercase">
-                      {payment.payment_method}
+                    <p className="text-xs text-(--panel-text-subtle)">
+                      {PAYMENT_METHOD_LABELS[payment.payment_method as keyof typeof PAYMENT_METHOD_LABELS] || payment.payment_method}
                     </p>
                   </div>
 

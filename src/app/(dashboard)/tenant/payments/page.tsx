@@ -3,6 +3,7 @@ import {
   getTenantPaymentsData,
   submitTenantPayment,
 } from "@/actions/tenants/payments";
+import { PAYMENT_METHOD_LABELS } from "@/lib/validations/payments";
 
 function StatusBadge({ status }: { status: string }) {
   let className = "bg-zinc-500/10 text-(--panel-text-muted) border-zinc-500/20";
@@ -212,9 +213,9 @@ export default async function TenantPaymentsPage({
                   <p className="text-sm font-medium">
                     ${Number(payment.amount || 0).toFixed(2)}
                   </p>
-                  <p className="text-xs text-(--panel-text-subtle) uppercase">
-                    {payment.payment_method} · ខែ{" "}
-                    {formatMonth(payment.bills?.billing_month)}
+                  <p className="text-xs text-(--panel-text-subtle)">
+                    {PAYMENT_METHOD_LABELS[payment.payment_method as keyof typeof PAYMENT_METHOD_LABELS] || payment.payment_method}{" "}
+                    · ខែ {formatMonth(payment.bills?.billing_month)}
                   </p>
                 </div>
 

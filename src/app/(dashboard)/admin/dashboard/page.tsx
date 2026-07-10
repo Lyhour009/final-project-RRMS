@@ -110,7 +110,7 @@ export default async function AdminDashboardPage() {
         />
 
         <StatCard
-          title="Pending Payment"
+          title="ការទូទាត់រង់ចាំ"
           value={stats.cards.pendingPayments}
           subtitle="រង់ចាំអនុម័ត"
           icon={<CreditCard size={22} />}

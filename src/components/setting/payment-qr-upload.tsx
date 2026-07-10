@@ -27,13 +27,13 @@ export default function PaymentQrUpload({ currentQrUrl }: Props) {
   return (
     <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
       <p className="mb-2 text-sm font-medium text-(--panel-text-muted)">
-        Payment QR Code
+        កូដ QR សម្រាប់ទូទាត់ប្រាក់
       </p>
 
       <form ref={formRef} action={formAction}>
         <label className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-(--panel-border) bg-(--panel-inset) text-sm text-(--panel-text-muted)">
           <Upload size={16} />
-          {pending ? "កំពុង Upload..." : "Upload QR Image"}
+          {pending ? "កំពុងផ្ទុកឡើង..." : "ផ្ទុករូបភាព QR ឡើង"}
 
           <input
             name="qr_image"
