@@ -1,6 +1,6 @@
 "use server";
 
-import { createActionClient, getAuthenticatedUser } from "@/lib/supabase/server";
+import { getAuthenticatedUser, requireUser } from "@/lib/supabase/server";
 
 export async function createNotification({
   userId,
@@ -13,7 +13,10 @@ export async function createNotification({
   message: string;
   link?: string;
 }) {
-  const supabase = await createActionClient();
+  // Every "use server" export is an independently callable endpoint on its
+  // own, not just an internal helper — require a signed-in caller even
+  // though today's callers are already guarded upstream.
+  const { supabase } = await requireUser();
 
   const { error } = await supabase.from("notifications").insert([
     {

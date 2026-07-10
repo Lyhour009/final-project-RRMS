@@ -35,6 +35,7 @@ export default function RootLayout({
     <html
       lang="km"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={cn(
         "h-full antialiased",
         inter.variable,

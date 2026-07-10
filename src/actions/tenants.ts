@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import { requireAdmin } from "@/lib/supabase/server";
+import { tenantSchema } from "@/lib/validations/tenants";
 
 // This client uses the Supabase SERVICE ROLE key, which bypasses Row Level
 // Security entirely — it's required for auth.admin.* (create/update/delete
@@ -26,11 +27,15 @@ export async function getTenants() {
   await requireAdmin();
   const supabase = getSupabaseAdmin();
 
+  // Safety cap: admin list view shows the 500 most recent tenants. A tenant
+  // older than that won't appear here or in search — revisit with real
+  // pagination if this becomes a problem.
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("role", "tenant")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(500);
 
   if (error) throw new Error(error.message);
 
@@ -41,15 +46,21 @@ export async function upsertTenant(id: string | null, formData: FormData) {
   await requireAdmin();
   const supabase = getSupabaseAdmin();
 
-  const full_name = String(formData.get("full_name") || "").trim();
-  const email = String(formData.get("email") || "").trim();
-  const phone_number = String(formData.get("phone_number") || "").trim();
-  const password = String(formData.get("password") || "").trim();
-  const existingImageUrl = String(formData.get("existing_image_url") || "");
+  const parsed = tenantSchema.safeParse({
+    full_name: formData.get("full_name"),
+    email: formData.get("email"),
+    phone_number: formData.get("phone_number"),
+    password: formData.get("password") ?? "",
+    id_card_image: formData.get("id_card_image"),
+  });
 
-  if (!full_name || !email || !phone_number) {
-    throw new Error("សូមបំពេញព័ត៌មានឲ្យបានគ្រប់គ្រាន់");
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message || "ទិន្នន័យមិនត្រឹមត្រូវ");
   }
+
+  const { full_name, email, phone_number } = parsed.data;
+  const password = (parsed.data.password ?? "").trim();
+  const existingImageUrl = String(formData.get("existing_image_url") || "");
 
   if (!id && password.length < 6) {
     throw new Error("លេខកូដសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ ៦ ខ្ទង់");

@@ -24,6 +24,7 @@ with separate **Admin** and **Tenant** portals.
 - [Tech Stack](#-tech-stack)
 - [Getting Started](#-getting-started)
 - [Project Structure](#-project-structure)
+- [Security](#-security)
 - [Deployment](#-deployment)
 
 ---
@@ -74,13 +75,13 @@ with separate **Admin** and **Tenant** portals.
 |---|---|
 | Framework | [Next.js 16](https://nextjs.org) (App Router, Server Actions, Turbopack) |
 | UI | React 19, Tailwind CSS v4, shadcn/Base UI components |
-| Data & Auth | [Supabase](https://supabase.com) (Postgres, Auth, Storage) |
-| Forms & Validation | React Hook Form + Zod |
+| Data & Auth | [Supabase](https://supabase.com) (Postgres + Row Level Security, Auth, Storage) |
+| Forms & Validation | React Hook Form + Zod (validated both client-side and again server-side in every Server Action) |
 | Charts | Recharts |
-| Tables | TanStack Table |
-| Exports | xlsx, @react-pdf/renderer, jsPDF |
+| Tables | Hand-rolled, with client-side search/filter and progressive scroll reveal |
+| Exports | xlsx (dynamically imported so it doesn't bloat the initial page bundle) |
 | State | Zustand, TanStack Query |
-| Testing | Playwright |
+| Testing | Playwright (scaffolded — not yet covering core admin/tenant flows) |
 
 > **Note:** This project pins Next.js 16.2.7, which has behavioral differences from the version most training data and tutorials assume. Check `node_modules/next/dist/docs/` before relying on unfamiliar API behavior.
 
@@ -110,7 +111,9 @@ with separate **Admin** and **Tenant** portals.
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public API key |
    | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service-role key (server-only — never expose client-side) |
 
-3. **Run the dev server**
+3. **Apply the Row Level Security policies** — run [`supabase/rls-policies.sql`](supabase/rls-policies.sql) in your Supabase project's SQL Editor. This is required, not optional: without it, the anon key (which is public — it ships in every browser bundle) can read/write the `profiles`, `contracts`, `bills`, `payments`, `maintenance_requests`, `settings`, and `rooms` tables directly through Supabase's REST API, completely bypassing this app's own access checks. See [Security](#-security) below for why.
+
+4. **Run the dev server**
    ```bash
    npm run dev
    ```
@@ -124,6 +127,14 @@ npm run build   # production build
 npm run start   # run a production build
 npm run lint    # eslint
 ```
+
+### Admin utility scripts
+
+```bash
+npx tsx scripts/reset-admin-password.ts <user-id> <new-password>
+```
+
+Directly resets a Supabase Auth user's password via the service-role key — useful when the dashboard's "send recovery email" flow can't be used (e.g. a non-deliverable admin email domain). Takes the user ID and new password as arguments; never hardcode credentials into this file.
 
 ---
 
@@ -143,15 +154,31 @@ src/
   lib/
     supabase/          # Supabase client factories + auth helpers (requireAdmin, requireUser)
     validations/       # Zod schemas
+  proxy.ts             # Next.js 16's middleware (route-level auth + role redirects)
+scripts/                # one-off admin/ops scripts (e.g. password reset)
+supabase/               # SQL to apply directly in the Supabase dashboard (RLS policies)
 ```
 
-🔒 Access control is enforced server-side: every admin action calls `requireAdmin()` and every tenant action calls `requireUser()` from `src/lib/supabase/server.ts`, which verify the session and role before touching data.
+---
+
+## 🔒 Security
+
+Access control is enforced in three independent layers — each one assumes the others might fail:
+
+1. **Edge / routing** — [`src/proxy.ts`](src/proxy.ts) (Next 16's rename of `middleware.ts`) checks the session on every request and redirects unauthenticated users to `/login`, and redirects each role away from the other's routes (tenant → `/admin/*` bounces to `/tenant/dashboard`, and vice versa).
+2. **Server Actions** — every admin action calls `requireAdmin()` and every tenant action calls `requireUser()` from `src/lib/supabase/server.ts`, which re-verify the session and role before touching data. This matters because a Server Action is its own callable endpoint — it stays protected even if a future refactor moves it off a proxy-guarded route.
+3. **Database (Row Level Security)** — [`supabase/rls-policies.sql`](supabase/rls-policies.sql) enforces access at the Postgres level, scoped by `auth.uid()`. This is the layer that actually matters if someone bypasses the Next.js app entirely and calls the Supabase REST API directly with the public anon key — which anyone can do, since that key ships in the browser bundle by design. **Layers 1 and 2 alone are not sufficient without this.**
+
+Inputs are validated with the same Zod schema on both the client (via `zodResolver`) and again inside the Server Action (via `safeParse`) — client-side validation alone is trivially bypassed by posting `FormData` directly, so every mutating action re-validates server-side. File uploads are checked server-side for type and size for the same reason.
 
 ---
 
 ## ☁️ Deployment
 
-Deploy like any Next.js app (Vercel, or any Node-capable host). Set the same three Supabase environment variables in your hosting provider's dashboard before deploying.
+Deploy like any Next.js app (Vercel, or any Node-capable host).
+
+1. Set the three Supabase environment variables in your hosting provider's dashboard.
+2. Confirm [`supabase/rls-policies.sql`](supabase/rls-policies.sql) has been applied to your Supabase project (see [Getting Started](#-getting-started)) — this is easy to forget since the app runs fine without it, but it's the only thing standing between the public anon key and your entire database.
 
 ---
 

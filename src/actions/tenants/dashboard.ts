@@ -28,20 +28,23 @@ export async function getTenantDashboardData() {
 
   const tenantId = user.id;
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("id, full_name, phone_number, email, role")
-    .eq("id", tenantId)
-    .single();
-
-  if (profileError || !profile) {
-    throw new Error("រកមិនឃើញព័ត៌មានអ្នកជួល");
-  }
-
-  const { data: activeContractData } = await supabase
-    .from("contracts")
-    .select(
-      `
+  const [
+    profileResult,
+    activeContractResult,
+    currentBillResult,
+    recentBillsResult,
+    recentPaymentsResult,
+    pendingPaymentsResult,
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, full_name, phone_number, email, role")
+      .eq("id", tenantId)
+      .single(),
+    supabase
+      .from("contracts")
+      .select(
+        `
       id,
       start_date,
       end_date,
@@ -58,18 +61,14 @@ export async function getTenantDashboardData() {
         images
       )
     `,
-    )
-    .eq("tenant_id", tenantId)
-    .eq("status", "active")
-    .maybeSingle();
-
-  const activeContract =
-    activeContractData as unknown as ActiveContractWithRoom | null;
-
-  const { data: currentBill } = await supabase
-    .from("bills")
-    .select(
-      `
+      )
+      .eq("tenant_id", tenantId)
+      .eq("status", "active")
+      .maybeSingle(),
+    supabase
+      .from("bills")
+      .select(
+        `
       id,
       billing_month,
       room_fee,
@@ -80,24 +79,22 @@ export async function getTenantDashboardData() {
       paid_at,
       created_at
     `,
-    )
-    .eq("tenant_id", tenantId)
-    .in("status", ["unpaid", "overdue"])
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const { data: recentBills } = await supabase
-    .from("bills")
-    .select("id, billing_month, total_amount, status, paid_at, created_at")
-    .eq("tenant_id", tenantId)
-    .order("created_at", { ascending: false })
-    .limit(5);
-
-  const { data: recentPayments } = await supabase
-    .from("payments")
-    .select(
-      `
+      )
+      .eq("tenant_id", tenantId)
+      .in("status", ["unpaid", "overdue"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("bills")
+      .select("id, billing_month, total_amount, status, paid_at, created_at")
+      .eq("tenant_id", tenantId)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("payments")
+      .select(
+        `
       id,
       amount,
       payment_method,
@@ -109,16 +106,30 @@ export async function getTenantDashboardData() {
         billing_month
       )
     `,
-    )
-    .eq("tenant_id", tenantId)
-    .order("created_at", { ascending: false })
-    .limit(5);
+      )
+      .eq("tenant_id", tenantId)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("payments")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("status", "pending"),
+  ]);
 
-  const { data: pendingPayments } = await supabase
-    .from("payments")
-    .select("id")
-    .eq("tenant_id", tenantId)
-    .eq("status", "pending");
+  const { data: profile, error: profileError } = profileResult;
+
+  if (profileError || !profile) {
+    throw new Error("រកមិនឃើញព័ត៌មានអ្នកជួល");
+  }
+
+  const activeContract =
+    activeContractResult.data as unknown as ActiveContractWithRoom | null;
+
+  const currentBill = currentBillResult.data;
+  const recentBills = recentBillsResult.data;
+  const recentPayments = recentPaymentsResult.data;
+  const pendingPayments = pendingPaymentsResult.data;
 
   return {
     profile,

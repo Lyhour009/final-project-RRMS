@@ -66,7 +66,7 @@ export async function proxy(request: NextRequest) {
 
     // Tenant cannot access admin pages
     if (role === "tenant" && isAdminRoute) {
-      url.pathname = "/tenant/overview";
+      url.pathname = "/tenant/dashboard";
       return NextResponse.redirect(url);
     }
 

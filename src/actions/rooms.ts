@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/server";
+import { roomSchema } from "@/lib/validations/room";
 
 export async function getRooms() {
   const { supabase } = await requireAdmin();
@@ -19,16 +20,40 @@ export async function getRooms() {
 export async function upsertRoom(id: string | null, formData: FormData) {
   const { supabase } = await requireAdmin();
 
-  const room_number = String(formData.get("room_number") || "").trim();
-  const room_type = String(formData.get("room_type") || "").trim();
-  const base_price = Number(formData.get("base_price"));
-  const status = String(formData.get("status") || "available");
-  const floor = Number(formData.get("floor"));
-  const max_occupants = Number(formData.get("max_occupants"));
-  const description = String(formData.get("description") || "");
-
   const amenitiesRaw = String(formData.get("amenities") || "[]");
-  const amenities = JSON.parse(amenitiesRaw);
+  let amenitiesInput: unknown;
+  try {
+    amenitiesInput = JSON.parse(amenitiesRaw);
+  } catch {
+    throw new Error("បញ្ជីគ្រឿងបរិក្ខារមិនត្រឹមត្រូវ");
+  }
+
+  const parsed = roomSchema.safeParse({
+    room_number: formData.get("room_number"),
+    room_type: formData.get("room_type"),
+    base_price: formData.get("base_price"),
+    status: formData.get("status"),
+    floor: formData.get("floor"),
+    max_occupants: formData.get("max_occupants"),
+    description: formData.get("description") ?? "",
+    amenities: amenitiesInput,
+    image: formData.get("image"),
+  });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message || "ទិន្នន័យមិនត្រឹមត្រូវ");
+  }
+
+  const {
+    room_number,
+    room_type,
+    base_price,
+    status,
+    floor,
+    max_occupants,
+    description,
+    amenities,
+  } = parsed.data;
 
   const imageFile = formData.get("image") as File | null;
   const existingImageUrl = String(formData.get("existing_image_url") || "");

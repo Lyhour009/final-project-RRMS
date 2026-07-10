@@ -2,8 +2,16 @@
 
 import { requireAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { settingsSchema } from "@/lib/validations/settings";
 
 const QR_BUCKET = "room-images";
+const MAX_FILE_SIZE = 5000000;
+const ACCEPTED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+];
 
 export async function getSettings() {
   const { supabase } = await requireAdmin();
@@ -29,15 +37,26 @@ export async function updateSettings(prevState: unknown, formData: FormData) {
     return { success: false, message: "រកមិនឃើញ Settings ID" };
   }
 
+  const parsed = settingsSchema.safeParse({
+    water_rate: formData.get("water_rate"),
+    electric_rate: formData.get("electric_rate"),
+    late_fee: formData.get("late_fee"),
+    monthly_due_day: formData.get("monthly_due_day"),
+    currency: formData.get("currency") || "USD",
+    payment_instruction: formData.get("payment_instruction"),
+  });
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: parsed.error.issues[0]?.message || "ទិន្នន័យមិនត្រឹមត្រូវ",
+    };
+  }
+
   const { error } = await supabase
     .from("settings")
     .update({
-      water_rate: Number(formData.get("water_rate") || 0),
-      electric_rate: Number(formData.get("electric_rate") || 0),
-      late_fee: Number(formData.get("late_fee") || 0),
-      monthly_due_day: Number(formData.get("monthly_due_day") || 1),
-      currency: String(formData.get("currency") || "USD"),
-      payment_instruction: String(formData.get("payment_instruction") || ""),
+      ...parsed.data,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);
@@ -60,6 +79,17 @@ export async function uploadPaymentQr(prevState: unknown, formData: FormData) {
 
   if (!qrFile || qrFile.size === 0) {
     return { success: false, message: "សូមជ្រើសរើស QR Image" };
+  }
+
+  if (qrFile.size > MAX_FILE_SIZE) {
+    return { success: false, message: "រូបភាពត្រូវតែតូចជាង 5MB" };
+  }
+
+  if (!ACCEPTED_IMAGE_TYPES.includes(qrFile.type)) {
+    return {
+      success: false,
+      message: "គាំទ្រតែប្រភេទ .jpg, .jpeg, .png និង .webp",
+    };
   }
 
   const { data: settings, error: settingsError } = await supabase

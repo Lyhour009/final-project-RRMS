@@ -9,21 +9,29 @@ function monthKey(value: string) {
 export async function getDashboardStats() {
   const { supabase } = await requireAdmin();
 
+  // Two queries per entity: a lean "aggregate" fetch with only the scalar
+  // columns actually reduced into cards/charts below (no joins — those are
+  // pure JS filter/length/reduce over every row, so payload should scale
+  // with columns-read, not with the full row shape), and a "recent" fetch
+  // that's already limited to 5 and needs the joined display columns.
   const [
     roomsResult,
-    tenantsResult,
+    tenantsCountResult,
     contractsResult,
+    recentContractsResult,
     billsResult,
+    recentBillsResult,
     paymentsResult,
+    recentPaymentsResult,
     maintenanceResult,
+    recentMaintenanceResult,
   ] = await Promise.all([
-    supabase
-      .from("rooms")
-      .select("id, room_number, room_type, base_price, status, floor"),
+    supabase.from("rooms").select("status"),
     supabase
       .from("profiles")
-      .select("id, full_name, phone_number, email, role")
+      .select("id", { count: "exact", head: true })
       .eq("role", "tenant"),
+    supabase.from("contracts").select("status, end_date"),
     supabase
       .from("contracts")
       .select(
@@ -33,7 +41,9 @@ export async function getDashboardStats() {
       rooms:room_id (id, room_number, room_type, base_price)
     `,
       )
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase.from("bills").select("status, total_amount, billing_month"),
     supabase
       .from("bills")
       .select(
@@ -44,7 +54,9 @@ export async function getDashboardStats() {
       contracts:contract_id (id, rooms:room_id (id, room_number))
     `,
       )
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase.from("payments").select("status"),
     supabase
       .from("payments")
       .select(
@@ -54,7 +66,9 @@ export async function getDashboardStats() {
       bills:bill_id (id, billing_month)
     `,
       )
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase.from("maintenance_requests").select("status"),
     supabase
       .from("maintenance_requests")
       .select(
@@ -64,22 +78,31 @@ export async function getDashboardStats() {
       rooms:room_id (id, room_number)
     `,
       )
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(5),
   ]);
 
   if (roomsResult.error) throw new Error(roomsResult.error.message);
-  if (tenantsResult.error) throw new Error(tenantsResult.error.message);
+  if (tenantsCountResult.error) throw new Error(tenantsCountResult.error.message);
   if (contractsResult.error) throw new Error(contractsResult.error.message);
+  if (recentContractsResult.error) throw new Error(recentContractsResult.error.message);
   if (billsResult.error) throw new Error(billsResult.error.message);
+  if (recentBillsResult.error) throw new Error(recentBillsResult.error.message);
   if (paymentsResult.error) throw new Error(paymentsResult.error.message);
+  if (recentPaymentsResult.error) throw new Error(recentPaymentsResult.error.message);
   if (maintenanceResult.error) throw new Error(maintenanceResult.error.message);
+  if (recentMaintenanceResult.error) throw new Error(recentMaintenanceResult.error.message);
 
   const rooms = roomsResult.data || [];
-  const tenants = tenantsResult.data || [];
+  const totalTenants = tenantsCountResult.count || 0;
   const contracts = contractsResult.data || [];
+  const recentContracts = recentContractsResult.data || [];
   const bills = billsResult.data || [];
+  const recentBills = recentBillsResult.data || [];
   const payments = paymentsResult.data || [];
+  const recentPayments = recentPaymentsResult.data || [];
   const maintenanceRequests = maintenanceResult.data || [];
+  const recentMaintenanceRequests = recentMaintenanceResult.data || [];
 
   const paidBills = bills.filter((b) => b.status === "paid");
   const unpaidBills = bills.filter((b) => b.status === "unpaid");
@@ -119,7 +142,7 @@ export async function getDashboardStats() {
       availableRooms: rooms.filter((r) => r.status === "available").length,
       occupiedRooms: rooms.filter((r) => r.status === "occupied").length,
       maintenanceRooms: rooms.filter((r) => r.status === "maintenance").length,
-      totalTenants: tenants.length,
+      totalTenants,
       activeContracts: contracts.filter((c) => c.status === "active").length,
       totalRevenue,
       monthlyRevenue,
@@ -165,10 +188,10 @@ export async function getDashboardStats() {
       revenueByMonth,
     },
     recent: {
-      bills: bills.slice(0, 5),
-      payments: payments.slice(0, 5),
-      contracts: contracts.slice(0, 5),
-      maintenanceRequests: maintenanceRequests.slice(0, 5),
+      bills: recentBills,
+      payments: recentPayments,
+      contracts: recentContracts,
+      maintenanceRequests: recentMaintenanceRequests,
     },
   };
 }

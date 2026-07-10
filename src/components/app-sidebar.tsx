@@ -176,6 +176,7 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
                   <SidebarMenuItem key={item.title} className="list-none">
                     <Link
                       href={item.url}
+                      prefetch={false}
                       className={cn(
                         "group relative flex w-full items-center gap-3 rounded-xl px-4 py-2 text-[13.5px] font-medium transition-all duration-150",
                         isActive

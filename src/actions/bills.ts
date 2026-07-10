@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/server";
+import { billSchema } from "@/lib/validations/bills";
 
 // See bill-generator.ts for why this cast exists: no generated DB types,
 // so Supabase-js can't tell `rooms:room_id` resolves to a single row.
@@ -43,7 +44,11 @@ export async function getBills() {
       )
     `,
     )
-    .order("created_at", { ascending: false });
+    // Safety cap: admin list view shows the 500 most recent bills. A bill
+    // older than that won't appear here or in search — revisit with real
+    // pagination if this becomes a problem.
+    .order("created_at", { ascending: false })
+    .limit(500);
 
   if (error) throw new Error(error.message);
 
@@ -53,29 +58,32 @@ export async function getBills() {
 export async function upsertBill(id: string | null, formData: FormData) {
   const { supabase } = await requireAdmin();
 
-  const contract_id = String(formData.get("contract_id") || "");
-  const billingMonthRaw = String(formData.get("billing_month") || "");
+  const parsed = billSchema.safeParse({
+    contract_id: formData.get("contract_id"),
+    billing_month: formData.get("billing_month"),
+    water_meter_start: formData.get("water_meter_start"),
+    water_meter_end: formData.get("water_meter_end"),
+    elec_meter_start: formData.get("elec_meter_start"),
+    elec_meter_end: formData.get("elec_meter_end"),
+    status: formData.get("status"),
+  });
 
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message || "ទិន្នន័យមិនត្រឹមត្រូវ");
+  }
+
+  const {
+    contract_id,
+    water_meter_start,
+    water_meter_end,
+    elec_meter_start,
+    elec_meter_end,
+    status,
+  } = parsed.data;
+
+  const billingMonthRaw = parsed.data.billing_month;
   const billing_month =
     billingMonthRaw.length === 7 ? `${billingMonthRaw}-01` : billingMonthRaw;
-
-  const water_meter_start = Number(formData.get("water_meter_start") || 0);
-  const water_meter_end = Number(formData.get("water_meter_end") || 0);
-  const elec_meter_start = Number(formData.get("elec_meter_start") || 0);
-  const elec_meter_end = Number(formData.get("elec_meter_end") || 0);
-  const status = String(formData.get("status") || "unpaid");
-
-  if (!contract_id || !billing_month) {
-    throw new Error("សូមជ្រើសរើសកិច្ចសន្យា និងខែវិក្កយបត្រ");
-  }
-
-  if (water_meter_end < water_meter_start) {
-    throw new Error("កុងទ័រទឹកចុងត្រូវធំជាង ឬស្មើកុងទ័រទឹកដើម");
-  }
-
-  if (elec_meter_end < elec_meter_start) {
-    throw new Error("កុងទ័រភ្លើងចុងត្រូវធំជាង ឬស្មើកុងទ័រភ្លើងដើម");
-  }
 
   const { data: contractData, error: contractError } = await supabase
     .from("contracts")

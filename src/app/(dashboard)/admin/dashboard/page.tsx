@@ -62,7 +62,7 @@ export default async function AdminDashboardPage() {
   return (
     <div className="p-6 space-y-6 text-(--panel-text)">
       <div>
-        <h1 className="text-2xl font-bold">📊 Dashboard</h1>
+        <h1 className="text-2xl font-bold">📊 ផ្ទាំងគ្រប់គ្រង</h1>
         <p className="text-(--panel-text-subtle) mt-1 text-sm">
           ស្ថិតិ និងសកម្មភាពទាំងអស់ក្នុងប្រព័ន្ធ RRMS
         </p>

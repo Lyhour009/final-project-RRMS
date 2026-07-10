@@ -11,12 +11,10 @@ export async function getReportsData() {
 
   const [roomsResult, billsResult, paymentsResult, maintenanceResult] =
     await Promise.all([
-      supabase.from("rooms").select("id, status, base_price"),
+      supabase.from("rooms").select("id, status"),
       supabase.from("bills").select("id, billing_month, total_amount, status"),
-      supabase
-        .from("payments")
-        .select("id, amount, status, payment_method, created_at"),
-      supabase.from("maintenance_requests").select("id, status, priority"),
+      supabase.from("payments").select("id, status"),
+      supabase.from("maintenance_requests").select("id, status"),
     ]);
 
   if (roomsResult.error) throw new Error(roomsResult.error.message);

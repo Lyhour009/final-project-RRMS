@@ -150,14 +150,16 @@ export async function createTenantMaintenanceRequest(formData: FormData) {
     .select("id")
     .eq("role", "admin");
 
-  for (const admin of admins || []) {
-    await createNotification({
-      userId: admin.id,
-      type: "maintenance_created",
-      message: `មានសំណើជួសជុលថ្មី៖ ${issue_title}`,
-      link: "/admin/maintenance",
-    });
-  }
+  await Promise.all(
+    (admins || []).map((admin) =>
+      createNotification({
+        userId: admin.id,
+        type: "maintenance_created",
+        message: `មានសំណើជួសជុលថ្មី៖ ${issue_title}`,
+        link: "/admin/maintenance",
+      }),
+    ),
+  );
 
   revalidatePath("/tenant/maintenance");
   revalidatePath("/admin/maintenance");

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/server";
 import { createNotification } from "@/actions/notifications";
+import { paymentSchema } from "@/lib/validations/payments";
 
 const PAYMENT_PROOF_BUCKET = "payment-proofs";
 
@@ -61,7 +62,11 @@ export async function getPayments() {
       )
     `,
     )
-    .order("created_at", { ascending: false });
+    // Safety cap: admin list view shows the 500 most recent payments. A
+    // payment older than that won't appear here or in search — revisit
+    // with real pagination if this becomes a problem.
+    .order("created_at", { ascending: false })
+    .limit(500);
 
   if (error) throw new Error(error.message);
 
@@ -98,7 +103,10 @@ export async function getUnpaidBillsForPayment() {
     `,
     )
     .in("status", ["unpaid", "overdue"])
-    .order("created_at", { ascending: false });
+    // Naturally bounded by unpaid/overdue status, but capped for
+    // defense-in-depth — see getPayments() above for the same pattern.
+    .order("created_at", { ascending: false })
+    .limit(500);
 
   if (error) throw new Error(error.message);
 
@@ -108,15 +116,20 @@ export async function getUnpaidBillsForPayment() {
 export async function submitPayment(formData: FormData) {
   const { supabase } = await requireAdmin();
 
-  const bill_id = String(formData.get("bill_id") || "");
-  const amount = Number(formData.get("amount"));
-  const payment_method = String(formData.get("payment_method") || "");
-  const note = String(formData.get("note") || "");
-  const proofFile = formData.get("proof_image") as File | null;
+  const parsed = paymentSchema.safeParse({
+    bill_id: formData.get("bill_id"),
+    amount: formData.get("amount"),
+    payment_method: formData.get("payment_method"),
+    note: formData.get("note") ?? "",
+    proof_image: formData.get("proof_image"),
+  });
 
-  if (!bill_id) throw new Error("សូមជ្រើសរើសវិក្កយបត្រ");
-  if (!amount || amount <= 0) throw new Error("ចំនួនទឹកប្រាក់មិនត្រឹមត្រូវ");
-  if (!payment_method) throw new Error("សូមជ្រើសរើសវិធីបង់ប្រាក់");
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message || "ទិន្នន័យមិនត្រឹមត្រូវ");
+  }
+
+  const { bill_id, amount, payment_method, note } = parsed.data;
+  const proofFile = formData.get("proof_image") as File | null;
 
   const { data: bill, error: billError } = await supabase
     .from("bills")

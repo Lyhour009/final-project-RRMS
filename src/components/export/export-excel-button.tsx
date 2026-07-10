@@ -1,6 +1,5 @@
 "use client";
 
-import * as XLSX from "xlsx";
 import { Download } from "lucide-react";
 
 export function ExportExcelButton({
@@ -10,11 +9,13 @@ export function ExportExcelButton({
   data: Record<string, any>[];
   fileName: string;
 }) {
-  function exportExcel() {
+  async function exportExcel() {
     if (!data || data.length === 0) {
       alert("មិនមានទិន្នន័យសម្រាប់ Export");
       return;
     }
+
+    const XLSX = await import("xlsx");
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();

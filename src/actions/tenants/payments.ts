@@ -4,6 +4,15 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/supabase/server";
 import { createNotification } from "@/actions/notifications";
 
+const PAYMENT_METHODS = [
+  "cash",
+  "aba",
+  "acleda",
+  "wing",
+  "bank_transfer",
+  "other",
+] as const;
+
 export async function getTenantPaymentsData() {
   const { supabase, user } = await requireUser();
 
@@ -64,10 +73,16 @@ export async function submitTenantPayment(formData: FormData) {
   const tenantId = user.id;
 
   const billId = String(formData.get("bill_id") || "");
-  const paymentMethod = String(formData.get("payment_method") || "aba");
-  const note = String(formData.get("note") || "");
+  const paymentMethodRaw = String(formData.get("payment_method") || "aba");
+  const note = String(formData.get("note") || "").slice(0, 500);
 
   if (!billId) throw new Error("សូមជ្រើសរើសវិក្កយបត្រ");
+
+  if (!PAYMENT_METHODS.includes(paymentMethodRaw as (typeof PAYMENT_METHODS)[number])) {
+    throw new Error("សូមជ្រើសរើសវិធីបង់ប្រាក់");
+  }
+
+  const paymentMethod = paymentMethodRaw as (typeof PAYMENT_METHODS)[number];
 
   const { data: bill, error: billError } = await supabase
     .from("bills")
@@ -117,14 +132,16 @@ export async function submitTenantPayment(formData: FormData) {
     .select("id")
     .eq("role", "admin");
 
-  for (const admin of admins || []) {
-    await createNotification({
-      userId: admin.id,
-      type: "payment_submitted",
-      message: "មានការទូទាត់ថ្មីពីអ្នកជួល",
-      link: "/admin/payments",
-    });
-  }
+  await Promise.all(
+    (admins || []).map((admin) =>
+      createNotification({
+        userId: admin.id,
+        type: "payment_submitted",
+        message: "មានការទូទាត់ថ្មីពីអ្នកជួល",
+        link: "/admin/payments",
+      }),
+    ),
+  );
 
   revalidatePath("/admin/payments");
   revalidatePath("/tenant/payments");

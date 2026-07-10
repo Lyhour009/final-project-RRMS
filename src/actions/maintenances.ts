@@ -40,8 +40,14 @@ export async function getMaintenanceRequests() {
   return data || [];
 }
 
+const MAINTENANCE_STATUSES = ["pending", "in_progress", "resolved"] as const;
+
 export async function updateMaintenanceStatus(id: string, status: string) {
   const { supabase } = await requireAdmin();
+
+  if (!MAINTENANCE_STATUSES.includes(status as (typeof MAINTENANCE_STATUSES)[number])) {
+    throw new Error("ស្ថានភាពមិនត្រឹមត្រូវ");
+  }
 
   const { data: request } = await supabase
     .from("maintenance_requests")

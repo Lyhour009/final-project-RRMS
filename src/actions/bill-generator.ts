@@ -111,7 +111,7 @@ export async function generateMonthlyBills(formData: FormData) {
   revalidatePath("/admin/billing");
   revalidatePath("/admin/dashboard");
   revalidatePath("/tenant/bills");
-  revalidatePath("/tenant/overview");
+  revalidatePath("/tenant/dashboard");
 
   return {
     created: newBills.length,

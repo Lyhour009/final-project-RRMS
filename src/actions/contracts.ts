@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/server";
+import { contractSchema } from "@/lib/validations/contracts";
 
 export async function getContracts() {
   const { supabase } = await requireAdmin();
@@ -26,7 +27,11 @@ export async function getContracts() {
       )
     `,
     )
-    .order("created_at", { ascending: false });
+    // Safety cap: admin list view shows the 500 most recent contracts. A
+    // contract older than that won't appear here or in search — revisit
+    // with real pagination if this becomes a problem.
+    .order("created_at", { ascending: false })
+    .limit(500);
 
   if (error) throw new Error(error.message);
 
@@ -89,21 +94,29 @@ export async function getContractFormData() {
 export async function upsertContract(id: string | null, formData: FormData) {
   const { supabase } = await requireAdmin();
 
-  const tenant_id = String(formData.get("tenant_id") || "");
-  const room_id = String(formData.get("room_id") || "");
-  const start_date = String(formData.get("start_date") || "");
-  const end_date = String(formData.get("end_date") || "");
-  const deposit_amount = Number(formData.get("deposit_amount"));
-  const status = String(formData.get("status") || "active");
-  const due_day = Number(formData.get("due_day"));
+  const parsed = contractSchema.safeParse({
+    tenant_id: formData.get("tenant_id"),
+    room_id: formData.get("room_id"),
+    start_date: formData.get("start_date"),
+    end_date: formData.get("end_date"),
+    deposit_amount: formData.get("deposit_amount"),
+    status: formData.get("status"),
+    due_day: formData.get("due_day"),
+  });
 
-  if (!tenant_id || !room_id || !start_date || !end_date) {
-    throw new Error("សូមបំពេញព័ត៌មានកិច្ចសន្យាឲ្យបានគ្រប់គ្រាន់");
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message || "ទិន្នន័យមិនត្រឹមត្រូវ");
   }
 
-  if (new Date(end_date) <= new Date(start_date)) {
-    throw new Error("ថ្ងៃបញ្ចប់ត្រូវតែក្រោយថ្ងៃចាប់ផ្តើម");
-  }
+  const {
+    tenant_id,
+    room_id,
+    start_date,
+    end_date,
+    deposit_amount,
+    status,
+    due_day,
+  } = parsed.data;
 
   const { data: tenant, error: tenantError } = await supabase
     .from("profiles")
