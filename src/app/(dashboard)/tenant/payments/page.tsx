@@ -51,17 +51,17 @@ export default async function TenantPaymentsPage({
   const { unpaidBills, payments, settings } = await getTenantPaymentsData();
 
   const selectedBill =
-    unpaidBills.find((bill: any) => bill.id === selectedBillId) ||
+    unpaidBills.find((bill) => bill.id === selectedBillId) ||
     unpaidBills[0];
 
   const pendingCount = payments.filter(
-    (p: any) => p.status === "pending",
+    (p) => p.status === "pending",
   ).length;
   const approvedCount = payments.filter(
-    (p: any) => p.status === "approved",
+    (p) => p.status === "approved",
   ).length;
   const rejectedCount = payments.filter(
-    (p: any) => p.status === "rejected",
+    (p) => p.status === "rejected",
   ).length;
   const hasPendingPayment = payments?.some(
     (p) => p.bill_id === selectedBill?.id && p.status === "pending",
@@ -115,7 +115,7 @@ export default async function TenantPaymentsPage({
                   defaultValue={selectedBill?.id}
                   className="mt-1 h-10 w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 text-sm text-(--panel-text)"
                 >
-                  {unpaidBills.map((bill: any) => (
+                  {unpaidBills.map((bill) => (
                     <option key={bill.id} value={bill.id}>
                       ខែ {formatMonth(bill.billing_month)} - $
                       {Number(bill.total_amount || 0).toFixed(2)}
@@ -204,7 +204,7 @@ export default async function TenantPaymentsPage({
           {payments.length === 0 ? (
             <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានការទូទាត់</p>
           ) : (
-            payments.map((payment: any) => (
+            payments.map((payment) => (
               <div
                 key={payment.id}
                 className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
@@ -215,7 +215,11 @@ export default async function TenantPaymentsPage({
                   </p>
                   <p className="text-xs text-(--panel-text-subtle)">
                     {PAYMENT_METHOD_LABELS[payment.payment_method as keyof typeof PAYMENT_METHOD_LABELS] || payment.payment_method}{" "}
-                    · ខែ {formatMonth(payment.bills?.billing_month)}
+                    · ខែ{" "}
+                    {formatMonth(
+                      (payment.bills as { billing_month?: string } | null)
+                        ?.billing_month,
+                    )}
                   </p>
                 </div>
 

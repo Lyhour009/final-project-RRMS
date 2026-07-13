@@ -1,5 +1,46 @@
 import { PAYMENT_METHOD_LABELS } from "@/lib/validations/payments";
 
+interface RecentBill {
+  id: string;
+  billing_month: string;
+  total_amount: number;
+  status: string;
+  profiles?: { full_name?: string } | null;
+  contracts?: { rooms?: { room_number?: string } | null } | null;
+}
+
+interface RecentPayment {
+  id: string;
+  amount: number;
+  payment_method: string;
+  status: string;
+  profiles?: { full_name?: string } | null;
+}
+
+interface RecentContract {
+  id: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  profiles?: { full_name?: string } | null;
+  rooms?: { room_number?: string } | null;
+}
+
+interface RecentMaintenanceRequest {
+  id: string;
+  issue_title: string;
+  status: string;
+  profiles?: { full_name?: string } | null;
+  rooms?: { room_number?: string } | null;
+}
+
+export interface RecentData {
+  bills: RecentBill[];
+  payments: RecentPayment[];
+  contracts: RecentContract[];
+  maintenanceRequests: RecentMaintenanceRequest[];
+}
+
 function StatusBadge({
   status,
 }: {
@@ -62,7 +103,7 @@ function RecentCard({
   );
 }
 
-export function RecentDashboardTables({ recent }: { recent: any }) {
+export function RecentDashboardTables({ recent }: { recent: RecentData }) {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <RecentCard title="វិក្កយបត្រថ្មីៗ">
@@ -70,7 +111,7 @@ export function RecentDashboardTables({ recent }: { recent: any }) {
           {recent.bills.length === 0 ? (
             <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានវិក្កយបត្រ</p>
           ) : (
-            recent.bills.map((bill: any) => (
+            recent.bills.map((bill) => (
               <div
                 key={bill.id}
                 className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
@@ -102,7 +143,7 @@ export function RecentDashboardTables({ recent }: { recent: any }) {
           {recent.payments.length === 0 ? (
             <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានការទូទាត់</p>
           ) : (
-            recent.payments.map((payment: any) => (
+            recent.payments.map((payment) => (
               <div
                 key={payment.id}
                 className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
@@ -133,7 +174,7 @@ export function RecentDashboardTables({ recent }: { recent: any }) {
           {recent.contracts.length === 0 ? (
             <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានកិច្ចសន្យា</p>
           ) : (
-            recent.contracts.map((contract: any) => (
+            recent.contracts.map((contract) => (
               <div
                 key={contract.id}
                 className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
@@ -160,7 +201,7 @@ export function RecentDashboardTables({ recent }: { recent: any }) {
           {recent.maintenanceRequests.length === 0 ? (
             <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានសំណើជួសជុល</p>
           ) : (
-            recent.maintenanceRequests.map((item: any) => (
+            recent.maintenanceRequests.map((item) => (
               <div
                 key={item.id}
                 className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"

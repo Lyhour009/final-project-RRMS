@@ -10,7 +10,10 @@ import {
 import { getDashboardStats } from "@/actions/dashboard";
 import { AdminDashboardCharts } from "@/components/dashboard/admin-dashboard-chart";
 import { DashboardActionCards } from "@/components/dashboard/admin-dashboard-action-card";
-import { RecentDashboardTables } from "@/components/dashboard/recent-dashboard-tables";
+import {
+  RecentDashboardTables,
+  type RecentData,
+} from "@/components/dashboard/recent-dashboard-tables";
 
 function StatCard({
   title,
@@ -127,7 +130,7 @@ export default async function AdminDashboardPage() {
         revenueByMonth={stats.charts.revenueByMonth}
       />
 
-      <RecentDashboardTables recent={stats.recent} />
+      <RecentDashboardTables recent={stats.recent as RecentData} />
     </div>
   );
 }

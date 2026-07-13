@@ -6,7 +6,7 @@ export default async function ContractsPage() {
   const contracts = await getContracts();
   const { tenants, rooms } = await getContractFormData();
 
-  const exportContracts = contracts.map((contract: any) => ({
+  const exportContracts = contracts.map((contract) => ({
     Tenant: contract.profiles?.full_name || "-",
     Room: contract.rooms?.room_number || "-",
     StartDate: contract.start_date,

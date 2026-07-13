@@ -43,12 +43,12 @@ export default async function TenantBillsPage() {
   const { bills, payments, settings } = await getTenantBillsData();
 
   const currentBill = bills.find(
-    (bill: any) => bill.status === "unpaid" || bill.status === "overdue",
+    (bill) => bill.status === "unpaid" || bill.status === "overdue",
   );
 
   const pendingPayment = currentBill
     ? payments.find(
-        (payment: any) =>
+        (payment) =>
           payment.bill_id === currentBill.id && payment.status === "pending",
       )
     : null;
@@ -165,7 +165,7 @@ export default async function TenantBillsPage() {
           {bills.length === 0 ? (
             <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានវិក្កយបត្រ</p>
           ) : (
-            bills.map((bill: any) => (
+            bills.map((bill) => (
               <div
                 key={bill.id}
                 className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"

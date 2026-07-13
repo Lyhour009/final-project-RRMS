@@ -7,6 +7,17 @@ import {
   getMyNotifications,
   markNotificationAsRead,
 } from "@/actions/notifications";
+import { formatKhmerDate } from "@/lib/utils";
+
+function formatNotificationTime(value: string) {
+  const date = new Date(value);
+  const time = `${date.getHours().toString().padStart(2, "0")}:${date
+    .getMinutes()
+    .toString()
+    .padStart(2, "0")}`;
+
+  return `${formatKhmerDate(value, { withDay: true })} ${time}`;
+}
 
 type NotificationItem = {
   id: string;
@@ -26,15 +37,6 @@ export function NotificationBell() {
     setNotifications(data as NotificationItem[]);
   }
 
-  // useEffect(() => {
-  //   loadNotifications();
-
-  //   const interval = setInterval(() => {
-  //     loadNotifications();
-  //   }, 10000);
-
-  //   return () => clearInterval(interval);
-  // }, []);
   useEffect(() => {
     loadNotifications();
 
@@ -84,13 +86,13 @@ export function NotificationBell() {
                 const content = (
                   <div
                     onClick={() => handleRead(item.id)}
-                    className={`p-4 border-b border-zinc-800 hover:bg-zinc-900/50 cursor-pointer ${
+                    className={`p-4 border-b border-(--panel-border) hover:bg-(--panel-hover) cursor-pointer ${
                       !item.is_read ? "bg-blue-500/5" : ""
                     }`}
                   >
                     <p className="text-sm text-(--panel-text)">{item.message}</p>
                     <p className="text-xs text-(--panel-text-subtle) mt-1">
-                      {new Date(item.created_at).toLocaleString()}
+                      {formatNotificationTime(item.created_at)}
                     </p>
                   </div>
                 );

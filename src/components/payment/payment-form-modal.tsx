@@ -148,8 +148,8 @@ export default function PaymentSubmitModal({
       reset();
       setProofPreview(null);
       onClose();
-    } catch (error: any) {
-      toast.error(error.message || "មានបញ្ហាបច្ចេកទេស");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "មានបញ្ហាបច្ចេកទេស");
     } finally {
       setLoading(false);
     }

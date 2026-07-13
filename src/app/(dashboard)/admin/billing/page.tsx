@@ -12,7 +12,7 @@ export default async function BillsPage() {
     getSettings(),
   ]);
 
-  const exportBills = bills.map((bill: any) => ({
+  const exportBills = bills.map((bill) => ({
     Tenant: bill.profiles?.full_name || "-",
     Room: bill.contracts?.rooms?.room_number || "-",
     BillingMonth: bill.billing_month,

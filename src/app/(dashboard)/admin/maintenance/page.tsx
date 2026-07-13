@@ -12,6 +12,18 @@ import {
 } from "@/actions/maintenances";
 import { ExportExcelButton } from "@/components/export/export-excel-button";
 
+interface MaintenanceRequestItem {
+  id: string;
+  issue_title: string;
+  issue_description: string;
+  status: string;
+  priority: string;
+  created_at: string;
+  resolved_at: string | null;
+  profiles?: { full_name?: string; phone_number?: string } | null;
+  rooms?: { room_number?: string } | null;
+}
+
 function StatusBadge({ status }: { status: string }) {
   let className = "bg-zinc-500/10 text-(--panel-text-muted) border-zinc-500/20";
 
@@ -96,22 +108,22 @@ function StatCard({
 }
 
 export default async function AdminMaintenancePage() {
-  const requests = await getMaintenanceRequests();
+  const requests = (await getMaintenanceRequests()) as MaintenanceRequestItem[];
 
   const pending = requests.filter(
-    (item: any) => item.status === "pending",
+    (item) => item.status === "pending",
   ).length;
   const inProgress = requests.filter(
-    (item: any) => item.status === "in_progress",
+    (item) => item.status === "in_progress",
   ).length;
   const resolved = requests.filter(
-    (item: any) => item.status === "resolved",
+    (item) => item.status === "resolved",
   ).length;
   const highPriority = requests.filter(
-    (item: any) => item.priority === "high",
+    (item) => item.priority === "high",
   ).length;
 
-  const exportMaintenance = requests.map((item: any) => ({
+  const exportMaintenance = requests.map((item) => ({
     Tenant: item.profiles?.full_name || "-",
     Room: item.rooms?.room_number || "-",
     Issue: item.issue_title,
@@ -196,7 +208,7 @@ export default async function AdminMaintenancePage() {
                   </td>
                 </tr>
               ) : (
-                requests.map((item: any) => (
+                requests.map((item) => (
                   <tr
                     key={item.id}
                     className="hover:bg-(--panel-hover)/30 transition-colors"

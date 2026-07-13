@@ -40,7 +40,9 @@ export default async function DashboardLayout({
               <SidebarTrigger className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" />
               <div className="hidden sm:flex items-center gap-1.5 text-[13px]">
                 <span className="font-medium text-slate-700 dark:text-slate-200">
-                  {userRole === "admin" ? "Admin Panel" : "Tenant Panel"}
+                  {userRole === "admin"
+                    ? "ផ្ទាំងគ្រប់គ្រងប្រព័ន្ធ"
+                    : "ប្រព័ន្ធព័ត៌មានអ្នកជួល"}
                 </span>
               </div>
             </div>

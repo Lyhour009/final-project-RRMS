@@ -136,8 +136,10 @@ export function PaymentTableWrapper({
       );
 
       toast.success("បានអនុម័តការទូទាត់");
-    } catch (error: any) {
-      toast.error(error.message || "មានបញ្ហាក្នុងការអនុម័ត");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "មានបញ្ហាក្នុងការអនុម័ត",
+      );
     } finally {
       setLoadingId(null);
     }
@@ -156,8 +158,10 @@ export function PaymentTableWrapper({
       );
 
       toast.success("បានបដិសេធការទូទាត់");
-    } catch (error: any) {
-      toast.error(error.message || "មានបញ្ហាក្នុងការបដិសេធ");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "មានបញ្ហាក្នុងការបដិសេធ",
+      );
     } finally {
       setLoadingId(null);
     }
@@ -174,8 +178,10 @@ export function PaymentTableWrapper({
       setPayments((prev) => prev.filter((p) => p.id !== payment.id));
 
       toast.success("បានលុបការទូទាត់");
-    } catch (error: any) {
-      toast.error(error.message || "មានបញ្ហាក្នុងការលុប");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "មានបញ្ហាក្នុងការលុប",
+      );
     } finally {
       setLoadingId(null);
     }

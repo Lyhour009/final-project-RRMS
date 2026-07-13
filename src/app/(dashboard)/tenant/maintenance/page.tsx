@@ -68,13 +68,13 @@ export default async function TenantMaintenancePage() {
   const { contract, requests } = await getTenantMaintenanceData();
 
   const pending = requests.filter(
-    (item: any) => item.status === "pending",
+    (item) => item.status === "pending",
   ).length;
   const inProgress = requests.filter(
-    (item: any) => item.status === "in_progress",
+    (item) => item.status === "in_progress",
   ).length;
   const resolved = requests.filter(
-    (item: any) => item.status === "resolved",
+    (item) => item.status === "resolved",
   ).length;
 
   return (
@@ -177,7 +177,7 @@ export default async function TenantMaintenancePage() {
             {requests.length === 0 ? (
               <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានសំណើជួសជុល</p>
             ) : (
-              requests.map((item: any) => (
+              requests.map((item) => (
                 <div
                   key={item.id}
                   className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-4"

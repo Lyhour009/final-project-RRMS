@@ -256,7 +256,7 @@ export default async function TenantOverviewPage() {
             {data.recentBills.length === 0 ? (
               <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានវិក្កយបត្រ</p>
             ) : (
-              data.recentBills.map((bill: any) => (
+              data.recentBills.map((bill) => (
                 <div
                   key={bill.id}
                   className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
@@ -284,7 +284,7 @@ export default async function TenantOverviewPage() {
             {data.recentPayments.length === 0 ? (
               <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានការទូទាត់</p>
             ) : (
-              data.recentPayments.map((payment: any) => (
+              data.recentPayments.map((payment) => (
                 <div
                   key={payment.id}
                   className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
