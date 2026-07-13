@@ -3,7 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { CreditCard, Save, Settings, Zap } from "lucide-react";
 import { toast } from "sonner";
-import { updateSettings } from "@/actions/settings";
+import { updateSettings, type getSettings } from "@/actions/settings";
 import PaymentQrUpload from "@/components/setting/payment-qr-upload";
 
 function Field({
@@ -12,12 +12,14 @@ function Field({
   defaultValue,
   type = "text",
   placeholder,
+  step,
 }: {
   label: string;
   name: string;
   defaultValue?: string | number | null;
   type?: string;
   placeholder?: string;
+  step?: string;
 }) {
   return (
     <div>
@@ -25,6 +27,7 @@ function Field({
       <input
         name={name}
         type={type}
+        step={step}
         defaultValue={defaultValue ?? ""}
         placeholder={placeholder}
         className="mt-1 h-10 w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 text-sm text-(--panel-text) outline-none focus:border-indigo-500/50 placeholder-(--panel-text-subtle)"
@@ -33,7 +36,9 @@ function Field({
   );
 }
 
-export default function SettingsForm({ settings }: { settings: any }) {
+type Settings = NonNullable<Awaited<ReturnType<typeof getSettings>>>;
+
+export default function SettingsForm({ settings }: { settings: Settings }) {
   const [state, formAction, pending] = useActionState(updateSettings, null);
 
   useEffect(() => {
@@ -98,18 +103,21 @@ export default function SettingsForm({ settings }: { settings: any }) {
               label="តម្លៃទឹក"
               name="water_rate"
               type="number"
+              step="0.01"
               defaultValue={settings.water_rate}
             />
             <Field
               label="តម្លៃភ្លើង"
               name="electric_rate"
               type="number"
+              step="0.01"
               defaultValue={settings.electric_rate}
             />
             <Field
               label="ថ្លៃពិន័យបង់យឺត"
               name="late_fee"
               type="number"
+              step="0.01"
               defaultValue={settings.late_fee}
             />
           </div>
