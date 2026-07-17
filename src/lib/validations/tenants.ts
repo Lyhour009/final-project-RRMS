@@ -19,6 +19,7 @@ export interface Tenant {
   email: string;
   created_at: string;
   id_card_images?: string[];
+  id_card_image_paths?: string[];
 }
 
 export const tenantSchema = z.object({

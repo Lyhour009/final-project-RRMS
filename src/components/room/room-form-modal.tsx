@@ -6,12 +6,25 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  FORM_MODAL_BODY,
+  FORM_MODAL_CONTENT,
+  FORM_MODAL_DESCRIPTION,
+  FORM_MODAL_FOOTER,
+  FORM_MODAL_HEADER,
+  FORM_MODAL_ICON,
+  FORM_MODAL_SCROLL_AREA,
+  FORM_MODAL_TITLE,
+  MODAL_PRIMARY_BUTTON,
+  MODAL_SECONDARY_BUTTON,
+} from "@/components/ui/modal-styles";
 import {
   Select,
   SelectContent,
@@ -22,8 +35,8 @@ import {
 import { roomSchema, RoomFormValues, Room } from "@/lib/validations/room";
 import { upsertRoom } from "@/actions/rooms";
 import { toast } from "sonner";
-import { X, UploadCloud } from "lucide-react";
-import Image from "next/image";
+import { Building2, X, UploadCloud } from "lucide-react";
+import { getErrorMessage } from "@/lib/utils";
 
 interface RoomModalProps {
   isOpen: boolean;
@@ -160,13 +173,14 @@ export default function RoomModal({
       }
 
       onClose();
-    } catch (error: any) {
-      if (error.message?.includes("23505") || error.code === "23505") {
+    } catch (error) {
+      const message = getErrorMessage(error, "មានបញ្ហាខុសបច្ចេកទេស");
+      if (message.includes("23505")) {
         toast.error(
           `លេខបន្ទប់ #${values.room_number} មានក្នុងប្រព័ន្ធរួចរាល់ហើយ! សូមប្រើលេខផ្សេង។`,
         );
       } else {
-        toast.error(error.message || "មានបញ្ហាខុសបច្ចេកទេស");
+        toast.error(message);
       }
     } finally {
       setLoading(false);
@@ -175,15 +189,20 @@ export default function RoomModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-(--panel-inset) text-(--panel-text) border-(--panel-border) max-w-xl max-h-[90vh] overflow-y-auto rounded-xl">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-(--panel-text)">
-            {isEditMode ? "📝 កែប្រែព័ត៌មានបន្ទប់" : "🏢 លម្អិតការបន្ថែមបន្ទប់"}
+      <DialogContent className={`${FORM_MODAL_CONTENT} sm:max-w-xl`}>
+        <DialogHeader className={FORM_MODAL_HEADER}>
+          <DialogTitle className={FORM_MODAL_TITLE}>
+            <span className={FORM_MODAL_ICON}><Building2 className="h-5 w-5" /></span>
+            {isEditMode ? "កែប្រែព័ត៌មានបន្ទប់" : "បន្ថែមបន្ទប់ថ្មី"}
           </DialogTitle>
+          <DialogDescription className={FORM_MODAL_DESCRIPTION}>
+            បញ្ចូលព័ត៌មាន តម្លៃ ស្ថានភាព និងគ្រឿងបរិក្ខាររបស់បន្ទប់
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
-          <div className="flex flex-col items-center justify-center border-2 border-dashed border-(--panel-border) rounded-xl p-4 bg-(--panel)">
+        <form onSubmit={handleSubmit(onSubmit)} className={FORM_MODAL_BODY}>
+          <div className={FORM_MODAL_SCROLL_AREA}>
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-(--panel-border) bg-(--panel) p-3 transition hover:border-indigo-500/35">
             {preview ? (
               <div className="relative w-full h-44">
                 <img
@@ -204,7 +223,7 @@ export default function RoomModal({
                 </button>
               </div>
             ) : (
-              <label className="cursor-pointer flex flex-col items-center py-6 w-full">
+              <label className="flex w-full cursor-pointer flex-col items-center rounded-xl py-8 transition hover:bg-(--panel-hover)/45">
                 <UploadCloud size={40} className="text-(--panel-text-subtle) mb-2" />
 
                 <span className="text-sm text-(--panel-text-muted)">
@@ -234,7 +253,7 @@ export default function RoomModal({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-(--panel-text-muted)">លេខបន្ទប់</Label>
 
@@ -271,7 +290,7 @@ export default function RoomModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-(--panel-text-muted)">ប្រភេទបន្ទប់</Label>
 
@@ -345,7 +364,7 @@ export default function RoomModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-(--panel-text-muted)">ជាន់</Label>
 
@@ -462,12 +481,13 @@ export default function RoomModal({
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-(--panel-border)/60">
+          </div>
+          <div className={FORM_MODAL_FOOTER}>
             <Button
               type="button"
               variant="ghost"
               onClick={onClose}
-              className="text-(--panel-text-muted) hover:text-(--panel-text) hover:bg-(--panel-border)"
+              className={MODAL_SECONDARY_BUTTON}
             >
               បោះបង់
             </Button>
@@ -475,7 +495,7 @@ export default function RoomModal({
             <Button
               type="submit"
               disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6"
+              className={MODAL_PRIMARY_BUTTON}
             >
               {loading ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
             </Button>

@@ -38,13 +38,16 @@ export function NotificationBell() {
   }
 
   useEffect(() => {
-    loadNotifications();
+    const initialLoad = window.setTimeout(() => void loadNotifications(), 0);
 
     const interval = setInterval(() => {
       loadNotifications();
     }, 60000);
 
-    return () => clearInterval(interval);
+    return () => {
+      window.clearTimeout(initialLoad);
+      clearInterval(interval);
+    };
   }, []);
 
   const unreadCount = notifications.filter((item) => !item.is_read).length;

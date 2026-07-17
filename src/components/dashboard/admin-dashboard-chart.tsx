@@ -1,5 +1,6 @@
 "use client";
 
+import { BarChart3 } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -51,21 +52,29 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
       <div className="mb-4">
         <h2 className="text-base font-semibold text-(--panel-text)">{title}</h2>
         <p className="text-xs text-(--panel-text-subtle) mt-1">{description}</p>
       </div>
 
-      <div className="dashboard-chart h-[300px] w-full">{children}</div>
+      <div className="dashboard-chart h-[260px] w-full">{children}</div>
     </div>
   );
 }
 
-function EmptyChart() {
+function EmptyChart({ description }: { description: string }) {
   return (
-    <div className="h-full flex items-center justify-center text-sm text-(--panel-text-subtle)">
-      មិនទាន់មានទិន្នន័យ
+    <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-(--panel-border) bg-(--panel-inset)/45 px-6 text-center">
+      <div className="mb-3 rounded-xl bg-indigo-500/10 p-3 text-indigo-500 dark:text-indigo-300">
+        <BarChart3 className="h-5 w-5" />
+      </div>
+      <p className="text-sm font-medium text-(--panel-text)">
+        មិនទាន់មានទិន្នន័យ
+      </p>
+      <p className="mt-1 max-w-xs text-xs leading-5 text-(--panel-text-subtle)">
+        {description}
+      </p>
     </div>
   );
 }
@@ -82,6 +91,11 @@ export function AdminDashboardCharts({
   revenueByMonth: { month: string; revenue: number }[];
 }) {
   const totalRooms = roomStatus.reduce((sum, item) => sum + item.value, 0);
+  const totalBills = billStatus.reduce((sum, item) => sum + item.value, 0);
+  const totalPayments = paymentStatus.reduce(
+    (sum, item) => sum + item.value,
+    0,
+  );
   const hasRevenueData = revenueByMonth.some((item) => item.revenue > 0);
   // A line needs 2+ points to draw an actual line — with only one month of
   // history, `<LineChart>` renders a single floating dot with nothing
@@ -90,12 +104,12 @@ export function AdminDashboardCharts({
   const hasTrendData = hasRevenueData && revenueByMonth.length >= 2;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <ChartCard title="ចំណូលតាមខែ" description="ចំណូលពីវិក្កយបត្រដែលបានបង់">
         {!hasRevenueData ? (
-          <EmptyChart />
+          <EmptyChart description="ចំណូលនឹងបង្ហាញនៅពេលវិក្កយបត្រត្រូវបានបង់" />
         ) : hasTrendData ? (
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height={250}>
             <LineChart
               data={revenueByMonth}
               margin={{ top: 20, right: 24, left: 4, bottom: 10 }}
@@ -137,7 +151,7 @@ export function AdminDashboardCharts({
           </ResponsiveContainer>
         ) : (
           <div className="flex h-full flex-col">
-            <ResponsiveContainer width="100%" height={230}>
+            <ResponsiveContainer width="100%" height={210}>
               <BarChart
                 data={revenueByMonth}
                 margin={{ top: 20, right: 24, left: 4, bottom: 10 }}
@@ -180,9 +194,9 @@ export function AdminDashboardCharts({
       </ChartCard>
       <ChartCard title="ស្ថានភាពបន្ទប់" description="ទំនេរ / មិនទំនេរ / ជួសជុល">
         {totalRooms === 0 ? (
-          <EmptyChart />
+          <EmptyChart description="បន្ថែមបន្ទប់ដើម្បីមើលសមាមាត្រការកាន់កាប់" />
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
                 data={roomStatus}
@@ -234,7 +248,10 @@ export function AdminDashboardCharts({
         )}
       </ChartCard>
       <ChartCard title="ស្ថានភាពវិក្កយបត្រ" description="បង់ / មិនបង់ / ហួស">
-        <ResponsiveContainer width="100%" height={280}>
+        {totalBills === 0 ? (
+          <EmptyChart description="ស្ថានភាពនឹងបង្ហាញនៅពេលមានវិក្កយបត្រ" />
+        ) : (
+        <ResponsiveContainer width="100%" height={250}>
           <BarChart
             data={billStatus}
             margin={{ top: 20, right: 18, left: -18, bottom: 10 }}
@@ -276,13 +293,17 @@ export function AdminDashboardCharts({
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        )}
       </ChartCard>
 
       <ChartCard
         title="ស្ថានភាពការទូទាត់"
         description="រង់ចាំ / អនុម័ត / បដិសេធ"
       >
-        <ResponsiveContainer width="100%" height={280}>
+        {totalPayments === 0 ? (
+          <EmptyChart description="ស្ថានភាពនឹងបង្ហាញនៅពេលមានការទូទាត់" />
+        ) : (
+        <ResponsiveContainer width="100%" height={250}>
           <BarChart
             data={paymentStatus}
             margin={{ top: 20, right: 18, left: -18, bottom: 10 }}
@@ -324,6 +345,7 @@ export function AdminDashboardCharts({
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        )}
       </ChartCard>
     </div>
   );

@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { ArrowUpRight, Inbox } from "lucide-react";
+
 import { PAYMENT_METHOD_LABELS } from "@/lib/validations/payments";
 
 interface RecentBill {
@@ -90,26 +93,46 @@ function StatusBadge({
 
 function RecentCard({
   title,
+  href,
   children,
 }: {
   title: string;
+  href: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
-      <h2 className="text-base font-semibold text-(--panel-text) mb-4">{title}</h2>
+    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-base font-semibold text-(--panel-text)">{title}</h2>
+        <Link
+          href={href}
+          aria-label={`មើល ${title}`}
+          className="rounded-lg p-1.5 text-(--panel-text-subtle) transition hover:bg-(--panel-hover) hover:text-indigo-500"
+        >
+          <ArrowUpRight className="h-4 w-4" />
+        </Link>
+      </div>
       {children}
+    </div>
+  );
+}
+
+function EmptyList({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-28 flex-col items-center justify-center rounded-xl border border-dashed border-(--panel-border) bg-(--panel-inset)/45 px-5 text-center">
+      <Inbox className="mb-2 h-5 w-5 text-(--panel-text-subtle)" />
+      <p className="text-xs leading-5 text-(--panel-text-subtle)">{children}</p>
     </div>
   );
 }
 
 export function RecentDashboardTables({ recent }: { recent: RecentData }) {
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-      <RecentCard title="វិក្កយបត្រថ្មីៗ">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <RecentCard title="វិក្កយបត្រថ្មីៗ" href="/admin/billing">
         <div className="space-y-3">
           {recent.bills.length === 0 ? (
-            <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានវិក្កយបត្រ</p>
+            <EmptyList>មិនទាន់មានវិក្កយបត្រថ្មីៗ</EmptyList>
           ) : (
             recent.bills.map((bill) => (
               <div
@@ -138,10 +161,10 @@ export function RecentDashboardTables({ recent }: { recent: RecentData }) {
         </div>
       </RecentCard>
 
-      <RecentCard title="ការទូទាត់ថ្មីៗ">
+      <RecentCard title="ការទូទាត់ថ្មីៗ" href="/admin/payments">
         <div className="space-y-3">
           {recent.payments.length === 0 ? (
-            <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានការទូទាត់</p>
+            <EmptyList>មិនទាន់មានការទូទាត់ថ្មីៗ</EmptyList>
           ) : (
             recent.payments.map((payment) => (
               <div
@@ -169,10 +192,10 @@ export function RecentDashboardTables({ recent }: { recent: RecentData }) {
         </div>
       </RecentCard>
 
-      <RecentCard title="កិច្ចសន្យាថ្មីៗ">
+      <RecentCard title="កិច្ចសន្យាថ្មីៗ" href="/admin/contracts">
         <div className="space-y-3">
           {recent.contracts.length === 0 ? (
-            <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានកិច្ចសន្យា</p>
+            <EmptyList>មិនទាន់មានកិច្ចសន្យាថ្មីៗ</EmptyList>
           ) : (
             recent.contracts.map((contract) => (
               <div
@@ -196,10 +219,10 @@ export function RecentDashboardTables({ recent }: { recent: RecentData }) {
         </div>
       </RecentCard>
 
-      <RecentCard title="សំណើជួសជុលថ្មីៗ">
+      <RecentCard title="សំណើជួសជុលថ្មីៗ" href="/admin/maintenance">
         <div className="space-y-3">
           {recent.maintenanceRequests.length === 0 ? (
-            <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានសំណើជួសជុល</p>
+            <EmptyList>មិនទាន់មានសំណើជួសជុលថ្មីៗ</EmptyList>
           ) : (
             recent.maintenanceRequests.map((item) => (
               <div

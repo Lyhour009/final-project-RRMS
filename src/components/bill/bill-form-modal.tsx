@@ -4,16 +4,31 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils";
 
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  FORM_MODAL_BODY,
+  FORM_MODAL_CONTENT,
+  FORM_MODAL_DESCRIPTION,
+  FORM_MODAL_FOOTER,
+  FORM_MODAL_HEADER,
+  FORM_MODAL_ICON,
+  FORM_MODAL_SCROLL_AREA,
+  FORM_MODAL_TITLE,
+  MODAL_PRIMARY_BUTTON,
+  MODAL_SECONDARY_BUTTON,
+} from "@/components/ui/modal-styles";
+import { ReceiptText } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -194,8 +209,8 @@ export default function BillModal({
       }
 
       onClose();
-    } catch (error: any) {
-      toast.error(error.message || "មានបញ្ហាខុសបច្ចេកទេស");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "មានបញ្ហាខុសបច្ចេកទេស"));
     } finally {
       setLoading(false);
     }
@@ -203,14 +218,19 @@ export default function BillModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-(--panel-inset) text-(--panel-text) border-(--panel-border) max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-(--panel-text)">
-            {isEditMode ? "📝 កែប្រែវិក្កយបត្រ" : "🧾 បន្ថែមវិក្កយបត្រថ្មី"}
+      <DialogContent className={`${FORM_MODAL_CONTENT} sm:max-w-2xl`}>
+        <DialogHeader className={FORM_MODAL_HEADER}>
+          <DialogTitle className={FORM_MODAL_TITLE}>
+            <span className={FORM_MODAL_ICON}><ReceiptText className="h-5 w-5" /></span>
+            {isEditMode ? "កែប្រែវិក្កយបត្រ" : "បន្ថែមវិក្កយបត្រថ្មី"}
           </DialogTitle>
+          <DialogDescription className={FORM_MODAL_DESCRIPTION}>
+            កំណត់ថ្លៃបន្ទប់ ការប្រើប្រាស់ទឹក ភ្លើង និងស្ថានភាពវិក្កយបត្រ
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
+        <form onSubmit={handleSubmit(onSubmit)} className={FORM_MODAL_BODY}>
+          <div className={FORM_MODAL_SCROLL_AREA}>
           <div className="space-y-1.5">
             <Label className="text-(--panel-text-muted)">កិច្ចសន្យា</Label>
 
@@ -294,7 +314,7 @@ export default function BillModal({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-(--panel-text-muted)">ខែវិក្កយបត្រ</Label>
 
@@ -343,7 +363,7 @@ export default function BillModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-(--panel-text-muted)">កុងទ័រទឹកដើម</Label>
               <Input
@@ -377,7 +397,7 @@ export default function BillModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-(--panel-text-muted)">កុងទ័រភ្លើងដើម</Label>
               <Input
@@ -445,12 +465,13 @@ export default function BillModal({
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-(--panel-border)/60">
+          </div>
+          <div className={FORM_MODAL_FOOTER}>
             <Button
               type="button"
               variant="ghost"
               onClick={onClose}
-              className="text-(--panel-text-muted) hover:text-(--panel-text) hover:bg-(--panel-border)"
+              className={MODAL_SECONDARY_BUTTON}
             >
               បោះបង់
             </Button>
@@ -458,7 +479,7 @@ export default function BillModal({
             <Button
               type="submit"
               disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6"
+              className={MODAL_PRIMARY_BUTTON}
             >
               {loading ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
             </Button>

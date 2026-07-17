@@ -83,7 +83,7 @@ export async function requireAdmin() {
     throw new Error("សូមចូលប្រើប្រាស់ជាមុនសិន");
   }
 
-  if (role !== "admin") {
+  if (role !== "admin" || user.app_metadata?.role !== "admin") {
     throw new Error("អ្នកមិនមានសិទ្ធិប្រើប្រាស់មុខងារនេះទេ");
   }
 

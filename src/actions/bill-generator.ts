@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/server";
-import { createNotification } from "@/actions/notifications";
+import { createNotification } from "@/lib/notifications";
 
 // Supabase-js can't infer that `rooms:room_id` resolves to a single row
 // (it's a to-one FK, but without generated DB types the client only knows

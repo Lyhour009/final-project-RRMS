@@ -19,7 +19,6 @@ import {
   ClipboardList,
   UsersRound,
   Files,
-  User2,
   User,
 } from "lucide-react";
 

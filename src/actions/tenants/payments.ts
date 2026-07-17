@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/supabase/server";
-import { createNotification } from "@/actions/notifications";
+import { createNotification } from "@/lib/notifications";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const PAYMENT_METHODS = [
   "cash",
@@ -60,9 +61,22 @@ export async function getTenantPaymentsData() {
 
   if (settingsError) throw new Error(settingsError.message);
 
+  const adminClient = createAdminClient();
+  const paymentsWithSignedProofs = await Promise.all(
+    (payments || []).map(async (payment) => {
+      if (!payment.proof_image) return payment;
+
+      const { data: signed } = await adminClient.storage
+        .from("payment-proofs")
+        .createSignedUrl(payment.proof_image, 60 * 60);
+
+      return { ...payment, proof_image: signed?.signedUrl ?? null };
+    }),
+  );
+
   return {
     unpaidBills: unpaidBills || [],
-    payments: payments || [],
+    payments: paymentsWithSignedProofs,
     settings,
   };
 }

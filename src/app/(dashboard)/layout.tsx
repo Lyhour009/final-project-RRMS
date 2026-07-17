@@ -26,7 +26,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      <div className="flex min-h-screen w-full bg-(--panel-inset) transition-colors duration-300">
         {/* ── Sidebar ─────────────────────────────────── */}
         {/* Pass the complete userProfile and role to the sidebar */}
         <AppSidebar user={userProfile} role={userRole} />
@@ -34,7 +34,7 @@ export default async function DashboardLayout({
         {/* ── Main shell ──────────────────────────────── */}
         <main className="flex-1 flex flex-col min-w-0">
           {/* ── Top bar ───────────────────────────────── */}
-          <header className="sticky top-0 z-30 flex items-center justify-between h-14 px-6 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-(--panel-border-subtle) bg-(--panel-inset)/85 px-4 backdrop-blur-xl sm:px-6">
             {/* Left: trigger + breadcrumb */}
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" />
@@ -70,7 +70,7 @@ export default async function DashboardLayout({
           </header>
 
           {/* ── Page content ──────────────────────────── */}
-          <div className="flex-1 p-6 md:p-8 overflow-y-auto">{children}</div>
+          <div className="flex-1 overflow-y-auto">{children}</div>
         </main>
       </div>
     </SidebarProvider>

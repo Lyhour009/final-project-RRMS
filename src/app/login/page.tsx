@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,22 +31,15 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
   const [showPassword, setShowPassword] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
-
-  useEffect(() => {
-    reset({ email: "", password: "" });
-    setMounted(true);
-  }, [reset]);
 
   const onLoginSubmit = async (data: LoginFormData) => {
     try {
@@ -228,7 +221,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                disabled={isSubmitting || !mounted}
+                disabled={isSubmitting}
                 className="w-full h-9 mt-1 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm shadow-md shadow-blue-500/20 transition-all"
               >
                 {isSubmitting ? (

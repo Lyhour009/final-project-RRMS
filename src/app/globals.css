@@ -97,16 +97,15 @@
 }
 
 .dark {
-  /* Same values the app used before it had light-mode support at all. */
-  --panel: #131626;
-  --panel-inset: #0b0d19;
-  --panel-sidebar: #0f1629;
-  --panel-hover: #18181b; /* zinc-900 */
-  --panel-border: #27272a; /* zinc-800 */
-  --panel-border-subtle: rgb(255 255 255 / 0.07);
-  --panel-text: #ffffff;
-  --panel-text-muted: #a1a1aa; /* zinc-400 */
-  --panel-text-subtle: #71717a; /* zinc-500 */
+  --panel: #121625;
+  --panel-inset: #080c16;
+  --panel-sidebar: #0d1424;
+  --panel-hover: #1a2030;
+  --panel-border: #283044;
+  --panel-border-subtle: rgb(255 255 255 / 0.08);
+  --panel-text: #f8fafc;
+  --panel-text-muted: #aeb7c8;
+  --panel-text-subtle: #818ba0;
 
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -177,7 +176,7 @@ html {
 
 .dashboard-chart .recharts-legend-item-text {
   font-size: 13px !important;
-  color: #a1a1aa !important;
+  color: var(--panel-text-muted) !important;
 }
 
 .dashboard-chart .recharts-tooltip-wrapper {

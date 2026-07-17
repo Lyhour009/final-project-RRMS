@@ -113,7 +113,20 @@ with separate **Admin** and **Tenant** portals.
 
 3. **Apply the Row Level Security policies** — run [`supabase/rls-policies.sql`](supabase/rls-policies.sql) in your Supabase project's SQL Editor. This is required, not optional: without it, the anon key (which is public — it ships in every browser bundle) can read/write the `profiles`, `contracts`, `bills`, `payments`, `maintenance_requests`, `settings`, and `rooms` tables directly through Supabase's REST API, completely bypassing this app's own access checks. See [Security](#-security) below for why.
 
-4. **Run the dev server**
+   Re-run this file after every policy change. In particular, the current
+   policy intentionally prevents users from updating their own `role` and
+   does not permit browser clients to insert arbitrary notifications.
+
+4. **Harden the Supabase project before production**
+
+   - Disable public user registration in **Authentication → Providers → Email**.
+     Tenant accounts are provisioned by an authenticated administrator.
+   - Keep `room-images` public, but keep `tenants` and `payment-proofs` private.
+   - Set both private buckets to a 5 MB file limit and allow only JPEG, PNG,
+     and WebP images.
+   - Configure production URL/redirect allowlists in Supabase Authentication.
+
+5. **Run the dev server**
    ```bash
    npm run dev
    ```
@@ -126,6 +139,7 @@ with separate **Admin** and **Tenant** portals.
 npm run build   # production build
 npm run start   # run a production build
 npm run lint    # eslint
+npm test        # security regression tests
 ```
 
 ### Admin utility scripts

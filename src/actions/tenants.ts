@@ -1,31 +1,47 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@supabase/supabase-js";
 import { requireAdmin } from "@/lib/supabase/server";
-import { tenantSchema } from "@/lib/validations/tenants";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { tenantSchema, type Tenant } from "@/lib/validations/tenants";
+
+const IMAGE_EXTENSIONS: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
+async function attachSignedIdCard(
+  supabase: ReturnType<typeof createAdminClient>,
+  tenant: Tenant,
+) {
+  const paths = tenant.id_card_images ?? [];
+  const signedUrls = await Promise.all(
+    paths.map(async (path) => {
+      const { data, error } = await supabase.storage
+        .from("tenants")
+        .createSignedUrl(path, 60 * 60);
+
+      return error ? null : data.signedUrl;
+    }),
+  );
+
+  return {
+    ...tenant,
+    id_card_image_paths: paths,
+    id_card_images: signedUrls.filter((url): url is string => Boolean(url)),
+  };
+}
 
 // This client uses the Supabase SERVICE ROLE key, which bypasses Row Level
 // Security entirely — it's required for auth.admin.* (create/update/delete
 // a user's login) and to list every tenant profile regardless of RLS.
 // Because RLS can't protect these calls, every exported function below
 // must call requireAdmin() first; do not add a new export here without it.
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    },
-  );
-}
-
 export async function getTenants() {
   await requireAdmin();
-  const supabase = getSupabaseAdmin();
+  const supabase = createAdminClient();
 
   // Safety cap: admin list view shows the 500 most recent tenants. A tenant
   // older than that won't appear here or in search — revisit with real
@@ -39,12 +55,16 @@ export async function getTenants() {
 
   if (error) throw new Error(error.message);
 
-  return data || [];
+  return Promise.all(
+    ((data || []) as Tenant[]).map((tenant) =>
+      attachSignedIdCard(supabase, tenant),
+    ),
+  );
 }
 
 export async function upsertTenant(id: string | null, formData: FormData) {
   await requireAdmin();
-  const supabase = getSupabaseAdmin();
+  const supabase = createAdminClient();
 
   const parsed = tenantSchema.safeParse({
     full_name: formData.get("full_name"),
@@ -60,21 +80,38 @@ export async function upsertTenant(id: string | null, formData: FormData) {
 
   const { full_name, email, phone_number } = parsed.data;
   const password = (parsed.data.password ?? "").trim();
-  const existingImageUrl = String(formData.get("existing_image_url") || "");
 
   if (!id && password.length < 6) {
     throw new Error("លេខកូដសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ ៦ ខ្ទង់");
   }
 
   const imageFile = formData.get("id_card_image") as File | null;
-  let imageUrl = existingImageUrl;
+  let previousImagePath = "";
+
+  if (id) {
+    const { data: existingProfile, error: existingProfileError } =
+      await supabase
+        .from("profiles")
+        .select("id_card_images")
+        .eq("id", id)
+        .single();
+
+    if (existingProfileError) throw new Error(existingProfileError.message);
+    previousImagePath = existingProfile.id_card_images?.[0] || "";
+  }
+
+  let imagePath = previousImagePath;
 
   if (imageFile && imageFile.size > 0) {
-    const fileName = `${Date.now()}-${imageFile.name.replace(/\s+/g, "_")}`;
+    const extension = IMAGE_EXTENSIONS[imageFile.type];
+    if (!extension) throw new Error("Unsupported image type");
+
+    const fileName = `${crypto.randomUUID()}.${extension}`;
 
     const { error: uploadError } = await supabase.storage
       .from("tenants")
       .upload(fileName, imageFile, {
+        contentType: imageFile.type,
         upsert: false,
       });
 
@@ -82,11 +119,7 @@ export async function upsertTenant(id: string | null, formData: FormData) {
       throw new Error("Upload រូបភាពបរាជ័យ: " + uploadError.message);
     }
 
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("tenants").getPublicUrl(fileName);
-
-    imageUrl = publicUrl;
+    imagePath = fileName;
   }
 
   if (id) {
@@ -97,12 +130,14 @@ export async function upsertTenant(id: string | null, formData: FormData) {
         full_name: string;
         phone_number: string;
       };
+      app_metadata: { role: "tenant" };
     } = {
       email,
       user_metadata: {
         full_name,
         phone_number,
       },
+      app_metadata: { role: "tenant" },
     };
 
     if (password.length >= 6) {
@@ -114,7 +149,12 @@ export async function upsertTenant(id: string | null, formData: FormData) {
       authUpdate,
     );
 
-    if (authError) throw new Error(authError.message);
+    if (authError) {
+      if (imagePath && imagePath !== previousImagePath) {
+        await supabase.storage.from("tenants").remove([imagePath]);
+      }
+      throw new Error(authError.message);
+    }
 
     const { data, error } = await supabase
       .from("profiles")
@@ -123,7 +163,7 @@ export async function upsertTenant(id: string | null, formData: FormData) {
         full_name,
         email,
         phone_number,
-        id_card_images: imageUrl ? [imageUrl] : [],
+        id_card_images: imagePath ? [imagePath] : [],
       })
       .eq("id", id)
       .select()
@@ -131,8 +171,12 @@ export async function upsertTenant(id: string | null, formData: FormData) {
 
     if (error) throw new Error(error.message);
 
+    if (previousImagePath && previousImagePath !== imagePath) {
+      await supabase.storage.from("tenants").remove([previousImagePath]);
+    }
+
     revalidatePath("/admin/tenants");
-    return data;
+    return attachSignedIdCard(supabase, data as Tenant);
   }
 
   const { data: authData, error: authError } =
@@ -144,9 +188,13 @@ export async function upsertTenant(id: string | null, formData: FormData) {
         full_name,
         phone_number,
       },
+      app_metadata: { role: "tenant" },
     });
 
-  if (authError) throw new Error(authError.message);
+  if (authError) {
+    if (imagePath) await supabase.storage.from("tenants").remove([imagePath]);
+    throw new Error(authError.message);
+  }
 
   const userId = authData.user.id;
 
@@ -159,21 +207,25 @@ export async function upsertTenant(id: string | null, formData: FormData) {
         full_name,
         email,
         phone_number,
-        id_card_images: imageUrl ? [imageUrl] : [],
+        id_card_images: imagePath ? [imagePath] : [],
       },
     ])
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    await supabase.auth.admin.deleteUser(userId);
+    if (imagePath) await supabase.storage.from("tenants").remove([imagePath]);
+    throw new Error(error.message);
+  }
 
   revalidatePath("/admin/tenants");
-  return data;
+  return attachSignedIdCard(supabase, data as Tenant);
 }
 
 export async function deleteTenant(id: string) {
   await requireAdmin();
-  const supabase = getSupabaseAdmin();
+  const supabase = createAdminClient();
 
   const checkTables = ["contracts", "bills", "maintenance_requests"];
 
@@ -197,20 +249,10 @@ export async function deleteTenant(id: string) {
     .eq("id", id)
     .single();
 
-  const imageUrls = profile?.id_card_images || [];
+  const imagePaths = profile?.id_card_images || [];
 
-  if (imageUrls.length > 0) {
-    const paths = imageUrls
-      .map((url: string) => {
-        const marker = "/storage/v1/object/public/tenants/";
-        const index = url.indexOf(marker);
-        return index >= 0 ? url.slice(index + marker.length) : null;
-      })
-      .filter(Boolean) as string[];
-
-    if (paths.length > 0) {
-      await supabase.storage.from("tenants").remove(paths);
-    }
+  if (imagePaths.length > 0) {
+    await supabase.storage.from("tenants").remove(imagePaths);
   }
 
   const { error } = await supabase.auth.admin.deleteUser(id);

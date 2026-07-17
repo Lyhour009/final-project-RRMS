@@ -3,18 +3,31 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, UploadCloud, X } from "lucide-react";
+import { Eye, EyeOff, UploadCloud, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  FORM_MODAL_BODY,
+  FORM_MODAL_CONTENT,
+  FORM_MODAL_DESCRIPTION,
+  FORM_MODAL_FOOTER,
+  FORM_MODAL_HEADER,
+  FORM_MODAL_ICON,
+  FORM_MODAL_SCROLL_AREA,
+  FORM_MODAL_TITLE,
+  MODAL_PRIMARY_BUTTON,
+  MODAL_SECONDARY_BUTTON,
+} from "@/components/ui/modal-styles";
 
 import {
   Tenant,
@@ -22,6 +35,7 @@ import {
   TenantFormValues,
 } from "@/lib/validations/tenants";
 import { upsertTenant } from "@/actions/tenants";
+import { getErrorMessage } from "@/lib/utils";
 
 interface TenantModalProps {
   isOpen: boolean;
@@ -59,7 +73,9 @@ export default function TenantModal({
   });
 
   useEffect(() => {
-    if (isOpen) {
+    const resetTimer = window.setTimeout(() => {
+      if (!isOpen) return;
+
       if (tenant) {
         reset({
           full_name: tenant.full_name || "",
@@ -81,7 +97,9 @@ export default function TenantModal({
       }
 
       setShowPassword(false);
-    }
+    }, 0);
+
+    return () => window.clearTimeout(resetTimer);
   }, [isOpen, tenant, reset]);
 
   async function onSubmit(values: TenantFormValues) {
@@ -96,8 +114,6 @@ export default function TenantModal({
 
     if (values.id_card_image) {
       formData.append("id_card_image", values.id_card_image);
-    } else if (tenant?.id_card_images?.[0]) {
-      formData.append("existing_image_url", tenant.id_card_images[0]);
     }
 
     try {
@@ -112,8 +128,8 @@ export default function TenantModal({
       }
 
       onClose();
-    } catch (error: any) {
-      toast.error(error.message || "មានបញ្ហាខុសបច្ចេកទេស");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "មានបញ្ហាខុសបច្ចេកទេស"));
     } finally {
       setLoading(false);
     }
@@ -121,15 +137,20 @@ export default function TenantModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-(--panel-inset) text-(--panel-text) border-(--panel-border) max-w-xl max-h-[90vh] overflow-y-auto rounded-xl">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-(--panel-text)">
-            {isEditMode ? "📝 កែប្រែអ្នកជួល" : "👤 បន្ថែមអ្នកជួលថ្មី"}
+      <DialogContent className={`${FORM_MODAL_CONTENT} sm:max-w-xl`}>
+        <DialogHeader className={FORM_MODAL_HEADER}>
+          <DialogTitle className={FORM_MODAL_TITLE}>
+            <span className={FORM_MODAL_ICON}><UserPlus className="h-5 w-5" /></span>
+            {isEditMode ? "កែប្រែអ្នកជួល" : "បន្ថែមអ្នកជួលថ្មី"}
           </DialogTitle>
+          <DialogDescription className={FORM_MODAL_DESCRIPTION}>
+            បញ្ចូលព័ត៌មានទំនាក់ទំនង និងអត្តសញ្ញាណប័ណ្ណអ្នកជួល
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
-          <div className="flex flex-col items-center justify-center border-2 border-dashed border-(--panel-border) rounded-xl p-4 bg-(--panel)">
+        <form onSubmit={handleSubmit(onSubmit)} className={FORM_MODAL_BODY}>
+          <div className={FORM_MODAL_SCROLL_AREA}>
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-(--panel-border) bg-(--panel) p-3 transition hover:border-indigo-500/35">
             {preview ? (
               <div className="relative w-full h-44">
                 <img
@@ -152,7 +173,7 @@ export default function TenantModal({
                 </button>
               </div>
             ) : (
-              <label className="cursor-pointer flex flex-col items-center py-6 w-full">
+              <label className="flex w-full cursor-pointer flex-col items-center rounded-xl py-8 transition hover:bg-(--panel-hover)/45">
                 <UploadCloud size={40} className="text-(--panel-text-subtle) mb-2" />
 
                 <span className="text-sm text-(--panel-text-muted)">
@@ -269,12 +290,13 @@ export default function TenantModal({
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-(--panel-border)/60">
+          </div>
+          <div className={FORM_MODAL_FOOTER}>
             <Button
               type="button"
               variant="ghost"
               onClick={onClose}
-              className="text-(--panel-text-muted) hover:text-(--panel-text) hover:bg-(--panel-border)"
+              className={MODAL_SECONDARY_BUTTON}
             >
               បោះបង់
             </Button>
@@ -282,7 +304,7 @@ export default function TenantModal({
             <Button
               type="submit"
               disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6"
+              className={MODAL_PRIMARY_BUTTON}
             >
               {loading ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
             </Button>

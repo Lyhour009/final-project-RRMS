@@ -2,13 +2,23 @@ import { getPayments, getUnpaidBillsForPayment } from "@/actions/payments";
 import { ExportExcelButton } from "@/components/export/export-excel-button";
 import { PaymentTableWrapper } from "@/components/payment/payment-table";
 
+type PaymentExportRecord = {
+  amount: number;
+  payment_method: string;
+  status: string;
+  paid_at?: string | null;
+  created_at: string;
+  profiles?: { full_name?: string | null } | null;
+  bills?: { billing_month?: string | null } | null;
+};
+
 export default async function PaymentsPage() {
   const [payments, unpaidBills] = await Promise.all([
     getPayments(),
     getUnpaidBillsForPayment(),
   ]);
 
-  const exportPayments = payments.map((payment: any) => ({
+  const exportPayments = payments.map((payment: PaymentExportRecord) => ({
     Tenant: payment.profiles?.full_name || "-",
     BillMonth: payment.bills?.billing_month?.slice(0, 7) || "-",
     Amount: payment.amount,

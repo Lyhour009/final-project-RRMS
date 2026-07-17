@@ -25,9 +25,9 @@ security definer
 set search_path = public
 stable
 as $$
-  select exists (
-    select 1 from public.profiles
-    where id = auth.uid() and role = 'admin'
+  select coalesce(
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin',
+    false
   );
 $$;
 
@@ -39,14 +39,15 @@ create policy "profiles_select_self_or_admin"
   on public.profiles for select
   using (id = auth.uid() or public.is_admin());
 
--- Tenants may update their own non-role fields; admins may update anyone.
--- (Role changes should go through the service-role admin actions in
+-- Profile updates are admin-only. A self-update policy would also let a tenant promote their own account.
+-- Role changes go through the server-only service-role admin actions in
 -- src/actions/tenants.ts, which already bypass RLS by design.)
 drop policy if exists "profiles_update_self_or_admin" on public.profiles;
-create policy "profiles_update_self_or_admin"
+drop policy if exists "profiles_update_admin" on public.profiles;
+create policy "profiles_update_admin"
   on public.profiles for update
-  using (id = auth.uid() or public.is_admin())
-  with check (id = auth.uid() or public.is_admin());
+  using (public.is_admin())
+  with check (public.is_admin());
 
 -- Inserts/deletes on profiles happen via the service-role client in
 -- src/actions/tenants.ts (auth.admin.createUser/deleteUser cascades), which
@@ -180,15 +181,12 @@ create policy "notifications_select_self"
   on public.notifications for select
   using (user_id = auth.uid());
 
--- Any authenticated user can create a notification targeting another user
--- (admin -> tenant on bill/payment events, tenant -> admin on new payments/
--- maintenance requests) — src/actions/notifications.ts's createNotification
--- now requires an authenticated caller (requireUser()) as app-layer
--- defense-in-depth on top of this.
+-- Notification inserts use the server-only service-role helper.
+-- Browser clients receive no insert policy and cannot choose recipients.
+--
+--
+--
 drop policy if exists "notifications_insert_authenticated" on public.notifications;
-create policy "notifications_insert_authenticated"
-  on public.notifications for insert
-  with check (auth.uid() is not null);
 
 -- Tenants/admins can only mark their own notifications read.
 drop policy if exists "notifications_update_self" on public.notifications;

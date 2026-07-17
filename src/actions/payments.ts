@@ -2,10 +2,28 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/server";
-import { createNotification } from "@/actions/notifications";
+import { createNotification } from "@/lib/notifications";
 import { paymentSchema } from "@/lib/validations/payments";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const PAYMENT_PROOF_BUCKET = "payment-proofs";
+const PROOF_EXTENSIONS: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
+async function getSignedProofUrl(path?: string | null) {
+  if (!path) return null;
+
+  const adminClient = createAdminClient();
+  const { data, error } = await adminClient.storage
+    .from(PAYMENT_PROOF_BUCKET)
+    .createSignedUrl(path, 60 * 60);
+
+  return error ? null : data.signedUrl;
+}
 
 // See bill-generator.ts for why this cast exists: no generated DB types,
 // so Supabase-js can't tell these FK joins resolve to a single row.
@@ -70,7 +88,12 @@ export async function getPayments() {
 
   if (error) throw new Error(error.message);
 
-  return data || [];
+  return Promise.all(
+    (data || []).map(async (payment) => ({
+      ...payment,
+      proof_image: await getSignedProofUrl(payment.proof_image),
+    })),
+  );
 }
 
 export async function getUnpaidBillsForPayment() {
@@ -163,11 +186,16 @@ export async function submitPayment(formData: FormData) {
   let proofImageUrl: string | null = null;
 
   if (proofFile && proofFile.size > 0) {
-    const fileName = `${Date.now()}-${proofFile.name.replace(/\s+/g, "_")}`;
+    const extension = PROOF_EXTENSIONS[proofFile.type];
+    if (!extension) throw new Error("Unsupported image type");
 
-    const { error: uploadError } = await supabase.storage
+    const fileName = `${crypto.randomUUID()}.${extension}`;
+
+    const adminClient = createAdminClient();
+    const { error: uploadError } = await adminClient.storage
       .from(PAYMENT_PROOF_BUCKET)
       .upload(fileName, proofFile, {
+        contentType: proofFile.type,
         upsert: false,
       });
 
@@ -175,11 +203,7 @@ export async function submitPayment(formData: FormData) {
       throw new Error("Upload រូបភាពបរាជ័យ: " + uploadError.message);
     }
 
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from(PAYMENT_PROOF_BUCKET).getPublicUrl(fileName);
-
-    proofImageUrl = publicUrl;
+    proofImageUrl = fileName;
   }
 
   const { data, error } = await supabase
@@ -223,14 +247,25 @@ export async function submitPayment(formData: FormData) {
     )
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (proofImageUrl) {
+      const adminClient = createAdminClient();
+      await adminClient.storage
+        .from(PAYMENT_PROOF_BUCKET)
+        .remove([proofImageUrl]);
+    }
+    throw new Error(error.message);
+  }
 
   revalidatePath("/admin/payments");
   revalidatePath("/admin/bills");
   revalidatePath("/tenant/payments");
   revalidatePath("/tenant/bills");
 
-  return data;
+  return {
+    ...data,
+    proof_image: await getSignedProofUrl(data.proof_image),
+  };
 }
 
 export async function approvePayment(id: string) {
@@ -331,7 +366,7 @@ export async function deletePayment(id: string) {
 
   const { data: payment, error: paymentError } = await supabase
     .from("payments")
-    .select("id, status")
+    .select("id, status, proof_image")
     .eq("id", id)
     .single();
 
@@ -346,6 +381,13 @@ export async function deletePayment(id: string) {
   const { error } = await supabase.from("payments").delete().eq("id", id);
 
   if (error) throw new Error(error.message);
+
+  if (payment.proof_image) {
+    const adminClient = createAdminClient();
+    await adminClient.storage
+      .from(PAYMENT_PROOF_BUCKET)
+      .remove([payment.proof_image]);
+  }
 
   revalidatePath("/admin/payments");
 }

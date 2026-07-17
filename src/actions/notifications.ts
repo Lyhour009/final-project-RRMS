@@ -1,37 +1,6 @@
 "use server";
 
-import { getAuthenticatedUser, requireUser } from "@/lib/supabase/server";
-
-export async function createNotification({
-  userId,
-  type,
-  message,
-  link,
-}: {
-  userId: string;
-  type: string;
-  message: string;
-  link?: string;
-}) {
-  // Every "use server" export is an independently callable endpoint on its
-  // own, not just an internal helper — require a signed-in caller even
-  // though today's callers are already guarded upstream.
-  const { supabase } = await requireUser();
-
-  const { error } = await supabase.from("notifications").insert([
-    {
-      user_id: userId,
-      type,
-      message,
-      link,
-      is_read: false,
-    },
-  ]);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-}
+import { getAuthenticatedUser } from "@/lib/supabase/server";
 
 export async function markNotificationAsRead(id: string) {
   const { supabase, user } = await getAuthenticatedUser();
@@ -40,9 +9,7 @@ export async function markNotificationAsRead(id: string) {
 
   await supabase
     .from("notifications")
-    .update({
-      is_read: true,
-    })
+    .update({ is_read: true })
     .eq("id", id)
     .eq("user_id", user.id);
 }

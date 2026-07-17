@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/supabase/server";
-import { createNotification } from "@/actions/notifications";
+import { createNotification } from "@/lib/notifications";
 import { maintenanceSchema } from "@/lib/validations/tenant/maintenance";
 
 // See bill-generator.ts (actions folder) for why this cast exists: no
@@ -128,7 +128,7 @@ export async function createTenantMaintenanceRequest(formData: FormData) {
     throw new Error("អ្នកមិនទាន់មានកិច្ចសន្យាសកម្មទេ");
   }
 
-  const { data: request, error: requestError } = await supabase
+  const { error: requestError } = await supabase
     .from("maintenance_requests")
     .insert({
       tenant_id: tenantId,
@@ -137,9 +137,7 @@ export async function createTenantMaintenanceRequest(formData: FormData) {
       issue_description,
       priority,
       status: "pending",
-    })
-    .select("id, issue_title")
-    .single();
+    });
 
   if (requestError) {
     throw new Error(requestError.message);

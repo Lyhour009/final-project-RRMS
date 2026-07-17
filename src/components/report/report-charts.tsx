@@ -56,7 +56,16 @@ function ChartCard({
   );
 }
 
-export function ReportsCharts({ charts }: { charts: any }) {
+type ChartDatum = { name: string; value: number };
+type ReportsChartData = {
+  revenueByMonth: Array<{ month: string; revenue: number }>;
+  roomStatus: ChartDatum[];
+  billStatus: ChartDatum[];
+  paymentStatus: ChartDatum[];
+  maintenanceStatus: ChartDatum[];
+};
+
+export function ReportsCharts({ charts }: { charts: ReportsChartData }) {
   return (
     <div className="space-y-6">
       <ChartCard title="ចំណូលតាមខែ">
@@ -107,7 +116,7 @@ export function ReportsCharts({ charts }: { charts: any }) {
                 outerRadius={85}
                 paddingAngle={4}
               >
-                {charts.roomStatus.map((_: any, index: number) => (
+                {charts.roomStatus.map((_, index) => (
                   <Cell
                     key={index}
                     fill={ROOM_STATUS_COLORS[index % ROOM_STATUS_COLORS.length]}
@@ -137,7 +146,7 @@ export function ReportsCharts({ charts }: { charts: any }) {
               <YAxis hide />
               <Tooltip contentStyle={tooltipStyle} />
               <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={36}>
-                {charts.billStatus.map((_: any, index: number) => (
+                {charts.billStatus.map((_, index) => (
                   <Cell
                     key={index}
                     fill={STATUS_COLORS[index % STATUS_COLORS.length]}
@@ -165,7 +174,7 @@ export function ReportsCharts({ charts }: { charts: any }) {
               <YAxis hide />
               <Tooltip contentStyle={tooltipStyle} />
               <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={36}>
-                {charts.paymentStatus.map((_: any, index: number) => (
+                {charts.paymentStatus.map((_, index) => (
                   <Cell
                     key={index}
                     fill={STATUS_COLORS[index % STATUS_COLORS.length]}

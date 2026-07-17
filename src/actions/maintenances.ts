@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/server";
-import { createNotification } from "@/actions/notifications";
+import { createNotification } from "@/lib/notifications";
 
 export async function getMaintenanceRequests() {
   const { supabase } = await requireAdmin();

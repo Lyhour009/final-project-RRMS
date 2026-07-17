@@ -12,8 +12,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DELETE_MODAL_CANCEL_BUTTON,
+  DELETE_MODAL_CONFIRM_BUTTON,
+  DELETE_MODAL_CONTENT,
+  DELETE_MODAL_FOOTER,
+  DELETE_MODAL_HEADER,
+} from "@/components/ui/modal-styles";
 import { toast } from "sonner";
 import { deleteContract } from "@/actions/contracts";
+import { getErrorMessage } from "@/lib/utils";
 
 interface ContractDeleteModalProps {
   isOpen: boolean;
@@ -41,8 +49,8 @@ export default function ContractDeleteModal({
       onDeleteSuccess(contract.id);
       onClose();
       toast.success("បានលុបកិច្ចសន្យាជោគជ័យ");
-    } catch (error: any) {
-      toast.error(error.message || "មានបញ្ហាក្នុងការលុបកិច្ចសន្យានេះ");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "មានបញ្ហាក្នុងការលុបកិច្ចសន្យានេះ"));
     } finally {
       setIsDeleting(false);
     }
@@ -50,17 +58,17 @@ export default function ContractDeleteModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[420px] bg-(--panel) border-(--panel-border) text-(--panel-text) rounded-xl">
-        <DialogHeader className="flex flex-col items-center text-center space-y-3">
-          <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+      <DialogContent className={DELETE_MODAL_CONTENT}>
+        <DialogHeader className={DELETE_MODAL_HEADER}>
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-red-500/20 bg-red-500/10 text-red-500">
             <AlertTriangle size={24} />
           </div>
 
-          <DialogTitle className="text-xl font-bold">
+          <DialogTitle className="text-lg font-bold leading-7">
             តើអ្នកពិតជាចង់លុបកិច្ចសន្យានេះមែនទេ?
           </DialogTitle>
 
-          <DialogDescription className="text-(--panel-text-muted) text-sm">
+          <DialogDescription className="mt-2 text-sm leading-6 text-(--panel-text-muted)">
             សកម្មភាពនេះមិនអាចត្រឡប់ថយក្រោយវិញបានឡើយ។ កិច្ចសន្យារបស់{" "}
             <span className="text-red-400 font-semibold">
               {contract.profiles?.full_name || "អ្នកជួល"}
@@ -73,13 +81,13 @@ export default function ContractDeleteModal({
           </DialogDescription>
         </DialogHeader>
 
-        <DialogFooter className="flex sm:justify-center gap-2 mt-4">
+        <DialogFooter className={DELETE_MODAL_FOOTER}>
           <Button
             type="button"
             variant="ghost"
             onClick={onClose}
             disabled={isDeleting}
-            className="w-full sm:w-auto bg-(--panel-hover) border border-(--panel-border) text-(--panel-text-muted) hover:bg-(--panel-border) hover:text-(--panel-text)"
+            className={DELETE_MODAL_CANCEL_BUTTON}
           >
             បោះបង់
           </Button>
@@ -88,7 +96,7 @@ export default function ContractDeleteModal({
             type="button"
             onClick={handleDelete}
             disabled={isDeleting}
-            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-medium min-w-[100px]"
+            className={DELETE_MODAL_CONFIRM_BUTTON}
           >
             {isDeleting ? (
               <div className="flex items-center justify-center gap-2">

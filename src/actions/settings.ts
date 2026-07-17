@@ -25,6 +25,24 @@ export async function getSettings() {
 
   if (error) throw new Error(error.message);
 
+  if (!data) {
+    const { data: created, error: createError } = await supabase
+      .from("settings")
+      .insert({
+        water_rate: 0,
+        electric_rate: 0,
+        late_fee: 0,
+        monthly_due_day: 5,
+        currency: "USD",
+        payment_instruction: "",
+      })
+      .select("*")
+      .single();
+
+    if (createError) throw new Error(createError.message);
+    return created;
+  }
+
   return data;
 }
 
