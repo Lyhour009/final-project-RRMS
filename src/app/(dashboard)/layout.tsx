@@ -18,6 +18,10 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  if (userProfile.role !== "admin" && userProfile.role !== "tenant") {
+    redirect("/login?error=account_not_configured");
+  }
+
   // 3. Dynamic UI values based on the fetched profile
   const userEmail = userProfile.email || "no-user@roommaster.com";
   const userInitials = userEmail.substring(0, 2).toUpperCase();

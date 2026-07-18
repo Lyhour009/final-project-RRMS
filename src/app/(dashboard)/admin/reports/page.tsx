@@ -16,23 +16,32 @@ function ReportCard({
   value,
   subtitle,
   icon,
-  color,
+  tone,
 }: {
   title: string;
   value: string | number;
   subtitle: string;
   icon: React.ReactNode;
-  color: string;
+  tone: "emerald" | "amber" | "blue" | "red" | "indigo";
 }) {
-  return (
-    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-(--panel-text-muted)">{title}</p>
-        <div className={color}>{icon}</div>
-      </div>
+  const styles = {
+    emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
+    amber: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
+    blue: "bg-blue-500/10 text-blue-600 dark:text-blue-300",
+    red: "bg-red-500/10 text-red-600 dark:text-red-300",
+    indigo: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300",
+  }[tone];
 
-      <p className="mt-3 text-2xl font-bold text-(--panel-text)">{value}</p>
-      <p className="mt-1 text-xs text-(--panel-text-subtle)">{subtitle}</p>
+  return (
+    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20 sm:p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[13px] font-medium text-(--panel-text-muted)">{title}</p>
+          <p className="mt-2 text-3xl font-bold leading-none tracking-tight text-(--panel-text)">{value}</p>
+        </div>
+        <div className={`rounded-xl p-2.5 ${styles}`}>{icon}</div>
+      </div>
+      <p className="mt-3 text-xs text-(--panel-text-subtle)">{subtitle}</p>
     </div>
   );
 }
@@ -41,21 +50,28 @@ export default async function AdminReportsPage() {
   const data = await getReportsData();
 
   return (
-    <div className="p-6 space-y-6 text-(--panel-text)">
-      <div>
-        <h1 className="text-2xl font-bold">📊 របាយការណ៍</h1>
-        <p className="text-sm text-(--panel-text-subtle) mt-1">
-          សង្ខេបចំណូល វិក្កយបត្រ បន្ទប់ ការទូទាត់ និងសំណើជួសជុល
-        </p>
+    <div className="mx-auto w-full max-w-[1680px] space-y-7 p-4 text-(--panel-text) sm:p-6 lg:p-8">
+      <div className="flex items-center gap-3">
+        <div className="rounded-2xl bg-indigo-500/10 p-3 text-indigo-600 dark:text-indigo-300">
+          <BarChart3 className="h-6 w-6" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">របាយការណ៍</h1>
+          <p className="mt-1 text-sm leading-6 text-(--panel-text-muted)">
+            សង្ខេបចំណូល វិក្កយបត្រ បន្ទប់ ការទូទាត់ និងសំណើជួសជុល
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <section>
+        <div className="mb-3"><h2 className="text-lg font-semibold">ទិដ្ឋភាពសង្ខេប</h2><p className="mt-1 text-xs text-(--panel-text-subtle)">សូចនាករសំខាន់ៗសម្រាប់ការគ្រប់គ្រងប្រព័ន្ធ</p></div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <ReportCard
           title="ចំណូលសរុប"
           value={`$${data.summary.totalRevenue.toFixed(2)}`}
           subtitle="ពីវិក្កយបត្រដែលបានបង់"
           icon={<DollarSign size={22} />}
-          color="text-emerald-400"
+          tone="emerald"
         />
 
         <ReportCard
@@ -63,7 +79,7 @@ export default async function AdminReportsPage() {
           value={`$${data.summary.unpaidAmount.toFixed(2)}`}
           subtitle={`${data.summary.unpaidBills} វិក្កយបត្រ`}
           icon={<AlertTriangle size={22} />}
-          color="text-amber-400"
+          tone="amber"
         />
 
         <ReportCard
@@ -71,7 +87,7 @@ export default async function AdminReportsPage() {
           value={`${data.summary.occupancyRate}%`}
           subtitle={`${data.summary.totalRooms} បន្ទប់សរុប`}
           icon={<Percent size={22} />}
-          color="text-blue-400"
+          tone="blue"
         />
 
         <ReportCard
@@ -79,7 +95,7 @@ export default async function AdminReportsPage() {
           value={data.summary.pendingMaintenance}
           subtitle="ត្រូវការតាមដាន"
           icon={<Wrench size={22} />}
-          color="text-red-400"
+          tone="red"
         />
 
         <ReportCard
@@ -87,7 +103,7 @@ export default async function AdminReportsPage() {
           value={data.summary.paidBills}
           subtitle="វិក្កយបត្រដែលបានបង់រួច"
           icon={<FileText size={22} />}
-          color="text-emerald-400"
+          tone="emerald"
         />
 
         <ReportCard
@@ -95,7 +111,7 @@ export default async function AdminReportsPage() {
           value={data.summary.overdueBills}
           subtitle="វិក្កយបត្រហួសកាលកំណត់"
           icon={<AlertTriangle size={22} />}
-          color="text-red-400"
+          tone="red"
         />
 
         <ReportCard
@@ -103,7 +119,7 @@ export default async function AdminReportsPage() {
           value={data.summary.totalPayments}
           subtitle="កំណត់ត្រាការទូទាត់"
           icon={<BarChart3 size={22} />}
-          color="text-indigo-400"
+          tone="indigo"
         />
 
         <ReportCard
@@ -111,11 +127,15 @@ export default async function AdminReportsPage() {
           value={data.summary.totalRooms}
           subtitle="បន្ទប់ទាំងអស់"
           icon={<Building2 size={22} />}
-          color="text-blue-400"
+          tone="blue"
         />
-      </div>
+        </div>
+      </section>
 
-      <ReportsCharts charts={data.charts} />
+      <section>
+        <div className="mb-3"><h2 className="text-lg font-semibold">ទិន្នន័យវិភាគ</h2><p className="mt-1 text-xs text-(--panel-text-subtle)">និន្នាការចំណូល និងការបែងចែកស្ថានភាពប្រតិបត្តិការ</p></div>
+        <ReportsCharts charts={data.charts} />
+      </section>
     </div>
   );
 }

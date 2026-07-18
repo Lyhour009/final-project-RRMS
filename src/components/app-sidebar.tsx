@@ -130,7 +130,29 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
   const userInitials = userEmail.substring(0, 2).toUpperCase();
   const displayName = userEmail.split("@")[0];
 
-  const navLinks = role === "admin" ? adminLinks : tenantLinks;
+  const preferredOrder = role === "admin"
+    ? [
+        "/admin/dashboard",
+        "/admin/rooms",
+        "/admin/tenants",
+        "/admin/contracts",
+        "/admin/billing",
+        "/admin/payments",
+        "/admin/maintenance",
+        "/admin/reports",
+        "/admin/settings",
+      ]
+    : [
+        "/tenant/dashboard",
+        "/tenant/bills",
+        "/tenant/payments",
+        "/tenant/contracts",
+        "/tenant/maintenance",
+      ];
+  const sourceLinks = role === "admin" ? adminLinks : tenantLinks;
+  const navLinks = sourceLinks
+    .filter((item) => item.url !== "/profile")
+    .toSorted((a, b) => preferredOrder.indexOf(a.url) - preferredOrder.indexOf(b.url));
 
   return (
     <Sidebar
@@ -170,7 +192,12 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
               {navLinks.map((item) => {
-                const isActive = pathname === item.url;
+                // Keep the parent section highlighted while viewing nested
+                // routes (for example, a bill's payment form). Exact
+                // equality leaves the navigation without an active item on
+                // those pages.
+                const isActive =
+                  pathname === item.url || pathname.startsWith(`${item.url}/`);
                 return (
                   <SidebarMenuItem key={item.title} className="list-none">
                     <Link
@@ -212,7 +239,7 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
         <div className="mb-3 h-px bg-(--panel-border-subtle)" />
 
         {/* User card */}
-        <div className="flex items-center gap-3 rounded-xl border border-(--panel-border-subtle) bg-(--panel-hover) px-4 py-2 backdrop-blur-sm">
+        <Link href="/profile" prefetch={false} className="flex items-center gap-3 rounded-xl border border-(--panel-border-subtle) bg-(--panel-hover) px-4 py-2 backdrop-blur-sm transition hover:border-indigo-500/30 hover:bg-indigo-500/10">
           <Avatar className="h-8 w-8 rounded-lg">
             <AvatarFallback className="rounded-lg bg-linear-to-br from-indigo-500 to-sky-500 text-[11px] font-bold text-white">
               {userInitials}
@@ -224,7 +251,7 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
             </p>
             <p className="truncate text-[12px] text-(--panel-text-subtle)">{userEmail}</p>
           </div>
-        </div>
+        </Link>
 
         {/* Sign out */}
         <form action={logoutAction} className="mt-1">

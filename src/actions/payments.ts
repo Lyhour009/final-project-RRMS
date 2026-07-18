@@ -7,6 +7,7 @@ import { paymentSchema } from "@/lib/validations/payments";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const PAYMENT_PROOF_BUCKET = "payment-proofs";
+const MAX_PROOF_SIZE = 5_000_000;
 const PROOF_EXTENSIONS: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/jpg": "jpg",
@@ -168,6 +169,10 @@ export async function submitPayment(formData: FormData) {
     throw new Error("វិក្កយបត្រនេះបានបង់រួចហើយ");
   }
 
+  if (Math.abs(amount - Number(bill.total_amount)) > 0.005) {
+    throw new Error("Payment amount must equal the bill total");
+  }
+
   if (amount > Number(bill.total_amount)) {
     throw new Error("ចំនួនបង់មិនអាចលើសចំនួនសរុបវិក្កយបត្របានទេ");
   }
@@ -186,6 +191,9 @@ export async function submitPayment(formData: FormData) {
   let proofImageUrl: string | null = null;
 
   if (proofFile && proofFile.size > 0) {
+    if (proofFile.size > MAX_PROOF_SIZE) {
+      throw new Error("Payment proof must be smaller than 5MB");
+    }
     const extension = PROOF_EXTENSIONS[proofFile.type];
     if (!extension) throw new Error("Unsupported image type");
 
@@ -217,7 +225,7 @@ export async function submitPayment(formData: FormData) {
         note,
         proof_image: proofImageUrl,
         status: "pending",
-        paid_at: new Date().toISOString(),
+        paid_at: null,
       },
     ])
     .select(
@@ -258,9 +266,11 @@ export async function submitPayment(formData: FormData) {
   }
 
   revalidatePath("/admin/payments");
-  revalidatePath("/admin/bills");
+  revalidatePath("/admin/billing");
+  revalidatePath("/admin/dashboard");
   revalidatePath("/tenant/payments");
   revalidatePath("/tenant/bills");
+  revalidatePath("/tenant/dashboard");
 
   return {
     ...data,
@@ -273,7 +283,7 @@ export async function approvePayment(id: string) {
 
   const { data: payment, error: paymentError } = await supabase
     .from("payments")
-    .select("id,bill_id,tenant_id,status")
+    .select("id,bill_id,tenant_id,status,amount,bills:bill_id(total_amount,status)")
     .eq("id", id)
     .single();
 
@@ -285,43 +295,48 @@ export async function approvePayment(id: string) {
     throw new Error("ការទូទាត់នេះមិនស្ថិតក្នុងស្ថានភាពរង់ចាំទេ");
   }
 
+  const paymentBill = payment.bills as unknown as {
+    total_amount: number;
+    status: string;
+  } | null;
+
+  if (!paymentBill || !["unpaid", "overdue"].includes(paymentBill.status)) {
+    throw new Error("This bill is not payable");
+  }
+
+  if (Math.abs(Number(payment.amount) - Number(paymentBill.total_amount)) > 0.005) {
+    throw new Error("Payment amount does not match the bill total");
+  }
+
   const { error: updatePaymentError } = await supabase
-    .from("payments")
-    .update({
-      status: "approved",
-    })
-    .eq("id", id);
+    .rpc("decide_payment", {
+      p_payment_id: id,
+      p_decision: "approved",
+      p_reason: null,
+    });
 
   if (updatePaymentError) {
     throw new Error(updatePaymentError.message);
   }
 
-  await createNotification({
+  const notifyTenant = () => createNotification({
     userId: payment.tenant_id,
     type: "payment_approved",
     message: "ការទូទាត់របស់អ្នកត្រូវបានអនុម័ត",
     link: "/tenant/payments",
   });
 
-  const { error: updateBillError } = await supabase
-    .from("bills")
-    .update({
-      status: "paid",
-      paid_at: new Date().toISOString(),
-    })
-    .eq("id", payment.bill_id);
-
-  if (updateBillError) {
-    throw new Error(updateBillError.message);
-  }
+  await notifyTenant();
 
   revalidatePath("/admin/payments");
-  revalidatePath("/admin/bills");
+  revalidatePath("/admin/billing");
+  revalidatePath("/admin/dashboard");
   revalidatePath("/tenant/payments");
   revalidatePath("/tenant/bills");
+  revalidatePath("/tenant/dashboard");
 }
 
-export async function rejectPayment(id: string) {
+export async function rejectPayment(id: string, reason: string) {
   const { supabase } = await requireAdmin();
 
   const { data: payment, error: paymentError } = await supabase
@@ -338,36 +353,33 @@ export async function rejectPayment(id: string) {
     throw new Error("ការទូទាត់នេះមិនស្ថិតក្នុងស្ថានភាពរង់ចាំទេ");
   }
 
+  const cleanReason = reason.trim().slice(0, 500);
+  if (!cleanReason) throw new Error("A rejection reason is required");
+
   const { error: updatePaymentError } = await supabase
-    .from("payments")
-    .update({
-      status: "rejected",
-    })
-    .eq("id", id);
+    .rpc("decide_payment", {
+      p_payment_id: id,
+      p_decision: "rejected",
+      p_reason: cleanReason,
+    });
 
   if (updatePaymentError) {
     throw new Error(updatePaymentError.message);
   }
 
-  await supabase
-    .from("bills")
-    .update({
-      status: "unpaid",
-      paid_at: null,
-    })
-    .eq("id", payment.bill_id);
-
   revalidatePath("/admin/payments");
-  revalidatePath("/admin/bills");
+  revalidatePath("/admin/billing");
+  revalidatePath("/admin/dashboard");
 }
 
 export async function deletePayment(id: string) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
   const { data: payment, error: paymentError } = await supabase
     .from("payments")
     .select("id, status, proof_image")
     .eq("id", id)
+    .is("archived_at", null)
     .single();
 
   if (paymentError || !payment) {
@@ -378,16 +390,13 @@ export async function deletePayment(id: string) {
     throw new Error("មិនអាចលុបការទូទាត់ដែលបានអនុម័តរួចហើយបានទេ");
   }
 
-  const { error } = await supabase.from("payments").delete().eq("id", id);
+  const { error } = await supabase
+    .from("payments")
+    .update({ archived_at: new Date().toISOString(), archived_by: user.id })
+    .eq("id", id);
 
   if (error) throw new Error(error.message);
 
-  if (payment.proof_image) {
-    const adminClient = createAdminClient();
-    await adminClient.storage
-      .from(PAYMENT_PROOF_BUCKET)
-      .remove([payment.proof_image]);
-  }
-
   revalidatePath("/admin/payments");
+  revalidatePath("/admin/dashboard");
 }

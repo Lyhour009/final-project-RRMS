@@ -55,6 +55,27 @@ export async function upsertRoom(id: string | null, formData: FormData) {
     amenities,
   } = parsed.data;
 
+  if (status === "occupied" && !id) {
+    throw new Error("A room becomes occupied only when an active contract is created");
+  }
+
+  if (id) {
+    const { data: activeContract, error: activeContractError } = await supabase
+      .from("contracts")
+      .select("id")
+      .eq("room_id", id)
+      .eq("status", "active")
+      .limit(1);
+
+    if (activeContractError) throw new Error(activeContractError.message);
+    if (activeContract?.length && status !== "occupied") {
+      throw new Error("End or move the active contract before changing this room status");
+    }
+    if (!activeContract?.length && status === "occupied") {
+      throw new Error("A room can be occupied only when it has an active contract");
+    }
+  }
+
   const imageFile = formData.get("image") as File | null;
   const existingImageUrl = String(formData.get("existing_image_url") || "");
 

@@ -42,3 +42,33 @@ test("production security headers are configured", () => {
   assert.match(config, /X-Content-Type-Options/);
   assert.match(config, /frame-ancestors 'none'/);
 });
+
+test("production migration preserves records and enforces payment integrity", () => {
+  const migration = read("supabase/migrations/202607180001_production_hardening.sql");
+
+  assert.match(migration, /create table if not exists public\.audit_logs/);
+  assert.match(migration, /create unique index if not exists contracts_one_active_per_room/);
+  assert.match(migration, /create unique index if not exists bills_one_per_contract_month/);
+  assert.match(migration, /create or replace function public\.decide_payment/);
+  assert.match(migration, /for update/);
+  assert.match(migration, /archived_at timestamptz/);
+  assert.doesNotMatch(migration, /delete from public\.(bills|payments|contracts)/i);
+});
+
+test("private document buckets and scheduled status sync are protected", () => {
+  const migration = read("supabase/migrations/202607180001_production_hardening.sql");
+  const cron = read("src/app/api/cron/status-sync/route.ts");
+
+  assert.match(migration, /\('tenants', 'tenants', false, 5242880/);
+  assert.match(migration, /\('payment-proofs', 'payment-proofs', false, 5242880/);
+  assert.match(cron, /CRON_SECRET/);
+  assert.match(cron, /timingSafeEqual/);
+});
+
+test("password recovery callback prevents open redirects", () => {
+  const callback = read("src/app/auth/callback/route.ts");
+
+  assert.match(callback, /exchangeCodeForSession/);
+  assert.match(callback, /requestedNext\.startsWith\("\/"\)/);
+  assert.match(callback, /!requestedNext\.startsWith\("\/\/"\)/);
+});

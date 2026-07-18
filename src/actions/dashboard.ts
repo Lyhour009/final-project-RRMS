@@ -1,6 +1,7 @@
 "use server";
 
 import { requireAdmin } from "@/lib/supabase/server";
+import { syncBusinessStatuses } from "@/lib/business-status";
 
 function monthKey(value: string) {
   return value ? value.slice(0, 7) : "-";
@@ -8,6 +9,7 @@ function monthKey(value: string) {
 
 export async function getDashboardStats() {
   const { supabase } = await requireAdmin();
+  await syncBusinessStatuses();
 
   // Two queries per entity: a lean "aggregate" fetch with only the scalar
   // columns actually reduced into cards/charts below (no joins — those are

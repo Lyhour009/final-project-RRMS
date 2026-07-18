@@ -1,6 +1,7 @@
 "use server";
 
-import { requireUser } from "@/lib/supabase/server";
+import { requireTenant } from "@/lib/supabase/server";
+import { syncBusinessStatuses } from "@/lib/business-status";
 
 // See bill-generator.ts (actions folder) for why this cast exists: no
 // generated DB types, so Supabase-js can't tell `rooms:room_id` resolves
@@ -27,7 +28,8 @@ type TenantContract = {
 };
 
 export async function getTenantContract() {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireTenant();
+  await syncBusinessStatuses();
 
   const { data, error } = await supabase
     .from("contracts")

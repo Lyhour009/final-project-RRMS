@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser } from "@/lib/supabase/server";
+import { requireTenant } from "@/lib/supabase/server";
 import { createNotification } from "@/lib/notifications";
 import { maintenanceSchema } from "@/lib/validations/tenant/maintenance";
 
@@ -36,7 +36,7 @@ type ActiveContractWithRoom = {
 };
 
 export async function getTenantMaintenanceData() {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireTenant();
 
   const tenantId = user.id;
 
@@ -97,7 +97,7 @@ export async function getTenantMaintenanceData() {
 }
 
 export async function createTenantMaintenanceRequest(formData: FormData) {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireTenant();
 
   const tenantId = user.id;
 

@@ -5,7 +5,7 @@ export const settingsSchema = z.object({
   electric_rate: z.coerce.number().min(0),
   late_fee: z.coerce.number().min(0),
   monthly_due_day: z.coerce.number().min(1).max(31),
-  currency: z.string().min(1),
+  currency: z.literal("USD"),
   payment_instruction: z.string().optional().nullable(),
 });
 

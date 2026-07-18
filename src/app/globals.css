@@ -142,8 +142,8 @@
 
 @theme {
   --font-sans:
-    var(--font-sans), var(--font-sans-khmer), ui-sans-serif, system-ui,
-    sans-serif;
+    "Segoe UI Variable", "Segoe UI", "Noto Sans Khmer", ui-sans-serif,
+    system-ui, sans-serif;
 }
 html {
   scroll-behavior: smooth;
@@ -156,7 +156,7 @@ html {
 
   :lang(km),
   .font-khmer {
-    font-family: var(--font-sans-khmer), sans-serif;
+    font-family: "Noto Sans Khmer", "Khmer OS", "Leelawadee UI", sans-serif;
     font-size: 1.05em; /* Khmer glyphs are naturally smaller optically */
     line-height: 1.9; /* Khmer needs more line-height for descenders */
   }
@@ -171,7 +171,7 @@ html {
 
 .dashboard-chart text {
   font-size: 13px !important;
-  font-family: var(--font-khmer), Inter, system-ui, sans-serif !important;
+  font-family: "Noto Sans Khmer", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif !important;
 }
 
 .dashboard-chart .recharts-legend-item-text {

@@ -121,7 +121,14 @@ export async function uploadPaymentQr(prevState: unknown, formData: FormData) {
     return { success: false, message: "មិនមាន Settings row ក្នុង Database" };
   }
 
-  const fileName = `payment-qr/${Date.now()}-${qrFile.name.replace(/\s+/g, "_")}`;
+  // Keep original filenames out of storage paths (they may contain slashes
+  // or control characters). A random name also prevents collisions.
+  const extension = qrFile.type === "image/png"
+    ? "png"
+    : qrFile.type === "image/webp"
+      ? "webp"
+      : "jpg";
+  const fileName = `payment-qr/${crypto.randomUUID()}.${extension}`;
 
   const { error: uploadError } = await supabase.storage
     .from(QR_BUCKET)

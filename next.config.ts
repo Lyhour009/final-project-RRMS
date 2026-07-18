@@ -1,14 +1,19 @@
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === "development";
-const supabaseOrigin = "https://mubtpggtbsewhyawjmhu.supabase.co";
+const configuredSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseOrigin = configuredSupabaseUrl
+  ? new URL(configuredSupabaseUrl).origin
+  : "https://example.supabase.co";
+const supabaseHostname = new URL(supabaseOrigin).hostname;
+const supabaseWebSocketOrigin = supabaseOrigin.replace(/^http/, "ws");
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""};
   style-src 'self' 'unsafe-inline';
   img-src 'self' blob: data: ${supabaseOrigin};
   font-src 'self' data:;
-  connect-src 'self' ${supabaseOrigin} wss://mubtpggtbsewhyawjmhu.supabase.co;
+  connect-src 'self' ${supabaseOrigin} ${supabaseWebSocketOrigin};
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -38,7 +43,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "mubtpggtbsewhyawjmhu.supabase.co",
+        hostname: supabaseHostname,
         port: "",
         pathname: "/storage/v1/object/public/**",
       },

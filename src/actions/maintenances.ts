@@ -89,11 +89,11 @@ export async function updateMaintenanceStatus(id: string, status: string) {
 }
 
 export async function deleteMaintenanceRequest(id: string) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
   const { error } = await supabase
     .from("maintenance_requests")
-    .delete()
+    .update({ archived_at: new Date().toISOString(), archived_by: user.id })
     .eq("id", id);
 
   if (error) throw new Error(error.message);

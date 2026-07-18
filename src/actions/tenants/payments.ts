@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser } from "@/lib/supabase/server";
+import { requireTenant } from "@/lib/supabase/server";
 import { createNotification } from "@/lib/notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { syncBusinessStatuses } from "@/lib/business-status";
 
 const PAYMENT_METHODS = [
   "cash",
@@ -13,9 +14,16 @@ const PAYMENT_METHODS = [
   "bank_transfer",
   "other",
 ] as const;
+const MAX_PROOF_SIZE = 5_000_000;
+const PROOF_EXTENSIONS: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
 
 export async function getTenantPaymentsData() {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireTenant();
+  await syncBusinessStatuses();
 
   const tenantId = user.id;
 
@@ -82,13 +90,14 @@ export async function getTenantPaymentsData() {
 }
 
 export async function submitTenantPayment(formData: FormData) {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireTenant();
 
   const tenantId = user.id;
 
   const billId = String(formData.get("bill_id") || "");
   const paymentMethodRaw = String(formData.get("payment_method") || "aba");
   const note = String(formData.get("note") || "").slice(0, 500);
+  const proofFile = formData.get("proof_image") as File | null;
 
   if (!billId) throw new Error("សូមជ្រើសរើសវិក្កយបត្រ");
 
@@ -97,6 +106,15 @@ export async function submitTenantPayment(formData: FormData) {
   }
 
   const paymentMethod = paymentMethodRaw as (typeof PAYMENT_METHODS)[number];
+
+  if (paymentMethod !== "cash" && (!proofFile || proofFile.size === 0)) {
+    throw new Error("Please upload payment proof for an electronic payment");
+  }
+
+  if (proofFile && proofFile.size > 0) {
+    if (proofFile.size > MAX_PROOF_SIZE) throw new Error("Payment proof must be smaller than 5MB");
+    if (!PROOF_EXTENSIONS[proofFile.type]) throw new Error("Payment proof must be JPG, PNG, or WebP");
+  }
 
   const { data: bill, error: billError } = await supabase
     .from("bills")
@@ -127,6 +145,21 @@ export async function submitTenantPayment(formData: FormData) {
     );
   }
 
+  let proofImagePath: string | null = null;
+  const adminClient = createAdminClient();
+
+  if (proofFile && proofFile.size > 0) {
+    proofImagePath = `${tenantId}/${crypto.randomUUID()}.${PROOF_EXTENSIONS[proofFile.type]}`;
+    const { error: uploadError } = await adminClient.storage
+      .from("payment-proofs")
+      .upload(proofImagePath, proofFile, {
+        contentType: proofFile.type,
+        upsert: false,
+      });
+
+    if (uploadError) throw new Error(`Payment proof upload failed: ${uploadError.message}`);
+  }
+
   const { error } = await supabase.from("payments").insert([
     {
       bill_id: billId,
@@ -134,12 +167,18 @@ export async function submitTenantPayment(formData: FormData) {
       amount: Number(bill.total_amount || 0),
       payment_method: paymentMethod,
       note,
+      proof_image: proofImagePath,
       status: "pending",
-      paid_at: new Date().toISOString(),
+      paid_at: null,
     },
   ]);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (proofImagePath) {
+      await adminClient.storage.from("payment-proofs").remove([proofImagePath]);
+    }
+    throw new Error(error.message);
+  }
 
   const { data: admins } = await supabase
     .from("profiles")
@@ -160,5 +199,5 @@ export async function submitTenantPayment(formData: FormData) {
   revalidatePath("/admin/payments");
   revalidatePath("/tenant/payments");
   revalidatePath("/tenant/bills");
-  revalidatePath("/tenant/overview");
+  revalidatePath("/tenant/dashboard");
 }

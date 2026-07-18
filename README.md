@@ -1,203 +1,212 @@
-<div align="center">
+# RRMS
 
-# 🏢 RRMS
-### Room Rental Management System
+Room Rental Management System built with Next.js, Supabase, and TypeScript.
 
-A full-stack room/tenant management platform for rental property operators,
-with separate **Admin** and **Tenant** portals.
+RRMS helps a rental property operator manage rooms, tenants, contracts, monthly bills, payment approvals, maintenance requests, reports, and tenant self-service in one web application.
 
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)](https://nextjs.org)
-[![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20Auth-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-v4-38BDF8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Playwright](https://img.shields.io/badge/Tested%20with-Playwright-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev)
-[![License](https://img.shields.io/badge/License-Private-lightgrey)](#)
+## Features
 
-</div>
+Admin portal:
 
----
+- Dashboard with occupancy, revenue, payment, room, billing, and maintenance summaries.
+- Room management with images, pricing, floor, status, and notes.
+- Tenant management with contact details and private document storage.
+- Contract management for active, ended, and terminated leases.
+- Monthly bill generation from room rent and utility readings.
+- Payment tracking with proof upload, approval, rejection, and history.
+- Maintenance request tracking and status updates.
+- Reports with Excel export.
+- Settings for payment QR code and billing defaults.
 
-## 📖 Table of Contents
+Tenant portal:
 
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Getting Started](#-getting-started)
-- [Project Structure](#-project-structure)
-- [Security](#-security)
-- [Deployment](#-deployment)
+- Tenant dashboard with current room, rent, balance, and contract status.
+- Bill list and bill details.
+- Payment submission with proof upload.
+- Payment history.
+- Contract details.
+- Maintenance request submission and tracking.
 
----
+Security and operations:
 
-## ✨ Features
+- Supabase Auth with admin and tenant roles.
+- Route protection in `src/proxy.ts`.
+- Server-side role checks before every protected action.
+- Supabase Row Level Security policies.
+- Server-side validation with Zod.
+- File upload type and size checks.
+- Health check endpoint and scheduled status sync.
+- Production hardening SQL and deployment runbook.
 
-<table>
-<tr>
-<td valign="top" width="50%">
+## Tech Stack
 
-### 🛠️ Admin Portal
-- 📊 Dashboard with occupancy, revenue, and trend charts
-- 🏠 Room management (status, pricing, images)
-- 👥 Tenant management (profiles, contact info, ID documents)
-- 📄 Contracts — create, terminate, track active/historical leases
-- 💵 Billing — monthly bill generation from room + utility rates
-- 💳 Payments — record, approve/reject, track method
-- 🔧 Maintenance request tracking
-- 📈 Reports with Excel export
-- ⚙️ Staff/settings management
-
-</td>
-<td valign="top" width="50%">
-
-### 🙋 Tenant Portal
-- 🧾 Personal dashboard
-- 📄 View contract details
-- 💳 View and pay bills
-- 🔧 Submit and track maintenance requests
-- 🕓 Payment history
-
-</td>
-</tr>
-</table>
-
-### 🔄 Cross-cutting
-- 🔐 Role-based auth (admin / tenant) via Supabase Auth + `profiles` table
-- ⚡ Server Actions for all mutations, with `revalidatePath` cache invalidation
-- ♾️ Infinite-scroll tables (10 rows at a time) for large datasets, independent of full-data Excel export
-- 🌗 Light/dark theming
-- 🇰🇭 Khmer-language UI
-
----
-
-## 🧱 Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | [Next.js 16](https://nextjs.org) (App Router, Server Actions, Turbopack) |
-| UI | React 19, Tailwind CSS v4, shadcn/Base UI components |
-| Data & Auth | [Supabase](https://supabase.com) (Postgres + Row Level Security, Auth, Storage) |
-| Forms & Validation | React Hook Form + Zod (validated both client-side and again server-side in every Server Action) |
+| Area | Technology |
+| --- | --- |
+| Framework | Next.js 16 App Router |
+| UI | React 19, Tailwind CSS v4, Base UI/shadcn-style components |
+| Backend | Next.js Server Actions |
+| Database/Auth/Storage | Supabase |
+| Validation | Zod, React Hook Form |
 | Charts | Recharts |
-| Tables | Hand-rolled, with client-side search/filter and progressive scroll reveal |
-| Exports | xlsx (dynamically imported so it doesn't bloat the initial page bundle) |
-| State | Zustand, TanStack Query |
-| Testing | Playwright (scaffolded — not yet covering core admin/tenant flows) |
+| Tables | TanStack Table and custom table components |
+| State/Data | Zustand, TanStack Query |
+| Testing | Node test runner, Playwright |
 
-> **Note:** This project pins Next.js 16.2.7, which has behavioral differences from the version most training data and tutorials assume. Check `node_modules/next/dist/docs/` before relying on unfamiliar API behavior.
+## Requirements
 
----
+- Node.js 20 or newer
+- npm
+- A Supabase project with Auth, Database, and Storage enabled
 
-## 🚀 Getting Started
+## Quick Start
 
-### Prerequisites
-- Node.js 20+
-- A [Supabase](https://supabase.com) project (Postgres database + Auth enabled)
-
-### Setup
-
-1. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-2. **Copy the environment template** and fill in your Supabase credentials:
-   ```bash
-   cp .env.example .env.local
-   ```
-
-   | Variable | Description |
-   |---|---|
-   | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public API key |
-   | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service-role key (server-only — never expose client-side) |
-
-3. **Apply the Row Level Security policies** — run [`supabase/rls-policies.sql`](supabase/rls-policies.sql) in your Supabase project's SQL Editor. This is required, not optional: without it, the anon key (which is public — it ships in every browser bundle) can read/write the `profiles`, `contracts`, `bills`, `payments`, `maintenance_requests`, `settings`, and `rooms` tables directly through Supabase's REST API, completely bypassing this app's own access checks. See [Security](#-security) below for why.
-
-   Re-run this file after every policy change. In particular, the current
-   policy intentionally prevents users from updating their own `role` and
-   does not permit browser clients to insert arbitrary notifications.
-
-4. **Harden the Supabase project before production**
-
-   - Disable public user registration in **Authentication → Providers → Email**.
-     Tenant accounts are provisioned by an authenticated administrator.
-   - Keep `room-images` public, but keep `tenants` and `payment-proofs` private.
-   - Set both private buckets to a 5 MB file limit and allow only JPEG, PNG,
-     and WebP images.
-   - Configure production URL/redirect allowlists in Supabase Authentication.
-
-5. **Run the dev server**
-   ```bash
-   npm run dev
-   ```
-
-   Open [http://localhost:3000](http://localhost:3000) 🎉
-
-### Other scripts
+1. Install dependencies:
 
 ```bash
-npm run build   # production build
-npm run start   # run a production build
-npm run lint    # eslint
-npm test        # security regression tests
+npm install
 ```
 
-### Admin utility scripts
+2. Create your local environment file:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Fill in the required variables in `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+CRON_SECRET=generate-a-long-random-secret
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+4. Apply Supabase SQL in this order:
+
+- `supabase/rls-policies.sql`
+- `supabase/migrations/202607180001_production_hardening.sql`
+
+5. Start the app:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+## Scripts
+
+```bash
+npm run dev                # Start development server
+npm run build              # Create production build
+npm run start              # Start production server after build
+npm run lint               # Run ESLint
+npx tsc --noEmit           # Run TypeScript checks
+npm test                   # Run security regression tests
+npm run test:e2e           # Run Playwright E2E tests
+npm run verify:production  # Verify production Supabase configuration
+```
+
+Admin password reset utility:
 
 ```bash
 npx tsx scripts/reset-admin-password.ts <user-id> <new-password>
 ```
 
-Directly resets a Supabase Auth user's password via the service-role key — useful when the dashboard's "send recovery email" flow can't be used (e.g. a non-deliverable admin email domain). Takes the user ID and new password as arguments; never hardcode credentials into this file.
+Use this only with a trusted local `.env.local` because it requires the Supabase service-role key.
 
----
+## Environment Variables
 
-## 🗂️ Project Structure
+| Variable | Required | Description |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL. This is safe to expose to the browser. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon key. This is public by design, but must be protected by RLS. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Server-only Supabase key for admin operations. Never expose it in client code or commits. |
+| `CRON_SECRET` | Yes in production | Secret used to protect scheduled cron endpoints. |
+| `NEXT_PUBLIC_APP_URL` | Yes in production | Public app origin used for redirects and verification. |
+| `E2E_TENANT_EMAIL` | Optional | Tenant account email for Playwright tests. |
+| `E2E_TENANT_PASSWORD` | Optional | Tenant account password for Playwright tests. |
+| `DEPLOYMENT_TEST_TENANT_EMAIL` | Optional | Tenant account email for production verification. |
+| `DEPLOYMENT_TEST_TENANT_PASSWORD` | Optional | Tenant account password for production verification. |
 
-```
+## Project Structure
+
+```text
 src/
   app/
     (dashboard)/
-      admin/        # admin-only routes (rooms, tenants, contracts, billing, payments, maintenance, reports, settings)
-      tenant/        # tenant-only routes (dashboard, bills, contracts, maintenance, payments, settings)
-      profile/
-    login/
-  actions/           # Server Actions (mutations + data fetching), split by domain and admin/tenant
-  components/         # UI components, grouped by feature (room, tenant, contract, bill, payment, dashboard, report, ...)
-  hooks/              # shared client hooks (e.g. infinite-scroll reveal)
+      admin/       Admin pages
+      tenant/      Tenant pages
+      profile/     Shared profile page
+    api/           Health, auth, and cron endpoints
+    login/         Authentication screens
+  actions/         Server Actions grouped by domain
+  components/      Feature and UI components
+  hooks/           Shared React hooks
   lib/
-    supabase/          # Supabase client factories + auth helpers (requireAdmin, requireUser)
-    validations/       # Zod schemas
-  proxy.ts             # Next.js 16's middleware (route-level auth + role redirects)
-scripts/                # one-off admin/ops scripts (e.g. password reset)
-supabase/               # SQL to apply directly in the Supabase dashboard (RLS policies)
+    supabase/      Supabase clients and auth helpers
+    validations/   Zod schemas
+scripts/           Operational scripts
+supabase/          RLS policies and production migrations
+tests/             Security and E2E tests
+docs/              Deployment and public release docs
 ```
 
----
+## Supabase Setup
 
-## 🔒 Security
+This project assumes the base Supabase tables already exist. For a production or defense/demo environment:
 
-Access control is enforced in three independent layers — each one assumes the others might fail:
+1. Disable public sign-up in Supabase Auth.
+2. Apply `supabase/rls-policies.sql`.
+3. Apply files in `supabase/migrations/` in filename order.
+4. Keep `room-images` public.
+5. Keep `tenants` and `payment-proofs` private.
+6. Limit uploaded image files to JPEG, PNG, or WebP and 5 MB.
+7. Set the Site URL and redirect allowlist for your deployed domain.
 
-1. **Edge / routing** — [`src/proxy.ts`](src/proxy.ts) (Next 16's rename of `middleware.ts`) checks the session on every request and redirects unauthenticated users to `/login`, and redirects each role away from the other's routes (tenant → `/admin/*` bounces to `/tenant/dashboard`, and vice versa).
-2. **Server Actions** — every admin action calls `requireAdmin()` and every tenant action calls `requireUser()` from `src/lib/supabase/server.ts`, which re-verify the session and role before touching data. This matters because a Server Action is its own callable endpoint — it stays protected even if a future refactor moves it off a proxy-guarded route.
-3. **Database (Row Level Security)** — [`supabase/rls-policies.sql`](supabase/rls-policies.sql) enforces access at the Postgres level, scoped by `auth.uid()`. This is the layer that actually matters if someone bypasses the Next.js app entirely and calls the Supabase REST API directly with the public anon key — which anyone can do, since that key ships in the browser bundle by design. **Layers 1 and 2 alone are not sufficient without this.**
+See `supabase/README.md` and `docs/DEPLOYMENT.md` for the full order.
 
-Inputs are validated with the same Zod schema on both the client (via `zodResolver`) and again inside the Server Action (via `safeParse`) — client-side validation alone is trivially bypassed by posting `FormData` directly, so every mutating action re-validates server-side. File uploads are checked server-side for type and size for the same reason.
+## Deployment
 
----
+The app can be deployed to Vercel or any Node-capable host.
 
-## ☁️ Deployment
+Before public traffic:
 
-Deploy like any Next.js app (Vercel, or any Node-capable host).
+```bash
+npm run lint
+npx tsc --noEmit
+npm test
+npm run build
+```
 
-1. Set the three Supabase environment variables in your hosting provider's dashboard.
-2. Confirm [`supabase/rls-policies.sql`](supabase/rls-policies.sql) has been applied to your Supabase project (see [Getting Started](#-getting-started)) — this is easy to forget since the app runs fine without it, but it's the only thing standing between the public anon key and your entire database.
+Then complete the external checklist in `docs/DEPLOYMENT.md`:
 
----
+- Supabase backup
+- RLS and migration applied
+- Auth redirects configured
+- Storage bucket privacy checked
+- Environment variables added to the host
+- Health endpoint checked
+- Monitoring and rollback plan ready
 
-<div align="center">
+For a public GitHub repository, also review `docs/PUBLIC_REPO_CHECKLIST.md`.
 
-Made with ❤️ for better rental property management
+## Public Repository Safety
 
-</div>
+Commit source code, SQL policies, migrations, docs, `.env.example`, and CI config.
+
+Do not commit:
+
+- `.env.local` or any real environment file
+- Supabase service-role key
+- Real tenant data
+- Database dumps that contain table data
+- Uploaded tenant documents or payment proof images
+- Screenshots that reveal private emails, phone numbers, IDs, or keys
+
+If a secret was ever committed or shared publicly, rotate it in Supabase immediately.
+
+## License
+
+No public license has been added yet. Until a license is chosen, this project is source-available only and all rights are reserved.

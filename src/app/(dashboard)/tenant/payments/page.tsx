@@ -68,7 +68,7 @@ export default async function TenantPaymentsPage({
   );
 
   return (
-    <div className="p-6 space-y-6 text-(--panel-text)">
+    <div className="mx-auto w-full max-w-[1600px] space-y-7 p-4 text-(--panel-text) sm:p-6 lg:p-8">
       <div>
         <h1 className="text-2xl font-bold">💳 ការទូទាត់របស់ខ្ញុំ</h1>
         <p className="text-sm text-(--panel-text-subtle) mt-1">
@@ -77,19 +77,19 @@ export default async function TenantPaymentsPage({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm transition-shadow hover:shadow-md">
           <Clock className="text-amber-400 mb-2" size={20} />
           <p className="text-sm text-(--panel-text-muted)">រង់ចាំ</p>
           <p className="text-2xl font-bold">{pendingCount}</p>
         </div>
 
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm transition-shadow hover:shadow-md">
           <CheckCircle className="text-emerald-400 mb-2" size={20} />
           <p className="text-sm text-(--panel-text-muted)">បានអនុម័ត</p>
           <p className="text-2xl font-bold">{approvedCount}</p>
         </div>
 
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm transition-shadow hover:shadow-md">
           <XCircle className="text-red-400 mb-2" size={20} />
           <p className="text-sm text-(--panel-text-muted)">បានបដិសេធ</p>
           <p className="text-2xl font-bold">{rejectedCount}</p>
@@ -97,11 +97,11 @@ export default async function TenantPaymentsPage({
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-        <div className="xl:col-span-2 rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+        <div className="xl:col-span-2 rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold mb-4">បញ្ជាក់ការទូទាត់</h2>
 
           {unpaidBills.length === 0 ? (
-            <p className="text-sm text-(--panel-text-subtle)">
+            <p className="flex min-h-32 items-center justify-center rounded-xl border border-dashed border-(--panel-border) bg-(--panel-inset) p-6 text-center text-sm text-(--panel-text-subtle)">
               មិនមានវិក្កយបត្រមិនទាន់បង់ទេ។
             </p>
           ) : (
@@ -124,7 +124,7 @@ export default async function TenantPaymentsPage({
                 </select>
               </div>
 
-              <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-2">
+              <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4">
                 <p className="text-sm text-(--panel-text-subtle)">ចំនួនត្រូវបង់</p>
                 <p className="text-xl font-bold text-emerald-400 mt-1">
                   ${Number(selectedBill?.total_amount || 0).toFixed(2)}
@@ -156,6 +156,21 @@ export default async function TenantPaymentsPage({
                 />
               </div>
 
+              <div>
+                <label className="text-sm text-(--panel-text-muted)">
+                  Payment proof (required for electronic payments)
+                </label>
+                <input
+                  type="file"
+                  name="proof_image"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="mt-1 block w-full cursor-pointer rounded-xl border border-dashed border-indigo-500/40 bg-indigo-500/5 px-3 py-3 text-sm text-(--panel-text) file:mr-3 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
+                />
+                <p className="mt-1 text-xs text-(--panel-text-subtle)">
+                  JPG, PNG or WebP, maximum 5MB. Cash payments do not require an image.
+                </p>
+              </div>
+
               {hasPendingPayment ? (
                 <div className="rounded-lg border border-yellow-600/40 bg-yellow-500/10 p-3 text-sm text-yellow-400">
                   អ្នកបានផ្ញើការទូទាត់រួចហើយ។ សូមរង់ចាំ Admin ពិនិត្យ។
@@ -163,7 +178,7 @@ export default async function TenantPaymentsPage({
               ) : (
                 <button
                   type="submit"
-                  className="rounded-lg bg-indigo-600 px-5 py-3 text-white font-semibold text-sm"
+                  className="w-full rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-700 sm:w-auto"
                 >
                   ខ្ញុំបានបង់ប្រាក់រួចហើយ
                 </button>
@@ -172,7 +187,7 @@ export default async function TenantPaymentsPage({
           )}
         </div>
 
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">QR Code</h2>
             <CreditCard className="text-emerald-400" size={20} />
@@ -185,7 +200,7 @@ export default async function TenantPaymentsPage({
               className="w-full rounded-xl border border-(--panel-border) bg-white p-3"
             />
           ) : (
-            <div className="h-56 rounded-xl border border-(--panel-border) bg-(--panel-inset) flex items-center justify-center text-sm text-(--panel-text-subtle)">
+            <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-(--panel-border) bg-(--panel-inset) text-center text-sm text-(--panel-text-subtle)">
               មិនទាន់មាន QR Code
             </div>
           )}
@@ -197,7 +212,7 @@ export default async function TenantPaymentsPage({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+      <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold mb-4">ប្រវត្តិការទូទាត់</h2>
 
         <div className="space-y-3">

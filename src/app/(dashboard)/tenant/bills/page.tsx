@@ -54,7 +54,7 @@ export default async function TenantBillsPage() {
     : null;
 
   return (
-    <div className="p-6 space-y-6 text-(--panel-text)">
+    <div className="mx-auto w-full max-w-[1600px] space-y-7 p-4 text-(--panel-text) sm:p-6 lg:p-8">
       <div>
         <h1 className="text-2xl font-bold">🧾 វិក្កយបត្ររបស់ខ្ញុំ</h1>
         <p className="text-sm text-(--panel-text-subtle) mt-1">
@@ -62,55 +62,55 @@ export default async function TenantBillsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-        <div className="xl:col-span-2 rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
-          <div className="flex items-center justify-between mb-4">
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-3 xl:gap-6">
+        <div className="xl:col-span-2 rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6">
+          <div className="mb-5 flex items-center justify-between">
             <h2 className="text-lg font-semibold">វិក្កយបត្របច្ចុប្បន្ន</h2>
             <Receipt className="text-indigo-400" size={22} />
           </div>
 
           {!currentBill ? (
-            <p className="text-sm text-(--panel-text-subtle)">
+            <p className="flex min-h-32 items-center justify-center rounded-xl border border-dashed border-(--panel-border) bg-(--panel-inset) p-6 text-center text-sm text-(--panel-text-subtle)">
               មិនមានវិក្កយបត្រមិនទាន់បង់ទេ។
             </p>
           ) : (
             <div className="space-y-3">
-              <div className="flex justify-between">
+              <div className="flex items-center justify-between rounded-lg bg-(--panel-inset) px-3 py-2.5">
                 <span className="text-sm text-(--panel-text-subtle)">ខែ</span>
                 <span className="text-sm font-medium">
                   {formatMonth(currentBill.billing_month)}
                 </span>
               </div>
 
-              <div className="flex justify-between">
+              <div className="flex items-center justify-between px-3">
                 <span className="text-sm text-(--panel-text-subtle)">ថ្លៃបន្ទប់</span>
                 <span className="text-lg">
                   ${Number(currentBill.room_fee || 0).toFixed(2)}
                 </span>
               </div>
 
-              <div className="flex justify-between">
+              <div className="flex items-center justify-between px-3">
                 <span className="text-sm text-(--panel-text-subtle)">ថ្លៃទឹក</span>
                 <span className="text-lg">
                   ${Number(currentBill.water_fee || 0).toFixed(2)}
                 </span>
               </div>
 
-              <div className="flex justify-between">
+              <div className="flex items-center justify-between px-3">
                 <span className="text-sm text-(--panel-text-subtle)">ថ្លៃភ្លើង</span>
                 <span className="text-lg">
                   ${Number(currentBill.elec_fee || 0).toFixed(2)}
                 </span>
               </div>
 
-              <div className="border-t border-(--panel-border) pt-3 flex justify-between">
+              <div className="mt-2 flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-3">
                 <span className="text-sm font-medium">សរុប</span>
                 <span className="text-xl font-bold text-emerald-400">
                   ${Number(currentBill.total_amount || 0).toFixed(2)}
                 </span>
               </div>
 
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between px-3 pt-1">
                 <span className="text-sm text-(--panel-text-subtle)">ស្ថានភាព</span>
                 <StatusBadge status={currentBill.status} />
               </div>
@@ -124,8 +124,8 @@ export default async function TenantBillsPage() {
           )}
         </div>
 
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
-          <div className="flex items-center justify-between mb-4">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6">
+          <div className="mb-5 flex items-center justify-between">
             <h2 className="text-lg font-semibold">QR បង់ប្រាក់</h2>
             <CreditCard className="text-emerald-400" size={22} />
           </div>
@@ -134,10 +134,10 @@ export default async function TenantBillsPage() {
             <img
               src={settings.payment_qr_url}
               alt="Payment QR"
-              className="w-full rounded-xl border border-(--panel-border) bg-white p-3"
+              className="mx-auto aspect-square w-full max-w-[280px] rounded-xl border border-(--panel-border) bg-white p-4 shadow-sm"
             />
           ) : (
-            <div className="h-60 rounded-xl border border-(--panel-border) bg-(--panel-inset) flex items-center justify-center text-sm text-(--panel-text-subtle)">
+            <div className="flex aspect-square min-h-52 w-full items-center justify-center rounded-xl border border-dashed border-(--panel-border) bg-(--panel-inset) px-4 text-center text-sm text-(--panel-text-subtle)">
               មិនទាន់មាន QR Code
             </div>
           )}
@@ -150,7 +150,7 @@ export default async function TenantBillsPage() {
           {currentBill && !pendingPayment && (
             <a
               href={`/tenant/payments?bill=${currentBill.id}`}
-              className="mt-4 flex h-10 items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-sm font-medium text-white"
+              className="mt-5 flex h-11 items-center justify-center rounded-xl bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-(--panel)"
             >
               ខ្ញុំបានបង់ប្រាក់រួចហើយ
             </a>
@@ -158,17 +158,17 @@ export default async function TenantBillsPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+      <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold mb-4">ប្រវត្តិវិក្កយបត្រ</h2>
 
         <div className="space-y-3">
           {bills.length === 0 ? (
-            <p className="text-sm text-(--panel-text-subtle)">មិនទាន់មានវិក្កយបត្រ</p>
+            <div className="rounded-xl border border-dashed border-(--panel-border) bg-(--panel-inset) px-4 py-10 text-center text-sm text-(--panel-text-subtle)">មិនទាន់មានវិក្កយបត្រ</div>
           ) : (
             bills.map((bill) => (
               <div
                 key={bill.id}
-                className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
+                className="flex flex-col gap-3 rounded-xl border border-(--panel-border) bg-(--panel-inset) p-4 transition hover:border-indigo-400/30 hover:bg-(--panel) sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <p className="text-sm font-medium">

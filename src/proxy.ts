@@ -64,6 +64,12 @@ export async function proxy(request: NextRequest) {
 
     const role = profile?.role;
 
+    if (isProtectedRoute && role !== "admin" && role !== "tenant") {
+      url.pathname = "/login";
+      url.searchParams.set("error", "account_not_configured");
+      return NextResponse.redirect(url);
+    }
+
     // Tenant cannot access admin pages
     if (role === "tenant" && isAdminRoute) {
       url.pathname = "/tenant/dashboard";

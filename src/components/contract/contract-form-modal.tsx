@@ -66,6 +66,7 @@ interface ContractModalProps {
   contract?: Contract | null;
   tenants: TenantOption[];
   rooms: RoomOption[];
+  defaultDueDay: number;
   onSuccess?: (contract: Contract) => void;
 }
 
@@ -82,6 +83,7 @@ export default function ContractModal({
   contract,
   tenants,
   rooms,
+  defaultDueDay,
   onSuccess,
 }: ContractModalProps) {
   const [loading, setLoading] = useState(false);
@@ -104,7 +106,7 @@ export default function ContractModal({
       end_date: "",
       deposit_amount: 0,
       status: "active",
-      due_day: 5,
+      due_day: defaultDueDay,
     },
   });
 
@@ -123,7 +125,7 @@ export default function ContractModal({
         end_date: contract.end_date?.slice(0, 10) || "",
         deposit_amount: contract.deposit_amount || 0,
         status: contract.status || "active",
-        due_day: contract.due_day || 5,
+        due_day: contract.due_day || defaultDueDay,
       });
     } else {
       reset({
@@ -133,10 +135,10 @@ export default function ContractModal({
         end_date: "",
         deposit_amount: 0,
         status: "active",
-        due_day: 5,
+        due_day: defaultDueDay,
       });
     }
-  }, [isOpen, contract, reset]);
+  }, [isOpen, contract, defaultDueDay, reset]);
 
   const tenantsForDropdown = useMemo(() => {
     if (!isEditMode || !contract?.tenant_id || !contract.profiles) {

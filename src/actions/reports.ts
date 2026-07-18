@@ -1,6 +1,7 @@
 "use server";
 
 import { requireAdmin } from "@/lib/supabase/server";
+import { syncBusinessStatuses } from "@/lib/business-status";
 
 function monthKey(value?: string | null) {
   return value ? String(value).slice(0, 7) : "-";
@@ -8,6 +9,7 @@ function monthKey(value?: string | null) {
 
 export async function getReportsData() {
   const { supabase } = await requireAdmin();
+  await syncBusinessStatuses();
 
   const [roomsResult, billsResult, paymentsResult, maintenanceResult] =
     await Promise.all([

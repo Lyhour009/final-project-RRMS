@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/server";
 import { billSchema } from "@/lib/validations/bills";
+import { syncBusinessStatuses } from "@/lib/business-status";
 
 // See bill-generator.ts for why this cast exists: no generated DB types,
 // so Supabase-js can't tell `rooms:room_id` resolves to a single row.
@@ -15,6 +16,7 @@ type ContractWithRoom = {
 
 export async function getBills() {
   const { supabase } = await requireAdmin();
+  await syncBusinessStatuses();
 
   const { data, error } = await supabase
     .from("bills")
@@ -131,7 +133,7 @@ export async function upsertBill(id: string | null, formData: FormData) {
 
   const { data: settings, error: settingsError } = await supabase
     .from("settings")
-    .select("water_rate, electric_rate")
+    .select("water_rate, electric_rate, late_fee, currency")
     .limit(1)
     .single();
 
@@ -146,7 +148,30 @@ export async function upsertBill(id: string | null, formData: FormData) {
 
   const waterFee = waterUsed * Number(settings.water_rate || 0);
   const elecFee = elecUsed * Number(settings.electric_rate || 0);
-  const totalAmount = roomFee + waterFee + elecFee;
+  const appliedLateFee = status === "overdue" ? Number(settings.late_fee || 0) : 0;
+  const totalAmount = roomFee + waterFee + elecFee + appliedLateFee;
+
+  let existingPaidAt: string | null = null;
+  if (id) {
+    const [{ data: existingBill, error: existingBillError }, { data: approvedPayment, error: paymentError }] =
+      await Promise.all([
+        supabase.from("bills").select("status, paid_at").eq("id", id).single(),
+        supabase.from("payments").select("id").eq("bill_id", id).eq("status", "approved").limit(1),
+      ]);
+
+    if (existingBillError) throw new Error(existingBillError.message);
+    if (paymentError) throw new Error(paymentError.message);
+
+    if (approvedPayment?.length && status !== "paid") {
+      throw new Error("An approved payment exists, so this bill must remain paid");
+    }
+    if (!approvedPayment?.length && status === "paid") {
+      throw new Error("Approve or record a payment before marking this bill paid");
+    }
+    existingPaidAt = existingBill?.paid_at || null;
+  } else if (status === "paid") {
+    throw new Error("Create the bill as unpaid, then record and approve its payment");
+  }
 
   const billData = {
     contract_id,
@@ -159,9 +184,11 @@ export async function upsertBill(id: string | null, formData: FormData) {
     room_fee: roomFee,
     water_fee: waterFee,
     elec_fee: elecFee,
+    late_fee: appliedLateFee,
+    currency: settings.currency || "USD",
     total_amount: totalAmount,
     status,
-    paid_at: status === "paid" ? new Date().toISOString() : null,
+    paid_at: status === "paid" ? existingPaidAt : null,
   };
 
   if (id) {
@@ -200,6 +227,7 @@ export async function upsertBill(id: string | null, formData: FormData) {
     if (error) throw new Error(error.message);
 
     revalidatePath("/admin/billing");
+    revalidatePath("/admin/dashboard");
     revalidatePath("/tenant/bills");
     revalidatePath("/tenant/dashboard");
 
@@ -240,6 +268,7 @@ export async function upsertBill(id: string | null, formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/billing");
+  revalidatePath("/admin/dashboard");
   revalidatePath("/tenant/bills");
   revalidatePath("/tenant/dashboard");
 
@@ -247,7 +276,7 @@ export async function upsertBill(id: string | null, formData: FormData) {
 }
 
 export async function deleteBill(id: string) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
   const { data: payments, error: paymentsError } = await supabase
     .from("payments")
@@ -261,11 +290,15 @@ export async function deleteBill(id: string) {
     throw new Error("មិនអាចលុបវិក្កយបត្រនេះបានទេ ព្រោះមានការទូទាត់ពាក់ព័ន្ធ");
   }
 
-  const { error } = await supabase.from("bills").delete().eq("id", id);
+  const { error } = await supabase
+    .from("bills")
+    .update({ archived_at: new Date().toISOString(), archived_by: user.id })
+    .eq("id", id);
 
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/billing");
+  revalidatePath("/admin/dashboard");
   revalidatePath("/tenant/bills");
   revalidatePath("/tenant/dashboard");
 }

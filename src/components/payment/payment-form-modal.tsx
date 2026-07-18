@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable react/no-unescaped-entities */
 
 import { useEffect, useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
@@ -112,9 +111,8 @@ export default function PaymentSubmitModal({
   const selectedBill = bills.find((bill) => bill.id === selectedBillId);
 
   const selectedBillLabel = selectedBill
-    ? `${selectedBill.billing_month || "វិក្កយបត្រ"} — បន្ទប់ #${
-        selectedBill.contracts?.rooms?.room_number || "-"
-      } — $${Number(selectedBill.total_amount || 0).toFixed(2)}`
+    ? `${selectedBill.billing_month || "វិក្កយបត្រ"} — បន្ទប់ #${selectedBill.contracts?.rooms?.room_number || "-"
+    } — $${Number(selectedBill.total_amount || 0).toFixed(2)}`
     : "ជ្រើសរើសវិក្កយបត្រ";
 
   useEffect(() => {
@@ -191,191 +189,184 @@ export default function PaymentSubmitModal({
 
         <form onSubmit={handleSubmit(onSubmit)} className={FORM_MODAL_BODY}>
           <div className={FORM_MODAL_SCROLL_AREA}>
-          <div className="space-y-1.5">
-            <Label className="text-(--panel-text-muted)">វិក្កយបត្រ</Label>
+            <div className="space-y-1.5">
+              <Label className="text-(--panel-text-muted)">វិក្កយបត្រ</Label>
 
-            <Select
-              value={selectedBillId}
-              onValueChange={(value: string | null) =>
-                value && setValue("bill_id", value, { shouldValidate: true })
-              }
-            >
-              <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
-                <SelectValue placeholder="ជ្រើសរើសវិក្កយបត្រ">
-                  {selectedBillLabel}
-                </SelectValue>
-              </SelectTrigger>
-
-              <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
-                {bills.length === 0 ? (
-                  <SelectItem value="_none" disabled>
-                    មិនមានវិក្កយបត្រមិនទាន់បង់ឡើយ
-                  </SelectItem>
-                ) : (
-                  bills.map((bill) => (
-                    <SelectItem
-                      key={bill.id}
-                      value={bill.id}
-                      className="text-xs"
-                    >
-                      {bill.billing_month || "វិក្កយបត្រ"} —{" "}
-                      {bill.profiles?.full_name || "-"} — បន្ទប់ #
-                      {bill.contracts?.rooms?.room_number || "-"} — $
-                      {Number(bill.total_amount || 0).toFixed(2)}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-
-            {errors.bill_id && (
-              <p className="text-xs text-red-400">{errors.bill_id.message}</p>
-            )}
-          </div>
-
-          {selectedBill && (
-            <div className="rounded-xl border border-(--panel-border) bg-(--panel) p-4 space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-(--panel-text-muted)">អ្នកជួល</span>
-                <span className="font-medium text-(--panel-text)">
-                  {selectedBill.profiles?.full_name || "-"}
-                </span>
-              </div>
-
-              <div className="flex justify-between text-sm">
-                <span className="text-(--panel-text-muted)">លេខទូរស័ព្ទ</span>
-                <span className="font-medium text-(--panel-text)">
-                  {selectedBill.profiles?.phone_number || "-"}
-                </span>
-              </div>
-
-              <div className="flex justify-between text-sm">
-                <span className="text-(--panel-text-muted)">បន្ទប់</span>
-                <span className="font-medium text-(--panel-text)">
-                  #{selectedBill.contracts?.rooms?.room_number || "-"} —{" "}
-                  {selectedBill.contracts?.rooms?.room_type || "-"}
-                </span>
-              </div>
-
-              <div className="flex justify-between text-sm border-t border-(--panel-border) pt-2 mt-2">
-                <span className="text-(--panel-text-muted) font-medium">ចំនួនត្រូវបង់</span>
-                <span className="font-bold text-emerald-400">
-                  ${Number(selectedBill.total_amount || 0).toFixed(2)}
-                </span>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            <Label className="text-(--panel-text-muted)">ចំនួនទឹកប្រាក់</Label>
-
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
-              {...register("amount", { valueAsNumber: true })}
-            />
-
-            {errors.amount && (
-              <p className="text-xs text-red-400">{errors.amount.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-(--panel-text-muted)">វិធីបង់ប្រាក់</Label>
-
-            <Select
-              value={selectedMethod}
-              onValueChange={(value: PaymentMethod | null) =>
-                value && setValue("payment_method", value, { shouldValidate: true })
-              }
-            >
-              <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
-                <SelectValue placeholder="ជ្រើសរើសវិធីបង់ប្រាក់">
-                  {selectedMethod ? PAYMENT_METHOD_LABELS[selectedMethod] : ""}
-                </SelectValue>
-              </SelectTrigger>
-
-              <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
-                <SelectItem value="aba">ABA</SelectItem>
-                <SelectItem value="acleda">ACLEDA</SelectItem>
-                <SelectItem value="wing">Wing</SelectItem>
-                <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="other">ផ្សេងៗ</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {errors.payment_method && (
-              <p className="text-xs text-red-400">
-                {errors.payment_method.message}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-(--panel-text-muted)">រូបភាពបញ្ជាក់ Optional</Label>
-
-            <Input
-              type="file"
-              accept="image/jpeg,image/jpg,image/png,image/webp"
-              className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-
-                setValue("proof_image", file, { shouldValidate: true });
-
-                if (file) {
-                  setProofPreview(URL.createObjectURL(file));
-                } else {
-                  setProofPreview(null);
+              <Select
+                value={selectedBillId}
+                onValueChange={(value: string | null) =>
+                  value && setValue("bill_id", value, { shouldValidate: true })
                 }
-              }}
-            />
+              >
+                <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
+                  <SelectValue placeholder="ជ្រើសរើសវិក្កយបត្រ">
+                    {selectedBillLabel}
+                  </SelectValue>
+                </SelectTrigger>
 
-            <p className="text-xs text-(--panel-text-subtle)">
-              បើមាន screenshot នៃការបង់ប្រាក់ អាច upload បាន។ មិនបាច់ក៏បាន។
-            </p>
+                <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
+                  {bills.length === 0 ? (
+                    <SelectItem value="_none" disabled>
+                      មិនមានវិក្កយបត្រមិនទាន់បង់ឡើយ
+                    </SelectItem>
+                  ) : (
+                    bills.map((bill) => (
+                      <SelectItem
+                        key={bill.id}
+                        value={bill.id}
+                        className="text-xs"
+                      >
+                        {bill.billing_month || "វិក្កយបត្រ"} —{" "}
+                        {bill.profiles?.full_name || "-"} — បន្ទប់ #
+                        {bill.contracts?.rooms?.room_number || "-"} — $
+                        {Number(bill.total_amount || 0).toFixed(2)}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
 
-            {proofPreview && (
-              <div className="mt-2 w-full h-40 rounded-lg overflow-hidden border border-(--panel-border) bg-(--panel-hover)">
-                <img
-                  src={proofPreview}
-                  alt="Payment proof preview"
-                  className="w-full h-full object-cover"
-                />
+              {errors.bill_id && (
+                <p className="text-xs text-red-400">{errors.bill_id.message}</p>
+              )}
+            </div>
+
+            {selectedBill && (
+              <div className="rounded-xl border border-(--panel-border) bg-(--panel) p-4 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-(--panel-text-muted)">អ្នកជួល</span>
+                  <span className="font-medium text-(--panel-text)">
+                    {selectedBill.profiles?.full_name || "-"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-(--panel-text-muted)">លេខទូរស័ព្ទ</span>
+                  <span className="font-medium text-(--panel-text)">
+                    {selectedBill.profiles?.phone_number || "-"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-(--panel-text-muted)">បន្ទប់</span>
+                  <span className="font-medium text-(--panel-text)">
+                    #{selectedBill.contracts?.rooms?.room_number || "-"} —{" "}
+                    {selectedBill.contracts?.rooms?.room_type || "-"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-sm border-t border-(--panel-border) pt-2 mt-2">
+                  <span className="text-(--panel-text-muted) font-medium">ចំនួនត្រូវបង់</span>
+                  <span className="font-bold text-emerald-400">
+                    ${Number(selectedBill.total_amount || 0).toFixed(2)}
+                  </span>
+                </div>
               </div>
             )}
 
-            {errors.proof_image && (
-              <p className="text-xs text-red-400">
-                {String(errors.proof_image.message)}
+            <div className="space-y-1.5">
+              <Label className="text-(--panel-text-muted)">ចំនួនទឹកប្រាក់</Label>
+
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                readOnly
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
+                {...register("amount", { valueAsNumber: true })}
+              />
+
+              {errors.amount && (
+                <p className="text-xs text-red-400">{errors.amount.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-(--panel-text-muted)">វិធីបង់ប្រាក់</Label>
+
+              <Select
+                value={selectedMethod}
+                onValueChange={(value: PaymentMethod | null) =>
+                  value && setValue("payment_method", value, { shouldValidate: true })
+                }
+              >
+                <SelectTrigger className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
+                  <SelectValue placeholder="ជ្រើសរើសវិធីបង់ប្រាក់">
+                    {selectedMethod ? PAYMENT_METHOD_LABELS[selectedMethod] : ""}
+                  </SelectValue>
+                </SelectTrigger>
+
+                <SelectContent className="bg-(--panel) border-(--panel-border) text-(--panel-text)">
+                  <SelectItem value="aba">ABA</SelectItem>
+                  <SelectItem value="acleda">ACLEDA</SelectItem>
+                  <SelectItem value="wing">Wing</SelectItem>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="other">ផ្សេងៗ</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {errors.payment_method && (
+                <p className="text-xs text-red-400">
+                  {errors.payment_method.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-(--panel-text-muted)">រូបភាពបញ្ជាក់ Optional</Label>
+
+              <Input
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+
+                  setValue("proof_image", file, { shouldValidate: true });
+
+                  if (file) {
+                    setProofPreview(URL.createObjectURL(file));
+                  } else {
+                    setProofPreview(null);
+                  }
+                }}
+              />
+
+              <p className="text-xs text-(--panel-text-subtle)">
+                បើមាន screenshot នៃការបង់ប្រាក់ អាច upload បាន។ មិនបាច់ក៏បាន។
               </p>
-            )}
-          </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-(--panel-text-muted)">ចំណាំ</Label>
+              {proofPreview && (
+                <div className="mt-2 w-full h-40 rounded-lg overflow-hidden border border-(--panel-border) bg-(--panel-hover)">
+                  <img
+                    src={proofPreview}
+                    alt="Payment proof preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
 
-            <Input
-              className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
-              placeholder="ឧ. បានបង់តាម ABA"
-              {...register("note")}
-            />
+              {errors.proof_image && (
+                <p className="text-xs text-red-400">
+                  {String(errors.proof_image.message)}
+                </p>
+              )}
+            </div>
 
-            {errors.note && (
-              <p className="text-xs text-red-400">{errors.note.message}</p>
-            )}
-          </div>
+            <div className="space-y-1.5">
+              <Label className="text-(--panel-text-muted)">ចំណាំ</Label>
 
-          <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
-            <p className="text-xs text-amber-300 leading-relaxed">
-              សូមប្រាកដថាអ្នកបានបង់ប្រាក់រួចរាល់។
-              ការទូទាត់នេះនឹងស្ថិតក្នុងស្ថានភាព "កំពុងរង់ចាំ" រហូតដល់ Admin
-              ផ្ទៀងផ្ទាត់ និងអនុម័ត។
-            </p>
-          </div>
+              <Input
+                className="bg-(--panel) border-(--panel-border) text-(--panel-text)"
+                placeholder="ឧ. បានបង់តាម ABA"
+                {...register("note")}
+              />
+
+              {errors.note && (
+                <p className="text-xs text-red-400">{errors.note.message}</p>
+              )}
+            </div>
 
           </div>
           <div className={FORM_MODAL_FOOTER}>

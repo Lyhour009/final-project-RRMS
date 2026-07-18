@@ -16,13 +16,13 @@ function StatCard({
   color?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-[13px] text-(--panel-text-muted)">{title}</p>
-        <div className={color}>{icon}</div>
+    <div className="group rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-medium text-(--panel-text-muted)">{title}</p>
+        <div className={`rounded-xl bg-(--panel-inset) p-2.5 ${color}`}>{icon}</div>
       </div>
 
-      <p className="mt-3 text-2xl font-bold text-(--panel-text)">{value}</p>
+      <p className="mt-5 text-3xl font-bold tracking-tight text-(--panel-text)">{value}</p>
       <p className="mt-1 text-xs text-(--panel-text-subtle)">{subtitle}</p>
     </div>
   );
@@ -98,7 +98,7 @@ export default async function TenantOverviewPage() {
   const currentBill = data.currentBill;
 
   return (
-    <div className="p-6 space-y-6 text-(--panel-text)">
+    <div className="mx-auto w-full max-w-[1600px] space-y-7 p-4 text-(--panel-text) sm:p-6 lg:p-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           👋 សួស្តី, {data.profile.full_name}
@@ -108,7 +108,7 @@ export default async function TenantOverviewPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="បន្ទប់របស់ខ្ញុំ"
           value={room ? `#${room.room_number}` : "-"}
@@ -152,8 +152,8 @@ export default async function TenantOverviewPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 xl:col-span-2">
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-3">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm xl:col-span-2 sm:p-6">
           <h2 className="text-lg font-semibold mb-4">
             🏠 ព័ត៌មានបន្ទប់ និងកិច្ចសន្យា
           </h2>
@@ -163,13 +163,13 @@ export default async function TenantOverviewPage() {
               អ្នកមិនទាន់មានកិច្ចសន្យាសកម្មទេ។
             </p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-              <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-4">
+            <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2">
+              <div className="overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3.5">
                 {room?.images?.[0] ? (
                   <img
                     src={room.images[0]}
                     alt="Room"
-                    className="h-56 w-full rounded-lg object-cover mb-4"
+                    className="mb-4 h-56 w-full rounded-lg object-cover transition-transform duration-300 hover:scale-[1.02]"
                   />
                 ) : (
                   <div className="h-56 w-full rounded-lg bg-(--panel-hover) border border-(--panel-border) flex items-center justify-center text-sm text-(--panel-text-subtle) mb-4">
@@ -183,7 +183,7 @@ export default async function TenantOverviewPage() {
                 <p className="text-sm text-(--panel-text-subtle) mt-1">{room?.room_type}</p>
               </div>
 
-              <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-4 space-y-3">
+              <div className="space-y-4 rounded-xl border border-(--panel-border) bg-(--panel-inset) p-5">
                 <InfoRow
                   label="ស្ថានភាព"
                   value={<StatusBadge status={contract.status} />}
@@ -204,7 +204,7 @@ export default async function TenantOverviewPage() {
           )}
         </div>
 
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold mb-4">
             💰 វិក្កយបត្របច្ចុប្បន្ន
           </h2>
@@ -248,8 +248,8 @@ export default async function TenantOverviewPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold mb-4">🧾 វិក្កយបត្រថ្មីៗ</h2>
 
           <div className="space-y-3">
@@ -277,7 +277,7 @@ export default async function TenantOverviewPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold mb-4">💳 ការទូទាត់ថ្មីៗ</h2>
 
           <div className="space-y-3">

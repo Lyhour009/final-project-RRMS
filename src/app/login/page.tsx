@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -66,6 +67,9 @@ export default function LoginPage() {
         .single();
 
       if (profileError || !profile) {
+        // Avoid leaving a valid auth session behind when the app profile is
+        // missing or inaccessible.
+        await supabase.auth.signOut();
         toast.error("រកមិនឃើញព័ត៌មានគណនីអ្នកប្រើប្រាស់");
         return;
       }
@@ -180,6 +184,12 @@ export default function LoginPage() {
                   >
                     Forgot password?
                   </button> */}
+                  <Link
+                    href="/forgot-password"
+                    className="text-[12px] font-medium text-blue-600 transition-colors hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    Forgot password?
+                  </Link>
                 </div>
 
                 <div className="relative">

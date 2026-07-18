@@ -3,9 +3,30 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/server";
 import { contractSchema } from "@/lib/validations/contracts";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { syncBusinessStatuses } from "@/lib/business-status";
+
+async function syncRoomOccupancy(supabase: SupabaseClient, roomId: string) {
+  const [{ data: activeContracts, error: contractError }, { data: room, error: roomError }] =
+    await Promise.all([
+      supabase.from("contracts").select("id").eq("room_id", roomId).eq("status", "active").limit(1),
+      supabase.from("rooms").select("status").eq("id", roomId).single(),
+    ]);
+
+  if (contractError) throw new Error(contractError.message);
+  if (roomError || !room) throw new Error(roomError?.message || "Room not found");
+
+  const nextStatus = activeContracts?.length ? "occupied" : "available";
+  if (room.status === "maintenance" && nextStatus === "available") return;
+  if (room.status === nextStatus) return;
+
+  const { error } = await supabase.from("rooms").update({ status: nextStatus }).eq("id", roomId);
+  if (error) throw new Error(error.message);
+}
 
 export async function getContracts() {
   const { supabase } = await requireAdmin();
+  await syncBusinessStatuses();
 
   const { data, error } = await supabase
     .from("contracts")
@@ -79,15 +100,22 @@ export async function getContractFormData() {
     roomsQuery = roomsQuery.not("id", "in", `(${usedRoomIds.join(",")})`);
   }
 
-  const { data: rooms, error: roomsError } = await roomsQuery;
+  const [{ data: rooms, error: roomsError }, { data: settings, error: settingsError }] =
+    await Promise.all([
+      roomsQuery,
+      supabase.from("settings").select("monthly_due_day").limit(1).maybeSingle(),
+    ]);
 
   if (roomsError) {
     throw new Error(roomsError.message);
   }
 
+  if (settingsError) throw new Error(settingsError.message);
+
   return {
     tenants: tenants || [],
     rooms: rooms || [],
+    defaultDueDay: Number(settings?.monthly_due_day || 5),
   };
 }
 
@@ -140,11 +168,12 @@ export async function upsertContract(id: string | null, formData: FormData) {
   }
 
   let oldRoomId: string | null = null;
+  let oldStatus: string | null = null;
 
   if (id) {
     const { data: oldContract, error: oldContractError } = await supabase
       .from("contracts")
-      .select("id, room_id")
+      .select("id, room_id, status")
       .eq("id", id)
       .single();
 
@@ -153,14 +182,48 @@ export async function upsertContract(id: string | null, formData: FormData) {
     }
 
     oldRoomId = oldContract.room_id;
+    oldStatus = oldContract.status;
 
-    if (oldRoomId !== room_id && room.status !== "available") {
+    if (status === "active" && oldRoomId !== room_id && room.status !== "available") {
       throw new Error("បន្ទប់ថ្មីនេះមិនទំនេរទេ");
     }
   } else {
-    if (room.status !== "available") {
+    if (status === "active" && room.status !== "available") {
       throw new Error("បន្ទប់នេះមិនទំនេរទេ");
     }
+  }
+
+  const keepsCurrentActiveRoom = Boolean(
+    id && oldRoomId === room_id && oldStatus === "active",
+  );
+  if (status === "active" && room.status !== "available" && !keepsCurrentActiveRoom) {
+    throw new Error("The selected room must be available before activating this contract");
+  }
+
+  if (status === "active") {
+    let tenantConflictQuery = supabase
+      .from("contracts")
+      .select("id")
+      .eq("tenant_id", tenant_id)
+      .eq("status", "active");
+    let roomConflictQuery = supabase
+      .from("contracts")
+      .select("id")
+      .eq("room_id", room_id)
+      .eq("status", "active");
+
+    if (id) {
+      tenantConflictQuery = tenantConflictQuery.neq("id", id);
+      roomConflictQuery = roomConflictQuery.neq("id", id);
+    }
+
+    const [{ data: tenantConflict, error: tenantConflictError }, { data: roomConflict, error: roomConflictError }] =
+      await Promise.all([tenantConflictQuery.limit(1), roomConflictQuery.limit(1)]);
+
+    if (tenantConflictError) throw new Error(tenantConflictError.message);
+    if (roomConflictError) throw new Error(roomConflictError.message);
+    if (tenantConflict?.length) throw new Error("This tenant already has an active contract");
+    if (roomConflict?.length) throw new Error("This room already has an active contract");
   }
 
   const contractData = {
@@ -200,20 +263,14 @@ export async function upsertContract(id: string | null, formData: FormData) {
 
     if (error) throw new Error(error.message);
 
-    if (oldRoomId && oldRoomId !== room_id) {
-      await supabase
-        .from("rooms")
-        .update({ status: "available" })
-        .eq("id", oldRoomId);
-
-      await supabase
-        .from("rooms")
-        .update({ status: "occupied" })
-        .eq("id", room_id);
-    }
+    if (oldRoomId && oldRoomId !== room_id) await syncRoomOccupancy(supabase, oldRoomId);
+    if (oldRoomId !== room_id || oldStatus !== status) await syncRoomOccupancy(supabase, room_id);
 
     revalidatePath("/admin/contracts");
     revalidatePath("/admin/rooms");
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/tenant/contracts");
+    revalidatePath("/tenant/dashboard");
 
     return data;
   }
@@ -243,16 +300,19 @@ export async function upsertContract(id: string | null, formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  await supabase.from("rooms").update({ status: "occupied" }).eq("id", room_id);
+  await syncRoomOccupancy(supabase, room_id);
 
   revalidatePath("/admin/contracts");
   revalidatePath("/admin/rooms");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/tenant/contracts");
+  revalidatePath("/tenant/dashboard");
 
   return data;
 }
 
 export async function deleteContract(id: string) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
   const { data: contract, error: contractError } = await supabase
     .from("contracts")
@@ -276,17 +336,18 @@ export async function deleteContract(id: string) {
     throw new Error("មិនអាចលុបកិច្ចសន្យានេះបានទេ ព្រោះមានវិក្កយបត្រពាក់ព័ន្ធ");
   }
 
-  const { error } = await supabase.from("contracts").delete().eq("id", id);
+  const { error } = await supabase
+    .from("contracts")
+    .update({ archived_at: new Date().toISOString(), archived_by: user.id })
+    .eq("id", id);
 
   if (error) throw new Error(error.message);
 
-  await supabase
-    .from("rooms")
-    .update({ status: "available" })
-    .eq("id", contract.room_id);
+  await syncRoomOccupancy(supabase, contract.room_id);
 
   revalidatePath("/admin/contracts");
   revalidatePath("/admin/rooms");
+  revalidatePath("/admin/dashboard");
 }
 
 // See bill-generator.ts for why this cast exists: no generated DB types,

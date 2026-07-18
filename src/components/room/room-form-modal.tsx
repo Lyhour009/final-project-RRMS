@@ -348,7 +348,7 @@ export default function RoomModal({
                     ទំនេរ (Available)
                   </SelectItem>
 
-                  <SelectItem className="text-xs" value="occupied">
+                  <SelectItem className="text-xs" value="occupied" disabled={!room}>
                     មានមនុស្ស (Occupied)
                   </SelectItem>
 

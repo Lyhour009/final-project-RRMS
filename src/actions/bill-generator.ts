@@ -27,6 +27,13 @@ export async function generateMonthlyBills(formData: FormData) {
 
   const billingMonth = `${rawMonth}-01`;
 
+  const { data: settings, error: settingsError } = await supabase
+    .from("settings")
+    .select("currency")
+    .limit(1)
+    .single();
+  if (settingsError || !settings) throw new Error("Billing settings are not configured");
+
   const { data: contractsData, error: contractsError } = await supabase
     .from("contracts")
     .select(
@@ -86,6 +93,8 @@ export async function generateMonthlyBills(formData: FormData) {
       room_fee: roomFee,
       water_fee: 0,
       elec_fee: 0,
+      late_fee: 0,
+      currency: settings.currency || "USD",
       total_amount: roomFee,
       status: "unpaid",
     };

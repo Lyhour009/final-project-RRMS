@@ -1,0 +1,35 @@
+"use client";
+
+import { useState } from "react";
+import { AlertTriangle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+import { deletePayment } from "@/actions/payments";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DELETE_MODAL_CANCEL_BUTTON, DELETE_MODAL_CONFIRM_BUTTON, DELETE_MODAL_CONTENT, DELETE_MODAL_FOOTER, DELETE_MODAL_HEADER } from "@/components/ui/modal-styles";
+import { Payment } from "@/lib/validations/payments";
+
+export default function PaymentDeleteModal({ payment, isOpen, onClose, onDeleteSuccess }: {
+  payment: Payment | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onDeleteSuccess: (paymentId: string) => void;
+}) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  if (!payment) return null;
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deletePayment(payment.id);
+      onDeleteSuccess(payment.id);
+      onClose();
+      toast.success("បានលុបការទូទាត់");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "មានបញ្ហាក្នុងការលុបការទូទាត់");
+    } finally { setIsDeleting(false); }
+  };
+
+  return <Dialog open={isOpen} onOpenChange={onClose}><DialogContent className={DELETE_MODAL_CONTENT}><DialogHeader className={DELETE_MODAL_HEADER}><div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-red-500/20 bg-red-500/10 text-red-500"><AlertTriangle size={24} /></div><DialogTitle className="text-lg font-bold leading-7">តើអ្នកពិតជាចង់លុបការទូទាត់នេះមែនទេ?</DialogTitle><DialogDescription className="mt-2 text-sm leading-6 text-(--panel-text-muted)">សកម្មភាពនេះមិនអាចត្រឡប់ក្រោយបានទេ។ ការទូទាត់ចំនួន <span className="font-semibold text-red-500">${Number(payment.amount || 0).toFixed(2)}</span> នឹងត្រូវលុបចេញពីប្រព័ន្ធ។</DialogDescription></DialogHeader><DialogFooter className={DELETE_MODAL_FOOTER}><Button type="button" variant="ghost" onClick={onClose} disabled={isDeleting} className={DELETE_MODAL_CANCEL_BUTTON}>បោះបង់</Button><Button type="button" onClick={handleDelete} disabled={isDeleting} className={DELETE_MODAL_CONFIRM_BUTTON}>{isDeleting ? <span className="flex items-center justify-center gap-2"><Loader2 size={16} className="animate-spin" /> កំពុងលុប...</span> : "យល់ព្រមលុប"}</Button></DialogFooter></DialogContent></Dialog>;
+}

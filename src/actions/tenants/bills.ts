@@ -1,9 +1,11 @@
 "use server";
 
-import { requireUser } from "@/lib/supabase/server";
+import { requireTenant } from "@/lib/supabase/server";
+import { syncBusinessStatuses } from "@/lib/business-status";
 
 export async function getTenantBillsData() {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireTenant();
+  await syncBusinessStatuses();
 
   const tenantId = user.id;
 

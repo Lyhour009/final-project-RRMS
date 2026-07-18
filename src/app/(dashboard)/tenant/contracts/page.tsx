@@ -48,7 +48,7 @@ export default async function TenantContractPage() {
   const room = contract?.rooms;
 
   return (
-    <div className="p-6 space-y-6 text-(--panel-text)">
+    <div className="mx-auto w-full max-w-[1600px] space-y-7 p-4 text-(--panel-text) sm:p-6 lg:p-8">
       <div>
         <h1 className="text-2xl font-bold">📄 កិច្ចសន្យារបស់ខ្ញុំ</h1>
         <p className="text-sm text-(--panel-text-subtle) mt-1">
@@ -57,19 +57,19 @@ export default async function TenantContractPage() {
       </div>
 
       {!contract ? (
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-8 text-center text-(--panel-text-subtle)">
+        <div className="rounded-2xl border border-dashed border-(--panel-border) bg-(--panel) p-12 text-center text-(--panel-text-subtle) shadow-sm">
           មិនមានកិច្ចសន្យាសកម្មទេ។
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+              <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md sm:p-6">
               <Home className="text-blue-400 mb-3" size={22} />
               <p className="text-sm text-(--panel-text-muted)">បន្ទប់</p>
               <p className="text-2xl font-bold mt-1">#{room?.room_number}</p>
             </div>
 
-            <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+            <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
               <DollarSign className="text-emerald-400 mb-3" size={22} />
               <p className="text-sm text-(--panel-text-muted)">ថ្លៃបន្ទប់</p>
               <p className="text-2xl font-bold mt-1">
@@ -77,7 +77,7 @@ export default async function TenantContractPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+            <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
               <CalendarDays className="text-amber-400 mb-3" size={22} />
               <p className="text-sm text-(--panel-text-muted)">ថ្ងៃបង់ប្រាក់</p>
               <p className="text-2xl font-bold mt-1">
@@ -85,7 +85,7 @@ export default async function TenantContractPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+            <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
               <FileText className="text-indigo-400 mb-3" size={22} />
               <p className="text-sm text-(--panel-text-muted)">ស្ថានភាព</p>
               <div className="mt-2">
@@ -95,7 +95,7 @@ export default async function TenantContractPage() {
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+            <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
               <h2 className="text-lg font-semibold mb-4">ព័ត៌មានកិច្ចសន្យា</h2>
 
               <div className="space-y-3">
@@ -116,7 +116,7 @@ export default async function TenantContractPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+            <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
               <h2 className="text-lg font-semibold mb-4">ព័ត៌មានបន្ទប់</h2>
 
               {/* {room?.images?.[0] ? (

@@ -78,7 +78,7 @@ export default async function TenantMaintenancePage() {
   ).length;
 
   return (
-    <div className="p-6 space-y-6 text-(--panel-text)">
+    <div className="mx-auto w-full max-w-[1600px] space-y-7 p-4 text-(--panel-text) sm:p-6 lg:p-8">
       <div>
         <h1 className="text-2xl font-bold">🔧 សំណើជួសជុល</h1>
         <p className="text-sm text-(--panel-text-subtle) mt-1">
@@ -87,19 +87,19 @@ export default async function TenantMaintenancePage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm transition-shadow hover:shadow-md">
           <Clock className="text-amber-400 mb-2" size={20} />
           <p className="text-sm text-(--panel-text-muted)">រង់ចាំ</p>
           <p className="text-2xl font-bold">{pending}</p>
         </div>
 
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm transition-shadow hover:shadow-md">
           <AlertTriangle className="text-blue-400 mb-2" size={20} />
           <p className="text-sm text-(--panel-text-muted)">កំពុងធ្វើ</p>
           <p className="text-2xl font-bold">{inProgress}</p>
         </div>
 
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm transition-shadow hover:shadow-md">
           <CheckCircle className="text-emerald-400 mb-2" size={20} />
           <p className="text-sm text-(--panel-text-muted)">រួចរាល់</p>
           <p className="text-2xl font-bold">{resolved}</p>
@@ -107,7 +107,7 @@ export default async function TenantMaintenancePage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold mb-4">បង្កើតសំណើថ្មី</h2>
 
           {!contract ? (
@@ -115,7 +115,7 @@ export default async function TenantMaintenancePage() {
               អ្នកមិនទាន់មានបន្ទប់សកម្មទេ មិនអាចបង្កើតសំណើជួសជុលបាន។
             </p>
           ) : (
-            <form action={createTenantMaintenanceRequest}>
+            <form action={createTenantMaintenanceRequest} className="space-y-4">
               <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3">
                 <p className="text-xs text-(--panel-text-subtle)">បន្ទប់របស់អ្នក</p>
                 <p className="text-sm font-medium">
@@ -170,7 +170,7 @@ export default async function TenantMaintenancePage() {
           )}
         </div>
 
-        <div className="xl:col-span-2 rounded-2xl border border-(--panel-border) bg-(--panel) p-5">
+        <div className="xl:col-span-2 rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold mb-4">ប្រវត្តិសំណើជួសជុល</h2>
 
           <div className="space-y-3">
@@ -180,7 +180,7 @@ export default async function TenantMaintenancePage() {
               requests.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-4"
+                  className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-4 transition-colors hover:border-indigo-500/30 hover:bg-indigo-500/5"
                 >
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                     <div>

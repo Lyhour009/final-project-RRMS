@@ -348,7 +348,7 @@ export default function BillModal({
                   <SelectItem className="text-xs" value="unpaid">
                     មិនទាន់បង់ (Unpaid)
                   </SelectItem>
-                  <SelectItem className="text-xs" value="paid">
+                  <SelectItem className="text-xs" value="paid" disabled>
                     បានបង់ (Paid)
                   </SelectItem>
                   <SelectItem className="text-xs" value="overdue">

@@ -99,7 +99,7 @@ export async function getUserProfile() {
 
   return {
     ...user,
-    role: role ?? "tenant",
+    role,
   };
 }
 
@@ -111,6 +111,20 @@ export async function requireUser() {
 
   if (!user) {
     throw new Error("សូមចូលប្រើប្រាស់ជាមុនសិន");
+  }
+
+  return { supabase, user };
+}
+
+export async function requireTenant() {
+  const { supabase, user, role } = await getAuthenticatedUser();
+
+  if (!user) {
+    throw new Error("Please sign in first");
+  }
+
+  if (role !== "tenant" || user.app_metadata?.role !== "tenant") {
+    throw new Error("You do not have permission to use this tenant feature");
   }
 
   return { supabase, user };
