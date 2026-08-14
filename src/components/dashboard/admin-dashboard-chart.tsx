@@ -17,6 +17,8 @@ import {
   YAxis,
 } from "recharts";
 
+import { cn } from "@/lib/utils";
+
 const ROOM_COLORS = ["#22c55e", "#6366f1", "#f59e0b"];
 const STATUS_COLORS = ["#22c55e", "#f59e0b", "#ef4444"];
 
@@ -46,10 +48,12 @@ function ChartCard({
   title,
   description,
   children,
+  contentClassName,
 }: {
   title: string;
   description: string;
   children: React.ReactNode;
+  contentClassName?: string;
 }) {
   return (
     <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
@@ -58,7 +62,9 @@ function ChartCard({
         <p className="text-xs text-(--panel-text-subtle) mt-1">{description}</p>
       </div>
 
-      <div className="dashboard-chart h-[260px] w-full">{children}</div>
+      <div className={cn("dashboard-chart w-full", contentClassName || "h-65")}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -96,6 +102,11 @@ export function AdminDashboardCharts({
     (sum, item) => sum + item.value,
     0,
   );
+  // Explicit axis max instead of Recharts' default "nice" auto-domain,
+  // which rounds up (an actual max of 3 becomes an axis max of 4-5) and
+  // leaves every bar looking shorter than it is.
+  const billStatusMax = Math.max(1, ...billStatus.map((item) => item.value));
+  const paymentStatusMax = Math.max(1, ...paymentStatus.map((item) => item.value));
   const hasRevenueData = revenueByMonth.some((item) => item.revenue > 0);
   // A line needs 2+ points to draw an actual line — with only one month of
   // history, `<LineChart>` renders a single floating dot with nothing
@@ -192,11 +203,15 @@ export function AdminDashboardCharts({
           </div>
         )}
       </ChartCard>
-      <ChartCard title="ស្ថានភាពបន្ទប់" description="ទំនេរ / មិនទំនេរ / ជួសជុល">
+      <ChartCard
+        title="ស្ថានភាពបន្ទប់"
+        description="ទំនេរ / មិនទំនេរ / ជួសជុល"
+        contentClassName={totalRooms === 0 ? "h-65" : "h-72"}
+      >
         {totalRooms === 0 ? (
           <EmptyChart description="បន្ថែមបន្ទប់ដើម្បីមើលសមាមាត្រការកាន់កាប់" />
         ) : (
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={roomStatus}
@@ -242,7 +257,16 @@ export function AdminDashboardCharts({
 
               <Tooltip contentStyle={tooltipStyle} />
 
-              <Legend iconType="circle" wrapperStyle={legendStyle} />
+              <Legend
+                iconType="circle"
+                iconSize={9}
+                wrapperStyle={{ ...legendStyle, paddingTop: 18, lineHeight: "26px" }}
+                formatter={(value: string) => {
+                  const entry = roomStatus.find((item) => item.name === value);
+                  const pct = totalRooms > 0 ? Math.round(((entry?.value ?? 0) / totalRooms) * 100) : 0;
+                  return `${value} (${pct}%)`;
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         )}
@@ -276,6 +300,12 @@ export function AdminDashboardCharts({
               axisLine={false}
               allowDecimals={false}
               width={28}
+              // Recharts' default "nice" auto-domain rounds the max up
+              // (e.g. an actual max of 3 becomes an axis max of 4-5),
+              // which left short bars looking stranded under a lot of
+              // empty headroom. Scaling to the real max instead means the
+              // tallest bar always reaches the top of the chart.
+              domain={[0, billStatusMax]}
             />
 
             <Tooltip
@@ -328,6 +358,7 @@ export function AdminDashboardCharts({
               axisLine={false}
               allowDecimals={false}
               width={28}
+              domain={[0, paymentStatusMax]}
             />
 
             <Tooltip

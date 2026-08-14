@@ -179,7 +179,11 @@ export async function submitTenantPayment(formData: FormData) {
       note,
       proof_image: proofImagePath,
       status: "pending",
-      paid_at: null,
+      // Not set here: `paid_at` is NOT NULL with a default of now() in the
+      // database, so an explicit null (instead of omitting the key)
+      // overrides that default and violates the constraint — this insert
+      // was failing every tenant payment submission until this was found.
+      // decide_payment() overwrites it again on approval regardless.
     },
   ]);
 

@@ -3,19 +3,27 @@
 import { useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
+  Building2,
   CheckCircle2,
   Edit2,
   Home,
-  ImageOff,
   Loader2,
+  MoreVertical,
   Plus,
   RotateCcw,
   Search,
   Trash2,
   UserCheck,
+  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
 import { cn } from "@/lib/utils";
@@ -34,11 +42,22 @@ const STATUS_OPTIONS: {
   value: RoomStatus;
   label: string;
   activeClass: string;
+  activeCountClass: string;
 }[] = [
-  { value: "all", label: "ទាំងអស់", activeClass: "bg-indigo-600 text-white" },
-  { value: "available", label: "ទំនេរ", activeClass: "bg-emerald-600 text-white" },
-  { value: "occupied", label: "មិនទំនេរ", activeClass: "bg-blue-600 text-white" },
-  { value: "maintenance", label: "ជួសជុល", activeClass: "bg-amber-600 text-white" },
+  {
+    value: "all",
+    label: "ទាំងអស់",
+    // Soft tint, not a solid fill — the primary "+ បន្ថែមបន្ទប់" button is
+    // solid indigo, so an equally solid indigo "all" filter competed with it
+    // for attention. A tint keeps this readable as "selected filter" while
+    // staying visually secondary to the one true call-to-action.
+    activeClass:
+      "bg-indigo-500/15 text-indigo-700 ring-1 ring-inset ring-indigo-500/30 dark:bg-indigo-500/20 dark:text-indigo-300",
+    activeCountClass: "text-indigo-700/70 dark:text-indigo-300/70",
+  },
+  { value: "available", label: "ទំនេរ", activeClass: "bg-emerald-600 text-white", activeCountClass: "text-white/75" },
+  { value: "occupied", label: "មិនទំនេរ", activeClass: "bg-blue-600 text-white", activeCountClass: "text-white/75" },
+  { value: "maintenance", label: "ជួសជុល", activeClass: "bg-amber-600 text-white", activeCountClass: "text-white/75" },
 ];
 
 function StatCard({
@@ -180,14 +199,17 @@ export default function RoomTable({ initialRooms }: RoomTableProps) {
                   )}
                 >
                   {option.label}
-                  <span className={cn("text-[10px]", statusFilter === option.value ? "text-white/75" : "text-(--panel-text-subtle)")}>
+                  <span className={cn("text-[10px]", statusFilter === option.value ? option.activeCountClass : "text-(--panel-text-subtle)")}>
                     {counts[option.value]}
                   </span>
                 </button>
               ))}
             </div>
 
-            <Button onClick={handleAddNew} className="h-10 gap-2 rounded-xl bg-indigo-600 px-4 text-white shadow-lg shadow-indigo-600/15 hover:bg-indigo-500">
+            {/* The one true call-to-action on this page: solid fill, ring, and a
+                heavier shadow so it reads as clearly primary next to the now-muted
+                "all" filter tint above. */}
+            <Button onClick={handleAddNew} className="h-10 gap-2 rounded-xl bg-indigo-600 px-4 font-semibold text-white shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400/40 hover:bg-indigo-500">
               <Plus size={16} /> បន្ថែមបន្ទប់
             </Button>
           </div>
@@ -238,21 +260,45 @@ export default function RoomTable({ initialRooms }: RoomTableProps) {
               <tbody className="divide-y divide-(--panel-border-subtle) text-sm">
                 {visibleRooms.map((room) => (
                   <tr key={room.id} className="transition-colors hover:bg-(--panel-hover)/55">
-                    <td className="px-5 py-3.5">
-                      <div className="h-12 w-16 overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel-inset)">
-                        {room.images?.[0] ? <img src={room.images[0]} alt={`បន្ទប់ ${room.room_number}`} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-(--panel-text-subtle)"><ImageOff size={17} /></div>}
+                    <td className="px-5 py-2.5">
+                      <div className="h-10 w-14 overflow-hidden rounded-lg border border-(--panel-border) bg-(--panel-inset)">
+                        {room.images?.[0] ? (
+                          <img src={room.images[0]} alt={`បន្ទប់ ${room.room_number}`} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-(--panel-hover) text-(--panel-text-subtle)">
+                            <Building2 size={16} />
+                          </div>
+                        )}
                       </div>
                     </td>
-                    <td className="px-5 py-3.5"><p className="font-semibold text-(--panel-text)">#{room.room_number}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">អតិបរមា {room.max_occupants} នាក់</p></td>
-                    <td className="px-5 py-3.5 text-(--panel-text-muted)">{room.room_type}</td>
-                    <td className="px-5 py-3.5 text-(--panel-text-muted)">ជាន់ទី {room.floor}</td>
-                    <td className="px-5 py-3.5 font-semibold text-emerald-600 dark:text-emerald-300">${Number(room.base_price).toFixed(2)}</td>
-                    <td className="px-5 py-3.5"><StatusBadge status={room.status} /></td>
-                    <td className="px-5 py-3.5 text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button size="icon" variant="ghost" aria-label={`កែប្រែបន្ទប់ ${room.room_number}`} onClick={() => { setSelectedRoom(room); setIsModalOpen(true); }} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:text-indigo-500"><Edit2 size={15} /></Button>
-                        <Button size="icon" variant="ghost" aria-label={`លុបបន្ទប់ ${room.room_number}`} onClick={() => { setRoomToDelete(room); setIsDeleteModalOpen(true); }} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:bg-red-500/10 hover:text-red-500"><Trash2 size={15} /></Button>
-                      </div>
+                    <td className="px-5 py-2.5">
+                      <p className="font-semibold text-(--panel-text)">#{room.room_number}</p>
+                      <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-(--panel-text-subtle)">
+                        <Users size={11} className="shrink-0" /> អតិបរមា {room.max_occupants} នាក់
+                      </p>
+                    </td>
+                    <td className="px-5 py-2.5 text-(--panel-text-muted)">{room.room_type}</td>
+                    <td className="px-5 py-2.5 text-(--panel-text-muted)">ជាន់ទី {room.floor}</td>
+                    <td className="px-5 py-2.5 font-semibold text-emerald-600 dark:text-emerald-300">${Number(room.base_price).toFixed(2)}</td>
+                    <td className="px-5 py-2.5"><StatusBadge status={room.status} /></td>
+                    <td className="px-5 py-2.5 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button size="icon" variant="ghost" aria-label={`សកម្មភាពសម្រាប់បន្ទប់ ${room.room_number}`} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:bg-(--panel-hover) hover:text-(--panel-text)">
+                              <MoreVertical size={16} />
+                            </Button>
+                          }
+                        />
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => { setSelectedRoom(room); setIsModalOpen(true); }}>
+                            <Edit2 size={14} /> កែប្រែ
+                          </DropdownMenuItem>
+                          <DropdownMenuItem variant="destructive" onClick={() => { setRoomToDelete(room); setIsDeleteModalOpen(true); }}>
+                            <Trash2 size={14} /> លុប
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
@@ -276,5 +322,13 @@ function StatusBadge({ status }: { status: Room["status"] }) {
     maintenance: { label: "ជួសជុល", className: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-300", dot: "bg-amber-500" },
   }[status];
 
-  return <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", config.className)}><span className={cn("h-1.5 w-1.5 rounded-full", config.dot)} />{config.label}</span>;
+  return (
+    // Fixed width + centered content so the three pills (whose Khmer labels
+    // are different lengths) line up in a neat column instead of each
+    // hugging its own text width.
+    <span className={cn("inline-flex w-23 items-center justify-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", config.className)}>
+      <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", config.dot)} />
+      {config.label}
+    </span>
+  );
 }

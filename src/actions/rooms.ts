@@ -11,7 +11,7 @@ export async function getRooms() {
   const { data, error } = await supabase
     .from("rooms")
     .select("*")
-    .order("room_number", { ascending: false });
+    .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
 

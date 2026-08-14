@@ -246,7 +246,11 @@ export async function submitPayment(formData: FormData) {
         note,
         proof_image: proofImageUrl,
         status: "pending",
-        paid_at: null,
+        // Not set here: the `payments` table's paid_at column is NOT NULL
+        // with a default of now(), so passing null explicitly (instead of
+        // omitting the key) overrides that default and violates the
+        // constraint. decide_payment() overwrites it again on approval
+        // anyway, so the submission-time default is only ever a placeholder.
       },
     ])
     .select(

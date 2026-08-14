@@ -7,6 +7,8 @@ import {
   Wrench,
 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
+
 type Tone = "amber" | "red" | "blue" | "purple";
 
 const TONE_STYLES: Record<
@@ -55,11 +57,22 @@ function ActionCard({
   tone: Tone;
 }) {
   const styles = TONE_STYLES[tone];
+  // The "red" card is the one genuinely urgent item here (unpaid bills) — a
+  // thicker left-border accent plus a stronger tint makes it read as
+  // "act on this" at a glance instead of sitting at equal weight next to
+  // the other three, less time-sensitive follow-ups.
+  const isUrgent = tone === "red";
 
   return (
     <Link
       href={href}
-      className={`group relative overflow-hidden rounded-2xl border ${styles.border} ${styles.bg} p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20`}
+      className={cn(
+        "group relative overflow-hidden rounded-2xl border p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20",
+        styles.border,
+        isUrgent
+          ? "border-l-4 border-l-red-500 bg-red-500/10 dark:bg-red-500/15"
+          : styles.bg,
+      )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">

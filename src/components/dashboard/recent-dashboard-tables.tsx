@@ -44,49 +44,58 @@ export interface RecentData {
   maintenanceRequests: RecentMaintenanceRequest[];
 }
 
-function StatusBadge({
-  status,
-}: {
-  status: string;
-  type?: "bill" | "payment" | "contract" | "maintenance" | "default";
-}) {
-  let className = "bg-zinc-500/10 text-(--panel-text-muted) border-zinc-500/20";
+// One color system for every status badge on this page: green = paid/active
+// outcomes, orange = pending/in-progress, red = overdue/rejected/terminated,
+// gray = neutral fallback — so the same status reads identically whether
+// it's on a bill, a payment, a contract, or a maintenance request.
+const STATUS_TONES = {
+  green: {
+    pill: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
+    dot: "bg-emerald-500",
+  },
+  orange: {
+    pill: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-300",
+    dot: "bg-amber-500",
+  },
+  red: {
+    pill: "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-300",
+    dot: "bg-red-500",
+  },
+  gray: {
+    pill: "border-zinc-500/20 bg-zinc-500/10 text-(--panel-text-muted)",
+    dot: "bg-zinc-400",
+  },
+} as const;
 
-  if (["paid", "approved", "active", "resolved"].includes(status)) {
-    className = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-  }
+const STATUS_LABELS: Record<string, string> = {
+  paid: "បានបង់",
+  unpaid: "មិនទាន់បង់",
+  overdue: "ហួសកំណត់",
+  pending: "រង់ចាំ",
+  approved: "អនុម័ត",
+  rejected: "បដិសេធ",
+  active: "សកម្ម",
+  expired: "ផុតកំណត់",
+  terminated: "បញ្ចប់",
+  resolved: "រួចរាល់",
+  in_progress: "កំពុងធ្វើ",
+};
 
-  if (["unpaid", "pending"].includes(status)) {
-    className = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-  }
+function StatusBadge({ status }: { status: string }) {
+  let tone: keyof typeof STATUS_TONES = "gray";
 
-  if (["overdue", "rejected", "terminated"].includes(status)) {
-    className = "bg-red-500/10 text-red-400 border-red-500/20";
-  }
+  if (["paid", "approved", "active", "resolved"].includes(status)) tone = "green";
+  if (["unpaid", "pending", "in_progress"].includes(status)) tone = "orange";
+  if (["overdue", "rejected", "terminated"].includes(status)) tone = "red";
 
-  if (status === "in_progress") {
-    className = "bg-blue-500/10 text-blue-400 border-blue-500/20";
-  }
-
-  const labelMap: Record<string, string> = {
-    paid: "បានបង់",
-    unpaid: "មិនទាន់បង់",
-    overdue: "ហួសកំណត់",
-    pending: "រង់ចាំ",
-    approved: "អនុម័ត",
-    rejected: "បដិសេធ",
-    active: "សកម្ម",
-    expired: "ផុតកំណត់",
-    terminated: "បញ្ចប់",
-    resolved: "រួចរាល់",
-    in_progress: "កំពុងធ្វើ",
-  };
+  const { pill, dot } = STATUS_TONES[tone];
 
   return (
     <span
-      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${pill}`}
     >
-      {labelMap[status] || status}
+      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+      {STATUS_LABELS[status] || status}
     </span>
   );
 }
@@ -153,7 +162,7 @@ export function RecentDashboardTables({ recent }: { recent: RecentData }) {
                   <p className="text-sm font-semibold text-emerald-400">
                     ${Number(bill.total_amount || 0).toFixed(2)}
                   </p>
-                  <StatusBadge status={bill.status} type="bill" />
+                  <StatusBadge status={bill.status} />
                 </div>
               </div>
             ))
@@ -184,7 +193,7 @@ export function RecentDashboardTables({ recent }: { recent: RecentData }) {
                   <p className="text-sm font-semibold text-emerald-400">
                     ${Number(payment.amount || 0).toFixed(2)}
                   </p>
-                  <StatusBadge status={payment.status} type="payment" />
+                  <StatusBadge status={payment.status} />
                 </div>
               </div>
             ))
@@ -212,7 +221,7 @@ export function RecentDashboardTables({ recent }: { recent: RecentData }) {
                   </p>
                 </div>
 
-                <StatusBadge status={contract.status} type="contract" />
+                <StatusBadge status={contract.status} />
               </div>
             ))
           )}
@@ -239,7 +248,7 @@ export function RecentDashboardTables({ recent }: { recent: RecentData }) {
                   </p>
                 </div>
 
-                <StatusBadge status={item.status} type="maintenance" />
+                <StatusBadge status={item.status} />
               </div>
             ))
           )}

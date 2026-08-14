@@ -58,40 +58,62 @@ function StatCard({
   subtitle,
   icon,
   tone,
+  size = "default",
 }: {
   title: string;
   value: string | number;
   subtitle: string;
   icon: React.ReactNode;
   tone: StatTone;
+  size?: "default" | "hero";
 }) {
   const styles = STAT_TONES[tone];
+  const isHero = size === "hero";
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-500/25 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20">
+    <div
+      className={cn(
+        "group relative overflow-hidden rounded-2xl border border-(--panel-border) bg-(--panel) shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-500/25 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20",
+        isHero ? "p-6" : "p-4",
+      )}
+    >
       <div
         className={cn(
-          "pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b to-transparent opacity-70",
+          "pointer-events-none absolute inset-x-0 top-0 bg-linear-to-b to-transparent opacity-70",
+          isHero ? "h-32" : "h-20",
           styles.glow,
         )}
       />
       <div className="relative flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[13px] font-medium text-(--panel-text-muted)">
+          <p
+            className={cn(
+              "font-medium text-(--panel-text-muted)",
+              isHero ? "text-sm" : "text-[13px]",
+            )}
+          >
             {title}
           </p>
           <p
             className={cn(
-              "mt-2 text-[30px] font-bold leading-none tracking-tight",
+              "font-bold leading-none tracking-tight",
+              isHero ? "mt-3 text-[44px]" : "mt-2 text-xl",
               styles.value,
             )}
           >
             {value}
           </p>
         </div>
-        <div className={cn("rounded-xl p-2.5", styles.icon)}>{icon}</div>
+        <div className={cn("rounded-xl", isHero ? "p-3" : "p-2", styles.icon)}>
+          {icon}
+        </div>
       </div>
-      <p className="relative mt-3 text-xs leading-5 text-(--panel-text-subtle)">
+      <p
+        className={cn(
+          "relative text-(--panel-text-subtle)",
+          isHero ? "mt-3 text-sm leading-6" : "mt-2 text-xs leading-5",
+        )}
+      >
         {subtitle}
       </p>
     </div>
@@ -140,47 +162,55 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      <section aria-label="ស្ថិតិសង្ខេប" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {/* The two metrics an owner actually opens this page to check — get a
+          bigger, higher-contrast treatment so they're readable at a glance
+          instead of competing equally with four secondary counts below. */}
+      <section aria-label="ស្ថិតិសំខាន់" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatCard
           title="ចំណូលខែនេះ"
           value={`$${stats.cards.monthlyRevenue.toFixed(2)}`}
           subtitle="ពីវិក្កយបត្រដែលបានបង់រួច"
-          icon={<DollarSign size={20} />}
+          icon={<DollarSign size={24} />}
           tone="emerald"
+          size="hero"
         />
         <StatCard
           title="អត្រាកាន់កាប់"
           value={`${occupancyRate}%`}
           subtitle={`${stats.cards.occupiedRooms} ក្នុងចំណោម ${stats.cards.totalRooms} បន្ទប់`}
-          icon={<Gauge size={20} />}
+          icon={<Gauge size={24} />}
           tone="sky"
+          size="hero"
         />
+      </section>
+
+      <section aria-label="ស្ថិតិបន្ថែម" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           title="អ្នកជួលសរុប"
           value={stats.cards.totalTenants}
           subtitle="អ្នកជួលដែលមានក្នុងប្រព័ន្ធ"
-          icon={<Users size={20} />}
+          icon={<Users size={18} />}
           tone="indigo"
         />
         <StatCard
           title="បន្ទប់សរុប"
           value={stats.cards.totalRooms}
           subtitle={`${stats.cards.availableRooms} ទំនេរ · ${stats.cards.maintenanceRooms} ជួសជុល`}
-          icon={<Building2 size={20} />}
+          icon={<Building2 size={18} />}
           tone="violet"
         />
         <StatCard
           title="កិច្ចសន្យាសកម្ម"
           value={stats.cards.activeContracts}
           subtitle="កិច្ចសន្យាដែលកំពុងដំណើរការ"
-          icon={<FileText size={20} />}
+          icon={<FileText size={18} />}
           tone="emerald"
         />
         <StatCard
           title="ការទូទាត់រង់ចាំ"
           value={stats.cards.pendingPayments}
           subtitle="ត្រូវពិនិត្យ និងអនុម័ត"
-          icon={<CreditCard size={20} />}
+          icon={<CreditCard size={18} />}
           tone="amber"
         />
       </section>

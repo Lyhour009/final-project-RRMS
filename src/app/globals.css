@@ -179,6 +179,15 @@ html {
   color: var(--panel-text-muted) !important;
 }
 
+/* Recharts sets a tight 10px inline margin-right on each legend <li> by
+   default — bump the gap between entries (and let them wrap onto their own
+   line with room to breathe) so the room-status legend isn't cramped now
+   that it also shows a percentage per entry. */
+.dashboard-chart .recharts-legend-item {
+  margin-right: 20px !important;
+  margin-bottom: 6px !important;
+}
+
 .dashboard-chart .recharts-tooltip-wrapper {
   font-size: 12px !important;
 }
