@@ -73,6 +73,34 @@ export async function getTenants() {
     }
   }
 
+  // One batched query for every tenant's active contract (if any) instead
+  // of a per-row lookup — the admin list shows the room a tenant is
+  // actually renting rather than a status badge that's identical on every
+  // row ("អ្នកជួល" for every single tenant, since this list is tenant-only).
+  const tenantIds = tenants.map((tenant) => tenant.id);
+  const activeRoomByTenant = new Map<string, { roomNumber: string; contractStatus: "active" }>();
+
+  if (tenantIds.length > 0) {
+    const { data: activeContracts } = await supabase
+      .from("contracts")
+      .select("tenant_id, rooms:room_id(room_number)")
+      .in("tenant_id", tenantIds)
+      .eq("status", "active")
+      .is("archived_at", null);
+
+    for (const contract of (activeContracts || []) as unknown as {
+      tenant_id: string;
+      rooms: { room_number: string } | null;
+    }[]) {
+      if (contract.rooms?.room_number) {
+        activeRoomByTenant.set(contract.tenant_id, {
+          roomNumber: contract.rooms.room_number,
+          contractStatus: "active",
+        });
+      }
+    }
+  }
+
   return tenants.map((tenant) => {
     const paths = tenant.id_card_images ?? [];
     return {
@@ -81,6 +109,7 @@ export async function getTenants() {
       id_card_images: paths
         .map((path) => signedUrlMap.get(path))
         .filter((url): url is string => Boolean(url)),
+      activeContract: activeRoomByTenant.get(tenant.id) ?? null,
     };
   });
 }

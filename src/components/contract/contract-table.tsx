@@ -2,13 +2,16 @@
 
 import { useMemo, useRef, useState } from "react";
 import {
+  CalendarClock,
   CalendarDays,
+  CalendarX,
   CheckCircle2,
   Clock3,
   Edit2,
   FileSignature,
   FileText,
   Loader2,
+  MoreVertical,
   Plus,
   RotateCcw,
   Search,
@@ -17,7 +20,14 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
 import { cn, formatKhmerDate } from "@/lib/utils";
 import { Contract, ContractStatus } from "@/lib/validations/contracts";
@@ -61,11 +71,20 @@ const FILTER_OPTIONS: {
   value: ContractFilter;
   label: string;
   activeClass: string;
+  activeCountClass: string;
 }[] = [
-  { value: "all", label: "ទាំងអស់", activeClass: "bg-indigo-600 text-white" },
-  { value: "active", label: "សកម្ម", activeClass: "bg-emerald-600 text-white" },
-  { value: "pending", label: "រង់ចាំ", activeClass: "bg-amber-600 text-white" },
-  { value: "ended", label: "បញ្ចប់", activeClass: "bg-red-600 text-white" },
+  {
+    value: "all",
+    label: "ទាំងអស់",
+    // Soft tint, not solid — keeps this from competing with the solid
+    // indigo "+ បន្ថែមកិច្ចសន្យា" button for attention as the primary action.
+    activeClass:
+      "bg-indigo-500/15 text-indigo-700 ring-1 ring-inset ring-indigo-500/30 dark:bg-indigo-500/20 dark:text-indigo-300",
+    activeCountClass: "text-indigo-700/70 dark:text-indigo-300/70",
+  },
+  { value: "active", label: "សកម្ម", activeClass: "bg-emerald-600 text-white", activeCountClass: "text-white/75" },
+  { value: "pending", label: "រង់ចាំ", activeClass: "bg-amber-600 text-white", activeCountClass: "text-white/75" },
+  { value: "ended", label: "បញ្ចប់", activeClass: "bg-red-600 text-white", activeCountClass: "text-white/75" },
 ];
 
 function StatCard({ title, value, subtitle, icon, tone }: {
@@ -170,11 +189,11 @@ export function ContractTableWrapper({ initialContracts, tenants, rooms, default
             <div className="flex w-full items-center gap-1 overflow-x-auto rounded-xl border border-(--panel-border) bg-(--panel-inset) p-1 sm:w-auto">
               {FILTER_OPTIONS.map((option) => (
                 <button key={option.value} type="button" onClick={() => setStatusFilter(option.value)} className={cn("inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition", statusFilter === option.value ? option.activeClass : "text-(--panel-text-muted) hover:bg-(--panel-hover) hover:text-(--panel-text)")}>
-                  {option.label}<span className={cn("text-[10px]", statusFilter === option.value ? "text-white/75" : "text-(--panel-text-subtle)")}>{counts[option.value]}</span>
+                  {option.label}<span className={cn("text-[10px]", statusFilter === option.value ? option.activeCountClass : "text-(--panel-text-subtle)")}>{counts[option.value]}</span>
                 </button>
               ))}
             </div>
-            <Button onClick={handleAddNew} className="h-10 gap-2 rounded-xl bg-indigo-600 px-4 text-white shadow-lg shadow-indigo-600/15 hover:bg-indigo-500"><Plus size={16} /> បន្ថែមកិច្ចសន្យា</Button>
+            <Button onClick={handleAddNew} className="h-10 gap-2 rounded-xl bg-indigo-600 px-4 font-semibold text-white shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400/40 hover:bg-indigo-500"><Plus size={16} /> បន្ថែមកិច្ចសន្យា</Button>
           </div>
         </div>
       </section>
@@ -193,18 +212,68 @@ export function ContractTableWrapper({ initialContracts, tenants, rooms, default
               <Button onClick={hasActiveFilters ? clearFilters : handleAddNew} variant={hasActiveFilters ? "outline" : "default"} className={cn("mt-5 gap-2 rounded-xl", !hasActiveFilters && "bg-indigo-600 text-white hover:bg-indigo-500")}>{hasActiveFilters ? <RotateCcw size={16} /> : <Plus size={16} />}{hasActiveFilters ? "សម្អាតតម្រង" : "បង្កើតកិច្ចសន្យាដំបូង"}</Button>
             </div>
           ) : (
-            <table className="w-full min-w-[1120px] border-collapse text-left">
-              <thead className="sticky top-0 z-10 border-b border-(--panel-border) bg-(--panel-inset)"><tr className="text-xs font-medium text-(--panel-text-muted)"><th className="px-5 py-3">អ្នកជួល</th><th className="px-5 py-3">បន្ទប់</th><th className="px-5 py-3">រយៈពេលកិច្ចសន្យា</th><th className="px-5 py-3">ប្រាក់កក់</th><th className="px-5 py-3">ថ្ងៃបង់</th><th className="px-5 py-3">ស្ថានភាព</th><th className="px-5 py-3 text-right">សកម្មភាព</th></tr></thead>
+            <table className="w-full min-w-270 border-collapse text-left">
+              <thead className="sticky top-0 z-10 border-b border-(--panel-border) bg-(--panel-inset)">
+                <tr className="text-xs font-medium text-(--panel-text-muted)">
+                  <th className="px-4 py-3">អ្នកជួល</th>
+                  <th className="px-4 py-3">បន្ទប់</th>
+                  <th className="px-4 py-3">រយៈពេលកិច្ចសន្យា</th>
+                  <th className="px-4 py-3">ប្រាក់កក់</th>
+                  <th className="px-4 py-3">
+                    <Tooltip>
+                      <TooltipTrigger render={<span className="inline-flex cursor-default items-center gap-1" />}>
+                        <CalendarClock className="h-3.5 w-3.5 text-(--panel-text-subtle)" />
+                        ថ្ងៃបង់
+                      </TooltipTrigger>
+                      <TooltipContent>ថ្ងៃប្រចាំខែដែលត្រូវបង់ប្រាក់ជួល</TooltipContent>
+                    </Tooltip>
+                  </th>
+                  <th className="px-4 py-3">ស្ថានភាព</th>
+                  <th className="px-4 py-3 text-right">សកម្មភាព</th>
+                </tr>
+              </thead>
               <tbody className="divide-y divide-(--panel-border-subtle) text-sm">
                 {visibleContracts.map((contract) => (
                   <tr key={contract.id} className="transition-colors hover:bg-(--panel-hover)/55">
-                    <td className="px-5 py-3.5"><p className="font-semibold text-(--panel-text)">{contract.profiles?.full_name || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{contract.profiles?.phone_number || "មិនមានលេខទូរស័ព្ទ"}</p></td>
-                    <td className="px-5 py-3.5"><p className="font-semibold text-(--panel-text)">#{contract.rooms?.room_number || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{contract.rooms?.room_type || "-"} · ជាន់ {contract.rooms?.floor || "-"}</p></td>
-                    <td className="px-5 py-3.5"><div className="flex items-center gap-2 text-(--panel-text-muted)"><CalendarDays className="h-4 w-4 text-(--panel-text-subtle)" /><span>{formatKhmerDate(contract.start_date, { withDay: true })} → {formatKhmerDate(contract.end_date, { withDay: true })}</span></div></td>
-                    <td className="px-5 py-3.5 font-semibold text-emerald-600 dark:text-emerald-300">${Number(contract.deposit_amount || 0).toFixed(2)}</td>
-                    <td className="px-5 py-3.5 text-(--panel-text-muted)">ថ្ងៃទី {contract.due_day}</td>
-                    <td className="px-5 py-3.5"><StatusBadge status={contract.status} /></td>
-                    <td className="px-5 py-3.5 text-right"><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" aria-label="កែប្រែកិច្ចសន្យា" onClick={() => { setSelectedContract(contract); setIsModalOpen(true); }} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:text-indigo-500"><Edit2 size={15} /></Button><Button size="icon" variant="ghost" aria-label="លុបកិច្ចសន្យា" onClick={() => { setContractToDelete(contract); setIsDeleteModalOpen(true); }} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:bg-red-500/10 hover:text-red-500"><Trash2 size={15} /></Button></div></td>
+                    <td className="px-4 py-2.5"><p className="font-semibold text-(--panel-text)">{contract.profiles?.full_name || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{contract.profiles?.phone_number || "មិនមានលេខទូរស័ព្ទ"}</p></td>
+                    <td className="px-4 py-2.5"><p className="font-semibold text-(--panel-text)">#{contract.rooms?.room_number || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{contract.rooms?.room_type || "-"} · ជាន់ {contract.rooms?.floor || "-"}</p></td>
+                    <td className="px-4 py-2.5">
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <div className="flex w-fit cursor-default items-center gap-2 text-(--panel-text-muted) underline decoration-dotted decoration-(--panel-text-subtle) underline-offset-4" />
+                          }
+                        >
+                          <CalendarDays className="h-4 w-4 shrink-0 text-(--panel-text-subtle)" />
+                          <span>{formatKhmerDate(contract.start_date)} → {formatKhmerDate(contract.end_date)}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {formatKhmerDate(contract.start_date, { withDay: true })} → {formatKhmerDate(contract.end_date, { withDay: true })}
+                        </TooltipContent>
+                      </Tooltip>
+                    </td>
+                    <td className="px-4 py-2.5 font-semibold text-emerald-600 dark:text-emerald-300">${Number(contract.deposit_amount || 0).toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-(--panel-text-muted)">ថ្ងៃទី {contract.due_day}</td>
+                    <td className="px-4 py-2.5"><StatusBadge status={contract.status} /></td>
+                    <td className="px-4 py-2.5 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button size="icon" variant="ghost" aria-label={`សកម្មភាពសម្រាប់កិច្ចសន្យារបស់ ${contract.profiles?.full_name || "-"}`} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:bg-(--panel-hover) hover:text-(--panel-text)">
+                              <MoreVertical size={16} />
+                            </Button>
+                          }
+                        />
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => { setSelectedContract(contract); setIsModalOpen(true); }}>
+                            <Edit2 size={14} /> កែប្រែ
+                          </DropdownMenuItem>
+                          <DropdownMenuItem variant="destructive" onClick={() => { setContractToDelete(contract); setIsDeleteModalOpen(true); }}>
+                            <Trash2 size={14} /> លុប
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
                   </tr>
                 ))}
                 {hasMore && <tr><td colSpan={7} className="p-4 text-center"><div ref={sentinelRef} className="flex items-center justify-center gap-2 text-xs text-(--panel-text-subtle)"><Loader2 size={14} className="animate-spin" /> កំពុងផ្ទុកបន្ថែម...</div></td></tr>}
@@ -220,6 +289,13 @@ export function ContractTableWrapper({ initialContracts, tenants, rooms, default
   );
 }
 
+const STATUS_ICONS: Record<ContractStatus, React.ComponentType<{ className?: string }>> = {
+  active: CheckCircle2,
+  pending: Clock3,
+  expired: CalendarX,
+  terminated: XCircle,
+};
+
 function StatusBadge({ status }: { status: ContractStatus }) {
   const styles = {
     active: { className: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-500" },
@@ -227,5 +303,15 @@ function StatusBadge({ status }: { status: ContractStatus }) {
     expired: { className: "border-slate-500/20 bg-slate-500/10 text-(--panel-text-muted)", dot: "bg-slate-500" },
     terminated: { className: "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-300", dot: "bg-red-500" },
   }[status];
-  return <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", styles.className)}><span className={cn("h-1.5 w-1.5 rounded-full", styles.dot)} />{STATUS_LABELS[status]}</span>;
+  const StatusIcon = STATUS_ICONS[status];
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", styles.className)}>
+      <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", styles.dot)} />
+      {/* Icon repeats what the dot color already says — status isn't
+          conveyed by color alone, so it still reads for colorblind users
+          or in a black-and-white printout. */}
+      <StatusIcon className="h-3 w-3 shrink-0" />
+      {STATUS_LABELS[status]}
+    </span>
+  );
 }

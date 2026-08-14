@@ -3,11 +3,12 @@
 import { useMemo, useRef, useState } from "react";
 import {
   ContactRound,
+  DoorOpen,
   Edit2,
   Image as ImageIcon,
-  ImageOff,
   Loader2,
   Mail,
+  MoreVertical,
   Phone,
   Plus,
   RotateCcw,
@@ -16,7 +17,14 @@ import {
   Users,
 } from "lucide-react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
 import { cn, formatKhmerDate } from "@/lib/utils";
@@ -29,16 +37,51 @@ interface TenantTableProps {
   initialTenants: Tenant[];
 }
 
+type DataFilter = "phone" | "email" | "idcard" | null;
+
+// Deterministic color per tenant (hashed off their name) so the same
+// person always gets the same avatar color across renders/pages, instead
+// of a random or uniform color.
+const AVATAR_COLORS = [
+  "bg-indigo-500",
+  "bg-emerald-500",
+  "bg-blue-500",
+  "bg-amber-500",
+  "bg-rose-500",
+  "bg-violet-500",
+  "bg-teal-500",
+  "bg-fuchsia-500",
+];
+
+function avatarColorClass(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function initialOf(name: string) {
+  const trimmed = name.trim();
+  return trimmed ? trimmed[0].toUpperCase() : "?";
+}
+
 function StatCard({
   title,
   value,
   subtitle,
+  missingCount,
+  onFilterClick,
+  isFilterActive,
   icon,
   tone,
 }: {
   title: string;
   value: number;
   subtitle: string;
+  missingCount?: number;
+  onFilterClick?: () => void;
+  isFilterActive?: boolean;
   icon: React.ReactNode;
   tone: "violet" | "emerald" | "blue" | "amber";
 }) {
@@ -49,8 +92,15 @@ function StatCard({
     amber: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
   }[tone];
 
+  const canFilter = Boolean(onFilterClick) && (missingCount ?? 0) > 0;
+
   return (
-    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20 sm:p-5">
+    <div
+      className={cn(
+        "rounded-2xl border bg-(--panel) p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20 sm:p-5",
+        isFilterActive ? "border-indigo-500/50 ring-1 ring-indigo-500/30" : "border-(--panel-border)",
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[13px] font-medium text-(--panel-text-muted)">{title}</p>
@@ -58,7 +108,21 @@ function StatCard({
         </div>
         <div className={cn("rounded-xl p-2.5", styles)}>{icon}</div>
       </div>
-      <p className="mt-3 text-xs text-(--panel-text-subtle)">{subtitle}</p>
+
+      {canFilter ? (
+        <button
+          type="button"
+          onClick={onFilterClick}
+          className={cn(
+            "mt-3 inline-flex items-center gap-1 rounded-lg px-1.5 py-1 -ml-1.5 text-xs font-medium underline-offset-2 transition hover:bg-(--panel-hover) hover:underline",
+            isFilterActive ? "text-indigo-600 dark:text-indigo-300" : "text-(--panel-text-subtle)",
+          )}
+        >
+          {subtitle}
+        </button>
+      ) : (
+        <p className="mt-3 text-xs text-(--panel-text-subtle)">{subtitle}</p>
+      )}
     </div>
   );
 }
@@ -67,6 +131,7 @@ export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
   const [tenants, setTenants] = useState<Tenant[]>(initialTenants || []);
   const [prevInitialTenants, setPrevInitialTenants] = useState(initialTenants);
   const [searchQuery, setSearchQuery] = useState("");
+  const [dataFilter, setDataFilter] = useState<DataFilter>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -87,14 +152,29 @@ export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
     [tenants],
   );
 
+  const toggleDataFilter = (filter: DataFilter) => {
+    setDataFilter((current) => (current === filter ? null : filter));
+  };
+
   const filteredTenants = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
-    return tenants.filter((tenant) =>
-      [tenant?.full_name, tenant?.phone_number, tenant?.email]
+    return tenants.filter((tenant) => {
+      const matchesSearch = [tenant?.full_name, tenant?.phone_number, tenant?.email]
         .map((value) => String(value || "").toLowerCase())
-        .some((value) => value.includes(query)),
-    );
-  }, [tenants, searchQuery]);
+        .some((value) => value.includes(query));
+
+      const matchesDataFilter =
+        dataFilter === "phone"
+          ? !tenant.phone_number
+          : dataFilter === "email"
+            ? !tenant.email
+            : dataFilter === "idcard"
+              ? !(tenant.id_card_images || []).length
+              : true;
+
+      return matchesSearch && matchesDataFilter;
+    });
+  }, [tenants, searchQuery, dataFilter]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { visibleItems: visibleTenants, hasMore, sentinelRef } = useInfiniteReveal(
@@ -103,6 +183,11 @@ export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
   );
 
   const hasSearch = searchQuery.trim() !== "";
+  const hasActiveFilters = hasSearch || dataFilter !== null;
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setDataFilter(null);
+  };
   const handleAddNew = () => {
     setSelectedTenant(null);
     setIsModalOpen(true);
@@ -120,9 +205,36 @@ export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
     <div className="space-y-5">
       <section aria-label="ស្ថិតិអ្នកជួល" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard title="អ្នកជួលសរុប" value={stats.total} subtitle="គណនីអ្នកជួលក្នុងប្រព័ន្ធ" icon={<Users size={20} />} tone="violet" />
-        <StatCard title="មានលេខទូរស័ព្ទ" value={stats.withPhone} subtitle={`${stats.total - stats.withPhone} នាក់មិនទាន់បញ្ចូល`} icon={<Phone size={20} />} tone="emerald" />
-        <StatCard title="មានអ៊ីមែល" value={stats.withEmail} subtitle={`${stats.total - stats.withEmail} នាក់មិនទាន់បញ្ចូល`} icon={<Mail size={20} />} tone="blue" />
-        <StatCard title="មានអត្តសញ្ញាណប័ណ្ណ" value={stats.withIdCard} subtitle={`${stats.total - stats.withIdCard} នាក់មិនទាន់ផ្ទុកឡើង`} icon={<ImageIcon size={20} />} tone="amber" />
+        <StatCard
+          title="មានលេខទូរស័ព្ទ"
+          value={stats.withPhone}
+          subtitle={`${stats.total - stats.withPhone} នាក់មិនទាន់បញ្ចូល`}
+          missingCount={stats.total - stats.withPhone}
+          onFilterClick={() => toggleDataFilter("phone")}
+          isFilterActive={dataFilter === "phone"}
+          icon={<Phone size={20} />}
+          tone="emerald"
+        />
+        <StatCard
+          title="មានអ៊ីមែល"
+          value={stats.withEmail}
+          subtitle={`${stats.total - stats.withEmail} នាក់មិនទាន់បញ្ចូល`}
+          missingCount={stats.total - stats.withEmail}
+          onFilterClick={() => toggleDataFilter("email")}
+          isFilterActive={dataFilter === "email"}
+          icon={<Mail size={20} />}
+          tone="blue"
+        />
+        <StatCard
+          title="មានអត្តសញ្ញាណប័ណ្ណ"
+          value={stats.withIdCard}
+          subtitle={`${stats.total - stats.withIdCard} នាក់មិនទាន់ផ្ទុកឡើង`}
+          missingCount={stats.total - stats.withIdCard}
+          onFilterClick={() => toggleDataFilter("idcard")}
+          isFilterActive={dataFilter === "idcard"}
+          icon={<ImageIcon size={20} />}
+          tone="amber"
+        />
       </section>
 
       <section className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm">
@@ -142,7 +254,7 @@ export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
               </button>
             )}
           </div>
-          <Button onClick={handleAddNew} className="h-10 gap-2 rounded-xl bg-indigo-600 px-4 text-white shadow-lg shadow-indigo-600/15 hover:bg-indigo-500">
+          <Button onClick={handleAddNew} className="h-10 gap-2 rounded-xl bg-indigo-600 px-4 font-semibold text-white shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400/40 hover:bg-indigo-500">
             <Plus size={16} /> បន្ថែមអ្នកជួល
           </Button>
         </div>
@@ -154,41 +266,85 @@ export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
             <h2 className="text-sm font-semibold text-(--panel-text)">បញ្ជីអ្នកជួល</h2>
             <p className="mt-0.5 text-xs text-(--panel-text-subtle)">បង្ហាញ {filteredTenants.length} ក្នុងចំណោម {stats.total} នាក់</p>
           </div>
-          {hasSearch && <button type="button" onClick={() => setSearchQuery("")} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium text-(--panel-text-muted) transition hover:bg-(--panel-hover) hover:text-(--panel-text)"><RotateCcw className="h-3.5 w-3.5" /> សម្អាតការស្វែងរក</button>}
+          {hasActiveFilters && <button type="button" onClick={clearAllFilters} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium text-(--panel-text-muted) transition hover:bg-(--panel-hover) hover:text-(--panel-text)"><RotateCcw className="h-3.5 w-3.5" /> សម្អាតតម្រង</button>}
         </div>
 
         <div ref={scrollContainerRef} className="max-h-[560px] overflow-auto">
           {filteredTenants.length === 0 ? (
             <div className="flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center">
               <div className="mb-4 rounded-2xl bg-violet-500/10 p-4 text-violet-500 dark:text-violet-300">
-                {hasSearch ? <Search className="h-7 w-7" /> : <ContactRound className="h-7 w-7" />}
+                {hasActiveFilters ? <Search className="h-7 w-7" /> : <ContactRound className="h-7 w-7" />}
               </div>
-              <h3 className="text-base font-semibold text-(--panel-text)">{hasSearch ? "រកមិនឃើញអ្នកជួល" : "មិនទាន់មានអ្នកជួល"}</h3>
+              <h3 className="text-base font-semibold text-(--panel-text)">{hasActiveFilters ? "រកមិនឃើញអ្នកជួល" : "មិនទាន់មានអ្នកជួល"}</h3>
               <p className="mt-1 max-w-sm text-sm leading-6 text-(--panel-text-subtle)">
-                {hasSearch ? "សាកល្បងឈ្មោះ លេខទូរស័ព្ទ ឬអ៊ីមែលផ្សេងទៀត។" : "បន្ថែមអ្នកជួលដំបូង ដើម្បីចាប់ផ្តើមបង្កើតកិច្ចសន្យា និងគ្រប់គ្រងការទូទាត់។"}
+                {hasActiveFilters ? "សាកល្បងលក្ខខណ្ឌស្វែងរក ឬតម្រងផ្សេងទៀត។" : "បន្ថែមអ្នកជួលដំបូង ដើម្បីចាប់ផ្តើមបង្កើតកិច្ចសន្យា និងគ្រប់គ្រងការទូទាត់។"}
               </p>
-              <Button onClick={hasSearch ? () => setSearchQuery("") : handleAddNew} variant={hasSearch ? "outline" : "default"} className={cn("mt-5 gap-2 rounded-xl", !hasSearch && "bg-indigo-600 text-white hover:bg-indigo-500")}>
-                {hasSearch ? <RotateCcw size={16} /> : <Plus size={16} />}{hasSearch ? "សម្អាតការស្វែងរក" : "បន្ថែមអ្នកជួលដំបូង"}
+              <Button onClick={hasActiveFilters ? clearAllFilters : handleAddNew} variant={hasActiveFilters ? "outline" : "default"} className={cn("mt-5 gap-2 rounded-xl", !hasActiveFilters && "bg-indigo-600 text-white hover:bg-indigo-500")}>
+                {hasActiveFilters ? <RotateCcw size={16} /> : <Plus size={16} />}{hasActiveFilters ? "សម្អាតតម្រង" : "បន្ថែមអ្នកជួលដំបូង"}
               </Button>
             </div>
           ) : (
-            <table className="w-full min-w-[980px] border-collapse text-left">
+            <table className="w-full min-w-235 border-collapse text-left">
               <thead className="sticky top-0 z-10 border-b border-(--panel-border) bg-(--panel-inset)">
-                <tr className="text-xs font-medium text-(--panel-text-muted)"><th className="px-5 py-3">អត្តសញ្ញាណប័ណ្ណ</th><th className="px-5 py-3">អ្នកជួល</th><th className="px-5 py-3">អ៊ីមែល</th><th className="px-5 py-3">លេខទូរស័ព្ទ</th><th className="px-5 py-3">តួនាទី</th><th className="px-5 py-3">ថ្ងៃបង្កើត</th><th className="px-5 py-3 text-right">សកម្មភាព</th></tr>
+                <tr className="text-xs font-medium text-(--panel-text-muted)"><th className="px-5 py-3">អ្នកជួល</th><th className="px-5 py-3">អ៊ីមែល</th><th className="px-5 py-3">លេខទូរស័ព្ទ</th><th className="px-5 py-3">បន្ទប់ / កិច្ចសន្យា</th><th className="px-5 py-3">ថ្ងៃបង្កើត</th><th className="px-5 py-3 text-right">សកម្មភាព</th></tr>
               </thead>
               <tbody className="divide-y divide-(--panel-border-subtle) text-sm">
                 {visibleTenants.map((tenant) => (
                   <tr key={tenant.id} className="transition-colors hover:bg-(--panel-hover)/55">
-                    <td className="px-5 py-3.5"><div className="h-12 w-16 overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel-inset)">{tenant.id_card_images?.length ? <img src={tenant.id_card_images[0]} alt={`អត្តសញ្ញាណប័ណ្ណ ${tenant.full_name}`} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-(--panel-text-subtle)"><ImageOff size={17} /></div>}</div></td>
-                    <td className="px-5 py-3.5"><p className="font-semibold text-(--panel-text)">{tenant.full_name}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">លេខសម្គាល់ {tenant.id.slice(0, 8)}</p></td>
-                    <td className="px-5 py-3.5 text-(--panel-text-muted)">{tenant.email || <span className="text-(--panel-text-subtle)">មិនបានបញ្ចូល</span>}</td>
-                    <td className="px-5 py-3.5 text-(--panel-text-muted)">{tenant.phone_number || <span className="text-(--panel-text-subtle)">មិនបានបញ្ចូល</span>}</td>
-                    <td className="px-5 py-3.5"><span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/20 bg-violet-500/10 px-2.5 py-1 text-xs font-medium text-violet-600 dark:text-violet-300"><span className="h-1.5 w-1.5 rounded-full bg-violet-500" />អ្នកជួល</span></td>
-                    <td className="px-5 py-3.5 text-(--panel-text-muted)">{formatKhmerDate(tenant.created_at, { withDay: true })}</td>
-                    <td className="px-5 py-3.5 text-right"><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" aria-label={`កែប្រែ ${tenant.full_name}`} onClick={() => { setSelectedTenant(tenant); setIsModalOpen(true); }} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:text-indigo-500"><Edit2 size={15} /></Button><Button size="icon" variant="ghost" aria-label={`លុប ${tenant.full_name}`} onClick={() => { setTenantToDelete(tenant); setIsDeleteModalOpen(true); }} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:bg-red-500/10 hover:text-red-500"><Trash2 size={15} /></Button></div></td>
+                    <td className="px-5 py-2.5">
+                      <div className="flex items-center gap-3">
+                        <Avatar size="lg" className="shrink-0">
+                          {tenant.id_card_images?.[0] && (
+                            <AvatarImage src={tenant.id_card_images[0]} alt={tenant.full_name} />
+                          )}
+                          <AvatarFallback className={cn("font-semibold text-white", avatarColorClass(tenant.full_name))}>
+                            {initialOf(tenant.full_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-(--panel-text)">{tenant.full_name}</p>
+                          <p className="mt-0.5 truncate font-mono text-[10px] text-(--panel-text-subtle)/70">
+                            {tenant.id.slice(0, 8)}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-2.5 text-(--panel-text-muted)">{tenant.email || <span className="text-(--panel-text-subtle)">មិនបានបញ្ចូល</span>}</td>
+                    <td className="px-5 py-2.5 text-(--panel-text-muted)">{tenant.phone_number || <span className="text-(--panel-text-subtle)">មិនបានបញ្ចូល</span>}</td>
+                    <td className="px-5 py-2.5">
+                      {tenant.activeContract ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-600 dark:text-blue-300">
+                          <DoorOpen size={12} className="shrink-0" /> បន្ទប់ #{tenant.activeContract.roomNumber}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-500/20 bg-zinc-500/10 px-2.5 py-1 text-xs font-medium text-(--panel-text-muted)">
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" /> គ្មានកិច្ចសន្យា
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-2.5 text-(--panel-text-muted)">{formatKhmerDate(tenant.created_at, { withDay: true })}</td>
+                    <td className="px-5 py-2.5 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button size="icon" variant="ghost" aria-label={`សកម្មភាពសម្រាប់ ${tenant.full_name}`} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:bg-(--panel-hover) hover:text-(--panel-text)">
+                              <MoreVertical size={16} />
+                            </Button>
+                          }
+                        />
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => { setSelectedTenant(tenant); setIsModalOpen(true); }}>
+                            <Edit2 size={14} /> កែប្រែ
+                          </DropdownMenuItem>
+                          <DropdownMenuItem variant="destructive" onClick={() => { setTenantToDelete(tenant); setIsDeleteModalOpen(true); }}>
+                            <Trash2 size={14} /> លុប
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
                   </tr>
                 ))}
-                {hasMore && <tr><td colSpan={7} className="p-4 text-center"><div ref={sentinelRef} className="flex items-center justify-center gap-2 text-xs text-(--panel-text-subtle)"><Loader2 size={14} className="animate-spin" /> កំពុងផ្ទុកបន្ថែម...</div></td></tr>}
+                {hasMore && <tr><td colSpan={6} className="p-4 text-center"><div ref={sentinelRef} className="flex items-center justify-center gap-2 text-xs text-(--panel-text-subtle)"><Loader2 size={14} className="animate-spin" /> កំពុងផ្ទុកបន្ថែម...</div></td></tr>}
               </tbody>
             </table>
           )}

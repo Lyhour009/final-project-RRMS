@@ -20,6 +20,10 @@ export interface Tenant {
   created_at: string;
   id_card_images?: string[];
   id_card_image_paths?: string[];
+  // The tenant's current active contract, if any — attached by getTenants()
+  // so the admin list can show what a tenant is actually renting instead of
+  // a "តួនាទី: អ្នកជួល" badge that's identical on every row.
+  activeContract?: { roomNumber: string; contractStatus: "active" } | null;
 }
 
 export const tenantSchema = z.object({
