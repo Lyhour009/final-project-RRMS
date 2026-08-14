@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/supabase/server";
 import { contractSchema } from "@/lib/validations/contracts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { syncBusinessStatuses } from "@/lib/business-status";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 async function syncRoomOccupancy(supabase: SupabaseClient, roomId: string) {
   const [{ data: activeContracts, error: contractError }, { data: room, error: roomError }] =
@@ -324,7 +325,11 @@ export async function deleteContract(id: string) {
     throw new Error("រកមិនឃើញកិច្ចសន្យានេះទេ");
   }
 
-  const { data: bills, error: billsError } = await supabase
+  // Service-role client so already-archived bills still count — see the
+  // same comment on deleteRoom() in actions/rooms.ts for why the RLS-scoped
+  // client would otherwise miss them.
+  const adminClient = createAdminClient();
+  const { data: bills, error: billsError } = await adminClient
     .from("bills")
     .select("id")
     .eq("contract_id", id)

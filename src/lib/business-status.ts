@@ -24,14 +24,42 @@ function billDueDate(billingMonth: string, dueDay: number) {
   return `${year}-${String(month).padStart(2, "0")}-${String(safeDay).padStart(2, "0")}`;
 }
 
+// Every check in this module compares against a *date* (Asia/Bangkok), not a
+// timestamp, so re-running it again the same calendar day can never find
+// anything new — the daily cron and any other call earlier today already
+// applied everything today's date could trigger. Without this, every single
+// page navigation on a warm instance was paying for 2+ sequential Supabase
+// round trips (expired-contracts check, then settings+bills) before the
+// page's own data query even started, which is what made navigation feel
+// laggy. Throttling to once per day per warm instance removes that tax while
+// staying provably correct — same-day reruns are guaranteed no-ops.
+let lastSyncedDate: string | null = null;
+let syncInFlight: Promise<void> | null = null;
+
 /**
  * Keeps date-derived states correct whenever an authenticated dashboard is
  * opened. A scheduled job can call the same rules later, but navigation no
  * longer depends on an administrator manually changing expired/overdue rows.
  */
 export async function syncBusinessStatuses() {
-  const supabase = createAdminClient();
   const today = bangkokDate();
+
+  if (lastSyncedDate === today) return;
+  if (syncInFlight) return syncInFlight;
+
+  syncInFlight = runSync(today)
+    .then(() => {
+      lastSyncedDate = today;
+    })
+    .finally(() => {
+      syncInFlight = null;
+    });
+
+  return syncInFlight;
+}
+
+async function runSync(today: string) {
+  const supabase = createAdminClient();
 
   const { data: expiredContracts, error: contractReadError } = await supabase
     .from("contracts")

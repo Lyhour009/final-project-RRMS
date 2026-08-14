@@ -26,6 +26,26 @@ async function getSignedProofUrl(path?: string | null) {
   return error ? null : data.signedUrl;
 }
 
+// Signs every proof path in one Storage API call instead of one call per
+// row — getPayments() can list up to 500 rows, and N sequential/concurrent
+// createSignedUrl() round trips was the slowest part of loading that page.
+async function getSignedProofUrlMap(paths: (string | null | undefined)[]) {
+  const uniquePaths = [...new Set(paths.filter((path): path is string => Boolean(path)))];
+  const map = new Map<string, string>();
+  if (uniquePaths.length === 0) return map;
+
+  const adminClient = createAdminClient();
+  const { data } = await adminClient.storage
+    .from(PAYMENT_PROOF_BUCKET)
+    .createSignedUrls(uniquePaths, 60 * 60);
+
+  for (const item of data || []) {
+    if (item.path && item.signedUrl) map.set(item.path, item.signedUrl);
+  }
+
+  return map;
+}
+
 // See bill-generator.ts for why this cast exists: no generated DB types,
 // so Supabase-js can't tell these FK joins resolve to a single row.
 type UnpaidBill = {
@@ -89,12 +109,13 @@ export async function getPayments() {
 
   if (error) throw new Error(error.message);
 
-  return Promise.all(
-    (data || []).map(async (payment) => ({
-      ...payment,
-      proof_image: await getSignedProofUrl(payment.proof_image),
-    })),
-  );
+  const rows = data || [];
+  const signedUrls = await getSignedProofUrlMap(rows.map((payment) => payment.proof_image));
+
+  return rows.map((payment) => ({
+    ...payment,
+    proof_image: payment.proof_image ? signedUrls.get(payment.proof_image) ?? null : null,
+  }));
 }
 
 export async function getUnpaidBillsForPayment() {

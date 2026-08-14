@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { roomSchema } from "@/lib/validations/room";
 
 export async function getRooms() {
@@ -142,7 +143,13 @@ export async function upsertRoom(id: string | null, formData: FormData) {
 export async function deleteRoom(id: string) {
   const { supabase } = await requireAdmin();
 
-  const { data: contracts, error: contractError } = await supabase
+  // Use the service-role client for this check, not the RLS-scoped one: the
+  // production-hardening migration's contracts_select policy hides archived
+  // rows even from admins, so the normal client would report "no contracts"
+  // for a room whose only history is archived — and this delete is a real
+  // DELETE, not an archive, so that would permanently orphan those records.
+  const adminClient = createAdminClient();
+  const { data: contracts, error: contractError } = await adminClient
     .from("contracts")
     .select("id")
     .eq("room_id", id)

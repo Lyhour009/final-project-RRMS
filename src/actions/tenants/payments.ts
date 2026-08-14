@@ -69,18 +69,28 @@ export async function getTenantPaymentsData() {
 
   if (settingsError) throw new Error(settingsError.message);
 
+  // Sign every proof path in one Storage API call instead of one call per
+  // payment row.
   const adminClient = createAdminClient();
-  const paymentsWithSignedProofs = await Promise.all(
-    (payments || []).map(async (payment) => {
-      if (!payment.proof_image) return payment;
+  const proofPaths = [
+    ...new Set((payments || []).map((payment) => payment.proof_image).filter((path): path is string => Boolean(path))),
+  ];
+  const signedUrlMap = new Map<string, string>();
 
-      const { data: signed } = await adminClient.storage
-        .from("payment-proofs")
-        .createSignedUrl(payment.proof_image, 60 * 60);
+  if (proofPaths.length > 0) {
+    const { data: signed } = await adminClient.storage
+      .from("payment-proofs")
+      .createSignedUrls(proofPaths, 60 * 60);
 
-      return { ...payment, proof_image: signed?.signedUrl ?? null };
-    }),
-  );
+    for (const item of signed || []) {
+      if (item.path && item.signedUrl) signedUrlMap.set(item.path, item.signedUrl);
+    }
+  }
+
+  const paymentsWithSignedProofs = (payments || []).map((payment) => ({
+    ...payment,
+    proof_image: payment.proof_image ? signedUrlMap.get(payment.proof_image) ?? null : null,
+  }));
 
   return {
     unpaidBills: unpaidBills || [],

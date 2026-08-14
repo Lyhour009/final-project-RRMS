@@ -64,11 +64,3 @@ test("private document buckets and scheduled status sync are protected", () => {
   assert.match(cron, /CRON_SECRET/);
   assert.match(cron, /timingSafeEqual/);
 });
-
-test("password recovery callback prevents open redirects", () => {
-  const callback = read("src/app/auth/callback/route.ts");
-
-  assert.match(callback, /exchangeCodeForSession/);
-  assert.match(callback, /requestedNext\.startsWith\("\/"\)/);
-  assert.match(callback, /!requestedNext\.startsWith\("\/\/"\)/);
-});

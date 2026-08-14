@@ -55,11 +55,34 @@ export async function getTenants() {
 
   if (error) throw new Error(error.message);
 
-  return Promise.all(
-    ((data || []) as Tenant[]).map((tenant) =>
-      attachSignedIdCard(supabase, tenant),
-    ),
-  );
+  const tenants = (data || []) as Tenant[];
+
+  // Sign every ID-card path in one Storage API call instead of one call per
+  // tenant (attachSignedIdCard() is still used by upsertTenant(), where
+  // there's only ever a single tenant, so batching wouldn't help there).
+  const allPaths = [...new Set(tenants.flatMap((tenant) => tenant.id_card_images ?? []))];
+  const signedUrlMap = new Map<string, string>();
+
+  if (allPaths.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from("tenants")
+      .createSignedUrls(allPaths, 60 * 60);
+
+    for (const item of signed || []) {
+      if (item.path && item.signedUrl) signedUrlMap.set(item.path, item.signedUrl);
+    }
+  }
+
+  return tenants.map((tenant) => {
+    const paths = tenant.id_card_images ?? [];
+    return {
+      ...tenant,
+      id_card_image_paths: paths,
+      id_card_images: paths
+        .map((path) => signedUrlMap.get(path))
+        .filter((url): url is string => Boolean(url)),
+    };
+  });
 }
 
 export async function upsertTenant(id: string | null, formData: FormData) {

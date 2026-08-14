@@ -5,12 +5,6 @@ test("unauthenticated users cannot open an admin page", async ({ page }) => {
   await expect(page).toHaveURL(/\/login/);
 });
 
-test("password recovery page is available", async ({ page }) => {
-  await page.goto("/forgot-password");
-  await expect(page.getByRole("heading", { name: "Reset your password" })).toBeVisible();
-  await expect(page.getByLabel("Email")).toBeVisible();
-});
-
 test("tenant login remains isolated from admin routes", async ({ page }) => {
   const email = process.env.E2E_TENANT_EMAIL;
   const password = process.env.E2E_TENANT_PASSWORD;

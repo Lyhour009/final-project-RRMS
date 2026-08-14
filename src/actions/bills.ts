@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/supabase/server";
 import { billSchema } from "@/lib/validations/bills";
 import { syncBusinessStatuses } from "@/lib/business-status";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // See bill-generator.ts for why this cast exists: no generated DB types,
 // so Supabase-js can't tell `rooms:room_id` resolves to a single row.
@@ -278,7 +279,11 @@ export async function upsertBill(id: string | null, formData: FormData) {
 export async function deleteBill(id: string) {
   const { supabase, user } = await requireAdmin();
 
-  const { data: payments, error: paymentsError } = await supabase
+  // Service-role client so already-archived payments still count — see the
+  // same comment on deleteRoom() in actions/rooms.ts for why the RLS-scoped
+  // client would otherwise miss them.
+  const adminClient = createAdminClient();
+  const { data: payments, error: paymentsError } = await adminClient
     .from("payments")
     .select("id")
     .eq("bill_id", id)

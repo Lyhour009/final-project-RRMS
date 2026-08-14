@@ -40,8 +40,8 @@ where status = 'pending' group by bill_id having count(*) > 1;
 
 - Disable public sign-up. Tenant accounts must be created by an administrator.
 - Set the Supabase Site URL to the production origin.
-- Add `https://YOUR_DOMAIN/auth/callback` to the redirect allowlist.
-- Configure a production SMTP provider and send a real password-recovery test.
+- There is no self-service password recovery; reset a forgotten password with
+  `scripts/reset-admin-password.ts` or from the Supabase Auth dashboard.
 - Require passwords of at least eight characters and enable leaked-password
   protection if available on the Supabase plan.
 - Enable MFA for the owner/admin account in the Supabase and hosting dashboards.
@@ -93,7 +93,6 @@ After deployment verify:
 - `/api/health` returns HTTP 200 without exposing secrets.
 - An unauthenticated visitor is redirected to `/login` from admin/tenant pages.
 - A tenant cannot open an admin route or read another tenant's records.
-- Password recovery completes on the production domain.
 - Create a bill, submit an exact payment, reject it with a reason, submit again,
   approve it, and confirm the bill becomes paid exactly once.
 - Archive/delete actions remove records from normal screens but retain their
