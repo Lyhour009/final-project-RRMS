@@ -23,8 +23,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { Input } from "@/components/ui/input";
+import { StatCard } from "@/components/ui/stat-card";
 import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
 import { cn, formatKhmerDate } from "@/lib/utils";
 import { Bill, BillStatus } from "@/lib/validations/bills";
@@ -71,28 +73,6 @@ const FILTER_OPTIONS: { value: BillFilter; label: string; dotClass?: string }[] 
   { value: "paid", label: "បានបង់", dotClass: "bg-emerald-500" },
   { value: "overdue", label: "ហួសកំណត់", dotClass: "bg-red-500" },
 ];
-
-function StatCard({ title, value, subtitle, icon, tone }: {
-  title: string;
-  value: number;
-  subtitle: string;
-  icon: React.ReactNode;
-  tone: "indigo" | "amber" | "emerald" | "red";
-}) {
-  const styles = {
-    indigo: { accent: "bg-indigo-500", icon: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300" },
-    amber: { accent: "bg-amber-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
-    emerald: { accent: "bg-emerald-500", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
-    red: { accent: "bg-red-500", icon: "bg-red-500/10 text-red-600 dark:text-red-300" },
-  }[tone];
-  return (
-    <div className="group relative overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel) p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20">
-      <div className={cn("absolute inset-x-0 top-0 h-1", styles.accent)} />
-      <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-(--panel-text-muted)">{title}</p><p className="mt-1.5 text-lg font-bold leading-none tracking-tight">{value}</p></div><div className={cn("shrink-0 rounded-lg p-1.5", styles.icon)}>{icon}</div></div>
-      <p className="mt-1.5 text-xs text-(--panel-text-subtle)">{subtitle}</p>
-    </div>
-  );
-}
 
 export function BillTableWrapper({ initialBills, contracts, settings }: BillTableProps) {
   const [bills, setBills] = useState<Bill[]>(initialBills || []);
@@ -207,11 +187,12 @@ export function BillTableWrapper({ initialBills, contracts, settings }: BillTabl
   );
 }
 
+const BILL_STATUS_TONE: Record<BillStatus, "amber" | "green" | "red"> = {
+  unpaid: "amber",
+  paid: "green",
+  overdue: "red",
+};
+
 function StatusBadge({ status }: { status: BillStatus }) {
-  const styles = {
-    unpaid: { className: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-300", dot: "bg-amber-500" },
-    paid: { className: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-500" },
-    overdue: { className: "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-300", dot: "bg-red-500" },
-  }[status];
-  return <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", styles.className)}><span className={cn("h-1.5 w-1.5 rounded-full", styles.dot)} />{STATUS_LABELS[status]}</span>;
+  return <Badge tone={BILL_STATUS_TONE[status]}>{STATUS_LABELS[status]}</Badge>;
 }

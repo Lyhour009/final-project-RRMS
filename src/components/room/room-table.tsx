@@ -24,8 +24,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { Input } from "@/components/ui/input";
+import { StatCard } from "@/components/ui/stat-card";
 import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
 import { cn } from "@/lib/utils";
 import { Room } from "@/lib/validations/room";
@@ -49,41 +51,6 @@ const STATUS_OPTIONS: {
   { value: "occupied", label: "មិនទំនេរ", dotClass: "bg-blue-500" },
   { value: "maintenance", label: "ជួសជុល", dotClass: "bg-amber-500" },
 ];
-
-function StatCard({
-  title,
-  value,
-  subtitle,
-  icon,
-  tone,
-}: {
-  title: string;
-  value: number;
-  subtitle: string;
-  icon: React.ReactNode;
-  tone: "indigo" | "emerald" | "blue" | "amber";
-}) {
-  const styles = {
-    indigo: { accent: "bg-indigo-500", icon: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300" },
-    emerald: { accent: "bg-emerald-500", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
-    blue: { accent: "bg-blue-500", icon: "bg-blue-500/10 text-blue-600 dark:text-blue-300" },
-    amber: { accent: "bg-amber-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
-  }[tone];
-
-  return (
-    <div className="group relative overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel) p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20">
-      <div className={cn("absolute inset-x-0 top-0 h-1", styles.accent)} />
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium text-(--panel-text-muted)">{title}</p>
-          <p className="mt-1.5 text-lg font-bold leading-none tracking-tight">{value}</p>
-        </div>
-        <div className={cn("shrink-0 rounded-lg p-1.5", styles.icon)}>{icon}</div>
-      </div>
-      <p className="mt-1.5 text-xs text-(--panel-text-subtle)">{subtitle}</p>
-    </div>
-  );
-}
 
 export default function RoomTable({ initialRooms }: RoomTableProps) {
   const [rooms, setRooms] = useState<Room[]>(initialRooms || []);
@@ -291,20 +258,20 @@ export default function RoomTable({ initialRooms }: RoomTableProps) {
   );
 }
 
-function StatusBadge({ status }: { status: Room["status"] }) {
-  const config = {
-    available: { label: "ទំនេរ", className: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-500" },
-    occupied: { label: "មិនទំនេរ", className: "border-blue-500/20 bg-blue-500/10 text-blue-600 dark:text-blue-300", dot: "bg-blue-500" },
-    maintenance: { label: "ជួសជុល", className: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-300", dot: "bg-amber-500" },
-  }[status];
+const ROOM_STATUS: Record<Room["status"], { tone: "green" | "blue" | "amber"; label: string }> = {
+  available: { tone: "green", label: "ទំនេរ" },
+  occupied: { tone: "blue", label: "មិនទំនេរ" },
+  maintenance: { tone: "amber", label: "ជួសជុល" },
+};
 
+function StatusBadge({ status }: { status: Room["status"] }) {
+  const { tone, label } = ROOM_STATUS[status];
   return (
     // Fixed width + centered content so the three pills (whose Khmer labels
     // are different lengths) line up in a neat column instead of each
     // hugging its own text width.
-    <span className={cn("inline-flex w-23 items-center justify-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", config.className)}>
-      <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", config.dot)} />
-      {config.label}
-    </span>
+    <Badge tone={tone} className="w-23 justify-center">
+      {label}
+    </Badge>
   );
 }

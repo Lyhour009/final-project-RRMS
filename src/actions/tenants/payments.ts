@@ -17,6 +17,7 @@ const PAYMENT_METHODS = [
 const MAX_PROOF_SIZE = 5_000_000;
 const PROOF_EXTENSIONS: Record<string, string> = {
   "image/jpeg": "jpg",
+  "image/jpg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
 };

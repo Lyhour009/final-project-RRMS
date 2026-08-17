@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Inbox } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { PAYMENT_METHOD_LABELS } from "@/lib/validations/payments";
 
 interface RecentBill {
@@ -45,28 +46,9 @@ export interface RecentData {
 }
 
 // One color system for every status badge on this page: green = paid/active
-// outcomes, orange = pending/in-progress, red = overdue/rejected/terminated,
+// outcomes, amber = pending/in-progress, red = overdue/rejected/terminated,
 // gray = neutral fallback — so the same status reads identically whether
 // it's on a bill, a payment, a contract, or a maintenance request.
-const STATUS_TONES = {
-  green: {
-    pill: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
-    dot: "bg-emerald-500",
-  },
-  orange: {
-    pill: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-300",
-    dot: "bg-amber-500",
-  },
-  red: {
-    pill: "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-300",
-    dot: "bg-red-500",
-  },
-  gray: {
-    pill: "border-zinc-500/20 bg-zinc-500/10 text-(--panel-text-muted)",
-    dot: "bg-zinc-400",
-  },
-} as const;
-
 const STATUS_LABELS: Record<string, string> = {
   paid: "បានបង់",
   unpaid: "មិនទាន់បង់",
@@ -82,22 +64,13 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 function StatusBadge({ status }: { status: string }) {
-  let tone: keyof typeof STATUS_TONES = "gray";
+  let tone: "green" | "amber" | "red" | "gray" = "gray";
 
   if (["paid", "approved", "active", "resolved"].includes(status)) tone = "green";
-  if (["unpaid", "pending", "in_progress"].includes(status)) tone = "orange";
+  if (["unpaid", "pending", "in_progress"].includes(status)) tone = "amber";
   if (["overdue", "rejected", "terminated"].includes(status)) tone = "red";
 
-  const { pill, dot } = STATUS_TONES[tone];
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${pill}`}
-    >
-      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
-      {STATUS_LABELS[status] || status}
-    </span>
-  );
+  return <Badge tone={tone}>{STATUS_LABELS[status] || status}</Badge>;
 }
 
 function RecentCard({

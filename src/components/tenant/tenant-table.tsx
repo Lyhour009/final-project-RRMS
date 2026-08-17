@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { StatCard } from "@/components/ui/stat-card";
 import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
 import { cn, formatKhmerDate } from "@/lib/utils";
 import { Tenant } from "@/lib/validations/tenants";
@@ -66,67 +67,6 @@ function initialOf(name: string) {
   return trimmed ? trimmed[0].toUpperCase() : "?";
 }
 
-function StatCard({
-  title,
-  value,
-  subtitle,
-  missingCount,
-  onFilterClick,
-  isFilterActive,
-  icon,
-  tone,
-}: {
-  title: string;
-  value: number;
-  subtitle: string;
-  missingCount?: number;
-  onFilterClick?: () => void;
-  isFilterActive?: boolean;
-  icon: React.ReactNode;
-  tone: "violet" | "emerald" | "blue" | "amber";
-}) {
-  const styles = {
-    violet: { accent: "bg-violet-500", icon: "bg-violet-500/10 text-violet-600 dark:text-violet-300" },
-    emerald: { accent: "bg-emerald-500", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
-    blue: { accent: "bg-blue-500", icon: "bg-blue-500/10 text-blue-600 dark:text-blue-300" },
-    amber: { accent: "bg-amber-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
-  }[tone];
-
-  const canFilter = Boolean(onFilterClick) && (missingCount ?? 0) > 0;
-
-  return (
-    <div
-      className={cn(
-        "group relative overflow-hidden rounded-xl border bg-(--panel) p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20",
-        isFilterActive ? "border-indigo-500/50 ring-1 ring-indigo-500/30" : "border-(--panel-border)",
-      )}
-    >
-      <div className={cn("absolute inset-x-0 top-0 h-1", styles.accent)} />
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium text-(--panel-text-muted)">{title}</p>
-          <p className="mt-1.5 text-lg font-bold leading-none tracking-tight">{value}</p>
-        </div>
-        <div className={cn("shrink-0 rounded-lg p-1.5", styles.icon)}>{icon}</div>
-      </div>
-
-      {canFilter ? (
-        <button
-          type="button"
-          onClick={onFilterClick}
-          className={cn(
-            "mt-1.5 inline-flex items-center gap-1 rounded-lg px-1.5 py-1 -ml-1.5 text-xs font-medium underline-offset-2 transition hover:bg-(--panel-hover) hover:underline",
-            isFilterActive ? "text-indigo-600 dark:text-indigo-300" : "text-(--panel-text-subtle)",
-          )}
-        >
-          {subtitle}
-        </button>
-      ) : (
-        <p className="mt-1.5 text-xs text-(--panel-text-subtle)">{subtitle}</p>
-      )}
-    </div>
-  );
-}
 
 export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
   const [tenants, setTenants] = useState<Tenant[]>(initialTenants || []);

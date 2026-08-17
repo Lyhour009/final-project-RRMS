@@ -16,113 +16,7 @@ import {
   RecentDashboardTables,
   type RecentData,
 } from "@/components/dashboard/recent-dashboard-tables";
-import { cn } from "@/lib/utils";
-
-type StatTone = "indigo" | "sky" | "emerald" | "amber" | "violet";
-
-const STAT_TONES: Record<
-  StatTone,
-  { accent: string; icon: string; iconHero: string; value: string }
-> = {
-  indigo: {
-    accent: "bg-indigo-500",
-    icon: "bg-indigo-500/12 text-indigo-500 dark:text-indigo-300",
-    iconHero: "bg-indigo-600 text-white",
-    value: "text-indigo-700 dark:text-indigo-200",
-  },
-  sky: {
-    accent: "bg-sky-500",
-    icon: "bg-sky-500/12 text-sky-600 dark:text-sky-300",
-    iconHero: "bg-sky-600 text-white",
-    value: "text-sky-700 dark:text-sky-200",
-  },
-  emerald: {
-    accent: "bg-emerald-500",
-    icon: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-300",
-    iconHero: "bg-emerald-600 text-white",
-    value: "text-emerald-700 dark:text-emerald-200",
-  },
-  amber: {
-    accent: "bg-amber-500",
-    icon: "bg-amber-500/12 text-amber-600 dark:text-amber-300",
-    iconHero: "bg-amber-600 text-white",
-    value: "text-amber-700 dark:text-amber-200",
-  },
-  violet: {
-    accent: "bg-violet-500",
-    icon: "bg-violet-500/12 text-violet-600 dark:text-violet-300",
-    iconHero: "bg-violet-600 text-white",
-    value: "text-violet-700 dark:text-violet-200",
-  },
-};
-
-function StatCard({
-  title,
-  value,
-  subtitle,
-  icon,
-  tone,
-  size = "default",
-}: {
-  title: string;
-  value: string | number;
-  subtitle: string;
-  icon: React.ReactNode;
-  tone: StatTone;
-  size?: "default" | "hero";
-}) {
-  const styles = STAT_TONES[tone];
-  const isHero = size === "hero";
-
-  return (
-    <div
-      className={cn(
-        "group relative overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel) shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-500/25 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20",
-        isHero ? "p-4" : "p-3.5",
-      )}
-    >
-      <div className={cn("absolute inset-x-0 top-0 h-1", styles.accent)} />
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p
-            className={cn(
-              "font-medium text-(--panel-text-muted)",
-              isHero ? "text-sm" : "text-xs",
-            )}
-          >
-            {title}
-          </p>
-          <p
-            className={cn(
-              "font-bold leading-none tracking-tight",
-              isHero ? "mt-2 text-[30px]" : "mt-1.5 text-lg",
-              styles.value,
-            )}
-          >
-            {value}
-          </p>
-        </div>
-        <div
-          className={cn(
-            "shrink-0 rounded-lg",
-            isHero ? "p-2.5" : "p-1.5",
-            isHero ? styles.iconHero : styles.icon,
-          )}
-        >
-          {icon}
-        </div>
-      </div>
-      <p
-        className={cn(
-          "text-(--panel-text-subtle)",
-          isHero ? "mt-2 text-xs leading-5" : "mt-1.5 text-xs leading-5",
-        )}
-      >
-        {subtitle}
-      </p>
-    </div>
-  );
-}
+import { StatCard } from "@/components/ui/stat-card";
 
 export default async function AdminDashboardPage() {
   const stats = await getDashboardStats();
@@ -177,6 +71,7 @@ export default async function AdminDashboardPage() {
           icon={<DollarSign size={20} />}
           tone="emerald"
           size="hero"
+          tintValue
         />
         <StatCard
           title="អត្រាកាន់កាប់"
@@ -185,6 +80,7 @@ export default async function AdminDashboardPage() {
           icon={<Gauge size={20} />}
           tone="sky"
           size="hero"
+          tintValue
         />
       </section>
 
@@ -195,6 +91,7 @@ export default async function AdminDashboardPage() {
           subtitle="អ្នកជួលដែលមានក្នុងប្រព័ន្ធ"
           icon={<Users size={16} />}
           tone="indigo"
+          tintValue
         />
         <StatCard
           title="បន្ទប់សរុប"
@@ -202,6 +99,7 @@ export default async function AdminDashboardPage() {
           subtitle={`${stats.cards.availableRooms} ទំនេរ · ${stats.cards.maintenanceRooms} ជួសជុល`}
           icon={<Building2 size={16} />}
           tone="violet"
+          tintValue
         />
         <StatCard
           title="កិច្ចសន្យាសកម្ម"
@@ -209,6 +107,7 @@ export default async function AdminDashboardPage() {
           subtitle="កិច្ចសន្យាដែលកំពុងដំណើរការ"
           icon={<FileText size={16} />}
           tone="emerald"
+          tintValue
         />
       </section>
 

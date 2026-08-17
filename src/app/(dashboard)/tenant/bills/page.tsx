@@ -1,15 +1,10 @@
 import { CreditCard, Receipt } from "lucide-react";
 import { getTenantBillsData } from "@/actions/tenants/bills";
+import { Badge } from "@/components/ui/badge";
+import { formatBillingMonth } from "@/lib/utils";
 
 function StatusBadge({ status }: { status: string }) {
-  const config = {
-    green: { className: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-500" },
-    amber: { className: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-300", dot: "bg-amber-500" },
-    red: { className: "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-300", dot: "bg-red-500" },
-    gray: { className: "border-zinc-500/20 bg-zinc-500/10 text-(--panel-text-muted)", dot: "bg-zinc-400" },
-  };
-
-  let tone: keyof typeof config = "gray";
+  let tone: "green" | "amber" | "red" | "gray" = "gray";
   if (status === "paid" || status === "approved") tone = "green";
   if (status === "unpaid" || status === "pending") tone = "amber";
   if (status === "overdue" || status === "rejected") tone = "red";
@@ -23,19 +18,7 @@ function StatusBadge({ status }: { status: string }) {
     rejected: "បដិសេធ",
   };
 
-  const { className, dot } = config[tone];
-
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${className}`}>
-      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
-      {labels[status] || status}
-    </span>
-  );
-}
-
-function formatMonth(value?: string) {
-  if (!value) return "-";
-  return String(value).slice(0, 7);
+  return <Badge tone={tone}>{labels[status] || status}</Badge>;
 }
 
 export default async function TenantBillsPage() {
@@ -77,7 +60,7 @@ export default async function TenantBillsPage() {
               <div className="flex items-center justify-between rounded-lg bg-(--panel-inset) px-3 py-2.5">
                 <span className="text-sm text-(--panel-text-subtle)">ខែ</span>
                 <span className="text-sm font-medium">
-                  {formatMonth(currentBill.billing_month)}
+                  {formatBillingMonth(currentBill.billing_month)}
                 </span>
               </div>
 
@@ -171,7 +154,7 @@ export default async function TenantBillsPage() {
               >
                 <div>
                   <p className="text-sm font-medium">
-                    ខែ {formatMonth(bill.billing_month)}
+                    ខែ {formatBillingMonth(bill.billing_month)}
                   </p>
                   <p className="text-xs text-(--panel-text-subtle)">
                     ថ្លៃបន្ទប់ ${Number(bill.room_fee || 0).toFixed(2)} · ទឹក $

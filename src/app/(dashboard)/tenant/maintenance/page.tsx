@@ -3,60 +3,19 @@ import {
   createTenantMaintenanceRequest,
   getTenantMaintenanceData,
 } from "@/actions/tenants/maintenances";
-
-const BADGE_TONES = {
-  green: { className: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-500" },
-  amber: { className: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-300", dot: "bg-amber-500" },
-  blue: { className: "border-blue-500/20 bg-blue-500/10 text-blue-600 dark:text-blue-300", dot: "bg-blue-500" },
-  red: { className: "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-300", dot: "bg-red-500" },
-  gray: { className: "border-zinc-500/20 bg-zinc-500/10 text-(--panel-text-muted)", dot: "bg-zinc-400" },
-} as const;
-
-function Badge({ tone, label }: { tone: keyof typeof BADGE_TONES; label: string }) {
-  const { className, dot } = BADGE_TONES[tone];
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${className}`}>
-      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
-      {label}
-    </span>
-  );
-}
+import { Badge } from "@/components/ui/badge";
+import { StatCard } from "@/components/ui/stat-card";
 
 function StatusBadge({ status }: { status: string }) {
   const tone = status === "pending" ? "amber" : status === "in_progress" ? "blue" : status === "resolved" ? "green" : "gray";
   const labels: Record<string, string> = { pending: "រង់ចាំ", in_progress: "កំពុងធ្វើ", resolved: "រួចរាល់" };
-  return <Badge tone={tone} label={labels[status] || status} />;
+  return <Badge tone={tone}>{labels[status] || status}</Badge>;
 }
 
 function PriorityBadge({ priority }: { priority: string }) {
   const tone = priority === "low" ? "green" : priority === "medium" ? "amber" : priority === "high" ? "red" : "gray";
   const labels: Record<string, string> = { low: "ទាប", medium: "មធ្យម", high: "ខ្ពស់" };
-  return <Badge tone={tone} label={labels[priority] || priority} />;
-}
-
-const STAT_TONES = {
-  amber: { accent: "bg-amber-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
-  blue: { accent: "bg-blue-500", icon: "bg-blue-500/10 text-blue-600 dark:text-blue-300" },
-  emerald: { accent: "bg-emerald-500", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
-} as const;
-
-function StatCard({ title, value, icon, tone }: {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-  tone: keyof typeof STAT_TONES;
-}) {
-  const styles = STAT_TONES[tone];
-  return (
-    <div className="group relative overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel) p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20">
-      <div className={`absolute inset-x-0 top-0 h-1 ${styles.accent}`} />
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-medium text-(--panel-text-muted)">{title}</p>
-        <div className={`shrink-0 rounded-lg p-1.5 ${styles.icon}`}>{icon}</div>
-      </div>
-      <p className="mt-1.5 text-lg font-bold leading-none tracking-tight">{value}</p>
-    </div>
-  );
+  return <Badge tone={tone} dot={false}>{labels[priority] || priority}</Badge>;
 }
 
 export default async function TenantMaintenancePage() {

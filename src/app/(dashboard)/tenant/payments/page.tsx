@@ -3,17 +3,13 @@ import {
   getTenantPaymentsData,
   submitTenantPayment,
 } from "@/actions/tenants/payments";
+import { Badge } from "@/components/ui/badge";
+import { StatCard } from "@/components/ui/stat-card";
+import { formatBillingMonth } from "@/lib/utils";
 import { PAYMENT_METHOD_LABELS } from "@/lib/validations/payments";
 
 function StatusBadge({ status }: { status: string }) {
-  const config = {
-    green: { className: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-500" },
-    amber: { className: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-300", dot: "bg-amber-500" },
-    red: { className: "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-300", dot: "bg-red-500" },
-    gray: { className: "border-zinc-500/20 bg-zinc-500/10 text-(--panel-text-muted)", dot: "bg-zinc-400" },
-  };
-
-  let tone: keyof typeof config = "gray";
+  let tone: "green" | "amber" | "red" | "gray" = "gray";
   if (status === "approved") tone = "green";
   if (status === "pending") tone = "amber";
   if (status === "rejected") tone = "red";
@@ -24,44 +20,7 @@ function StatusBadge({ status }: { status: string }) {
     rejected: "បដិសេធ",
   };
 
-  const { className, dot } = config[tone];
-
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${className}`}>
-      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
-      {labels[status] || status}
-    </span>
-  );
-}
-
-const STAT_TONES = {
-  amber: { accent: "bg-amber-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
-  emerald: { accent: "bg-emerald-500", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
-  red: { accent: "bg-red-500", icon: "bg-red-500/10 text-red-600 dark:text-red-300" },
-} as const;
-
-function StatCard({ title, value, icon, tone }: {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-  tone: keyof typeof STAT_TONES;
-}) {
-  const styles = STAT_TONES[tone];
-  return (
-    <div className="group relative overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel) p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20">
-      <div className={`absolute inset-x-0 top-0 h-1 ${styles.accent}`} />
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-medium text-(--panel-text-muted)">{title}</p>
-        <div className={`shrink-0 rounded-lg p-1.5 ${styles.icon}`}>{icon}</div>
-      </div>
-      <p className="mt-1.5 text-lg font-bold leading-none tracking-tight">{value}</p>
-    </div>
-  );
-}
-
-function formatMonth(value?: string) {
-  if (!value) return "-";
-  return String(value).slice(0, 7);
+  return <Badge tone={tone}>{labels[status] || status}</Badge>;
 }
 
 export default async function TenantPaymentsPage({
@@ -127,7 +86,7 @@ export default async function TenantPaymentsPage({
                 >
                   {unpaidBills.map((bill) => (
                     <option key={bill.id} value={bill.id}>
-                      ខែ {formatMonth(bill.billing_month)} - $
+                      ខែ {formatBillingMonth(bill.billing_month)} - $
                       {Number(bill.total_amount || 0).toFixed(2)}
                     </option>
                   ))}
@@ -241,7 +200,7 @@ export default async function TenantPaymentsPage({
                   <p className="text-xs text-(--panel-text-subtle)">
                     {PAYMENT_METHOD_LABELS[payment.payment_method as keyof typeof PAYMENT_METHOD_LABELS] || payment.payment_method}{" "}
                     · ខែ{" "}
-                    {formatMonth(
+                    {formatBillingMonth(
                       (payment.bills as { billing_month?: string } | null)
                         ?.billing_month,
                     )}

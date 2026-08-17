@@ -48,3 +48,10 @@ export function formatKhmerDate(
 
   return `${month} ${year}`
 }
+
+// Bills are stored with a full date (e.g. "2026-08-01") but only the
+// year-month is meaningful for a billing period, so this trims to "2026-08".
+export function formatBillingMonth(value?: string | null) {
+  if (!value) return "-"
+  return String(value).slice(0, 7)
+}

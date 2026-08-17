@@ -1,5 +1,7 @@
 import { CalendarDays, DollarSign, FileText, Home } from "lucide-react";
 import { getTenantContract } from "@/actions/tenants/contract";
+import { Badge } from "@/components/ui/badge";
+import { StatCard } from "@/components/ui/stat-card";
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -12,42 +14,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 
 function StatusBadge({ status }: { status: string }) {
   const isActive = status === "active";
-  const className = isActive
-    ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
-    : "border-zinc-500/20 bg-zinc-500/10 text-(--panel-text-muted)";
-
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${className}`}>
-      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${isActive ? "bg-emerald-500" : "bg-zinc-400"}`} />
-      {isActive ? "សកម្ម" : status}
-    </span>
-  );
-}
-
-const STAT_TONES = {
-  blue: { accent: "bg-blue-500", icon: "bg-blue-500/10 text-blue-600 dark:text-blue-300" },
-  emerald: { accent: "bg-emerald-500", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
-  amber: { accent: "bg-amber-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
-  indigo: { accent: "bg-indigo-500", icon: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300" },
-} as const;
-
-function StatCard({ title, value, icon, tone }: {
-  title: string;
-  value: React.ReactNode;
-  icon: React.ReactNode;
-  tone: keyof typeof STAT_TONES;
-}) {
-  const styles = STAT_TONES[tone];
-  return (
-    <div className="group relative overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel) p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20">
-      <div className={`absolute inset-x-0 top-0 h-1 ${styles.accent}`} />
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-medium text-(--panel-text-muted)">{title}</p>
-        <div className={`shrink-0 rounded-lg p-1.5 ${styles.icon}`}>{icon}</div>
-      </div>
-      <div className="mt-1.5 text-lg font-bold leading-none tracking-tight">{value}</div>
-    </div>
-  );
+  return <Badge tone={isActive ? "green" : "gray"}>{isActive ? "សកម្ម" : status}</Badge>;
 }
 
 const ROOM_STATUS_LABELS: Record<string, string> = {

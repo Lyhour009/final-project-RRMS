@@ -4,6 +4,8 @@ Room Rental Management System built with Next.js, Supabase, and TypeScript.
 
 RRMS helps a rental property operator manage rooms, tenants, contracts, monthly bills, payment approvals, maintenance requests, reports, and tenant self-service in one web application.
 
+For a non-technical walkthrough of how the system is used day to day (useful when explaining it to a client or business owner), see [docs/WORKFLOW.md](docs/WORKFLOW.md). For an honest audit of what's built, what was cleaned up, and what's intentionally out of scope (useful before a demo or code review), see [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md).
+
 ## Features
 
 Admin portal:
@@ -15,7 +17,7 @@ Admin portal:
 - Monthly bill generation from room rent and utility readings.
 - Payment tracking with proof upload, approval, rejection, and history.
 - Maintenance request tracking and status updates.
-- Reports with Excel export.
+- Reports with CSV export (opens directly in Excel).
 - Settings for payment QR code and billing defaults.
 
 Tenant portal:
@@ -139,7 +141,7 @@ src/
       admin/       Admin pages
       tenant/      Tenant pages
       profile/     Shared profile page
-    api/           Health, auth, and cron endpoints
+    api/           Health and cron endpoints (auth runs client-side via Supabase, not through an API route)
     login/         Authentication screens
   actions/         Server Actions grouped by domain
   components/      Feature and UI components
