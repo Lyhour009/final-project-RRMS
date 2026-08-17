@@ -110,9 +110,9 @@ function RecentCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-(--panel-text)">{title}</h2>
+    <div className="rounded-xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold text-(--panel-text)">{title}</h2>
         <Link
           href={href}
           aria-label={`មើល ${title}`}
@@ -128,7 +128,7 @@ function RecentCard({
 
 function EmptyList({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-28 flex-col items-center justify-center rounded-xl border border-dashed border-(--panel-border) bg-(--panel-inset)/45 px-5 text-center">
+    <div className="flex min-h-24 flex-col items-center justify-center rounded-xl border border-dashed border-(--panel-border) bg-(--panel-inset)/45 px-5 text-center">
       <Inbox className="mb-2 h-5 w-5 text-(--panel-text-subtle)" />
       <p className="text-xs leading-5 text-(--panel-text-subtle)">{children}</p>
     </div>
@@ -137,16 +137,16 @@ function EmptyList({ children }: { children: React.ReactNode }) {
 
 export function RecentDashboardTables({ recent }: { recent: RecentData }) {
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
       <RecentCard title="វិក្កយបត្រថ្មីៗ" href="/admin/billing">
-        <div className="space-y-3">
+        <div className="space-y-2">
           {recent.bills.length === 0 ? (
             <EmptyList>មិនទាន់មានវិក្កយបត្រថ្មីៗ</EmptyList>
           ) : (
             recent.bills.map((bill) => (
               <div
                 key={bill.id}
-                className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
+                className="flex items-center justify-between rounded-lg border border-(--panel-border) bg-(--panel-inset) p-2.5"
               >
                 <div>
                   <p className="text-sm font-medium text-(--panel-text)">
@@ -171,14 +171,14 @@ export function RecentDashboardTables({ recent }: { recent: RecentData }) {
       </RecentCard>
 
       <RecentCard title="ការទូទាត់ថ្មីៗ" href="/admin/payments">
-        <div className="space-y-3">
+        <div className="space-y-2">
           {recent.payments.length === 0 ? (
             <EmptyList>មិនទាន់មានការទូទាត់ថ្មីៗ</EmptyList>
           ) : (
             recent.payments.map((payment) => (
               <div
                 key={payment.id}
-                className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
+                className="flex items-center justify-between rounded-lg border border-(--panel-border) bg-(--panel-inset) p-2.5"
               >
                 <div>
                   <p className="text-sm font-medium text-(--panel-text)">
@@ -202,14 +202,14 @@ export function RecentDashboardTables({ recent }: { recent: RecentData }) {
       </RecentCard>
 
       <RecentCard title="កិច្ចសន្យាថ្មីៗ" href="/admin/contracts">
-        <div className="space-y-3">
+        <div className="space-y-2">
           {recent.contracts.length === 0 ? (
             <EmptyList>មិនទាន់មានកិច្ចសន្យាថ្មីៗ</EmptyList>
           ) : (
             recent.contracts.map((contract) => (
               <div
                 key={contract.id}
-                className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
+                className="flex items-center justify-between rounded-lg border border-(--panel-border) bg-(--panel-inset) p-2.5"
               >
                 <div>
                   <p className="text-sm font-medium text-(--panel-text)">
@@ -229,14 +229,14 @@ export function RecentDashboardTables({ recent }: { recent: RecentData }) {
       </RecentCard>
 
       <RecentCard title="សំណើជួសជុលថ្មីៗ" href="/admin/maintenance">
-        <div className="space-y-3">
+        <div className="space-y-2">
           {recent.maintenanceRequests.length === 0 ? (
             <EmptyList>មិនទាន់មានសំណើជួសជុលថ្មីៗ</EmptyList>
           ) : (
             recent.maintenanceRequests.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
+                className="flex items-center justify-between rounded-lg border border-(--panel-border) bg-(--panel-inset) p-2.5"
               >
                 <div>
                   <p className="text-sm font-medium text-(--panel-text)">

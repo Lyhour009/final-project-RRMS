@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   ArrowUpRight,
   Building2,
-  CreditCard,
   DollarSign,
   FileText,
   Gauge,
@@ -78,17 +77,17 @@ function StatCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-(--panel-border) bg-(--panel) shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-500/25 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20",
-        isHero ? "p-6" : "p-4",
+        "group relative overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel) shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-500/25 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20",
+        isHero ? "p-4" : "p-3.5",
       )}
     >
       <div className={cn("absolute inset-x-0 top-0 h-1", styles.accent)} />
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p
             className={cn(
               "font-medium text-(--panel-text-muted)",
-              isHero ? "text-sm" : "text-[13px]",
+              isHero ? "text-sm" : "text-xs",
             )}
           >
             {title}
@@ -96,7 +95,7 @@ function StatCard({
           <p
             className={cn(
               "font-bold leading-none tracking-tight",
-              isHero ? "mt-3 text-[44px]" : "mt-2 text-xl",
+              isHero ? "mt-2 text-[30px]" : "mt-1.5 text-lg",
               styles.value,
             )}
           >
@@ -105,8 +104,8 @@ function StatCard({
         </div>
         <div
           className={cn(
-            "rounded-xl",
-            isHero ? "p-3" : "p-2",
+            "shrink-0 rounded-lg",
+            isHero ? "p-2.5" : "p-1.5",
             isHero ? styles.iconHero : styles.icon,
           )}
         >
@@ -116,7 +115,7 @@ function StatCard({
       <p
         className={cn(
           "text-(--panel-text-subtle)",
-          isHero ? "mt-3 text-sm leading-6" : "mt-2 text-xs leading-5",
+          isHero ? "mt-2 text-xs leading-5" : "mt-1.5 text-xs leading-5",
         )}
       >
         {subtitle}
@@ -134,7 +133,7 @@ export default async function AdminDashboardPage() {
     : 0;
 
   return (
-    <div className="mx-auto w-full max-w-[1680px] space-y-6 p-4 text-(--panel-text) sm:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-[1680px] space-y-5 p-4 text-(--panel-text) sm:p-5 lg:p-6">
       <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-indigo-500/15 bg-indigo-500/8 px-3 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-300">
@@ -170,12 +169,12 @@ export default async function AdminDashboardPage() {
       {/* The two metrics an owner actually opens this page to check — get a
           bigger, higher-contrast treatment so they're readable at a glance
           instead of competing equally with four secondary counts below. */}
-      <section aria-label="ស្ថិតិសំខាន់" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <section aria-label="ស្ថិតិសំខាន់" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <StatCard
           title="ចំណូលខែនេះ"
           value={`$${stats.cards.monthlyRevenue.toFixed(2)}`}
           subtitle="ពីវិក្កយបត្រដែលបានបង់រួច"
-          icon={<DollarSign size={24} />}
+          icon={<DollarSign size={20} />}
           tone="emerald"
           size="hero"
         />
@@ -183,40 +182,33 @@ export default async function AdminDashboardPage() {
           title="អត្រាកាន់កាប់"
           value={`${occupancyRate}%`}
           subtitle={`${stats.cards.occupiedRooms} ក្នុងចំណោម ${stats.cards.totalRooms} បន្ទប់`}
-          icon={<Gauge size={24} />}
+          icon={<Gauge size={20} />}
           tone="sky"
           size="hero"
         />
       </section>
 
-      <section aria-label="ស្ថិតិបន្ថែម" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section aria-label="ស្ថិតិបន្ថែម" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard
           title="អ្នកជួលសរុប"
           value={stats.cards.totalTenants}
           subtitle="អ្នកជួលដែលមានក្នុងប្រព័ន្ធ"
-          icon={<Users size={18} />}
+          icon={<Users size={16} />}
           tone="indigo"
         />
         <StatCard
           title="បន្ទប់សរុប"
           value={stats.cards.totalRooms}
           subtitle={`${stats.cards.availableRooms} ទំនេរ · ${stats.cards.maintenanceRooms} ជួសជុល`}
-          icon={<Building2 size={18} />}
+          icon={<Building2 size={16} />}
           tone="violet"
         />
         <StatCard
           title="កិច្ចសន្យាសកម្ម"
           value={stats.cards.activeContracts}
           subtitle="កិច្ចសន្យាដែលកំពុងដំណើរការ"
-          icon={<FileText size={18} />}
+          icon={<FileText size={16} />}
           tone="emerald"
-        />
-        <StatCard
-          title="ការទូទាត់រង់ចាំ"
-          value={stats.cards.pendingPayments}
-          subtitle="ត្រូវពិនិត្យ និងអនុម័ត"
-          icon={<CreditCard size={18} />}
-          tone="amber"
         />
       </section>
 

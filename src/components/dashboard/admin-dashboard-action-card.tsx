@@ -71,7 +71,7 @@ function ActionCard({
     <Link
       href={href}
       className={cn(
-        "group relative overflow-hidden rounded-2xl border p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20",
+        "group relative overflow-hidden rounded-xl border p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20",
         styles.border,
         isUrgent ? "bg-red-500/10 dark:bg-red-500/15" : styles.bg,
       )}
@@ -85,17 +85,17 @@ function ActionCard({
       />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[13px] font-medium text-(--panel-text-muted)">
+          <p className="text-xs font-medium text-(--panel-text-muted)">
             {title}
           </p>
-          <p className={`mt-2 text-2xl font-bold leading-none ${styles.value}`}>
+          <p className={`mt-1.5 text-xl font-bold leading-none ${styles.value}`}>
             {value}
           </p>
         </div>
-        <div className={`shrink-0 rounded-xl p-2.5 ${styles.icon}`}>{icon}</div>
+        <div className={`shrink-0 rounded-lg p-2 ${styles.icon}`}>{icon}</div>
       </div>
 
-      <div className="mt-3 flex items-end justify-between gap-3">
+      <div className="mt-2.5 flex items-end justify-between gap-3">
         <p className="text-xs leading-5 text-(--panel-text-subtle)">
           {description}
         </p>
@@ -125,7 +125,7 @@ export function DashboardActionCards({
         value={cards.pendingPayments}
         description="ពិនិត្យ និងអនុម័តការទូទាត់"
         href="/admin/payments"
-        icon={<CreditCard size={20} />}
+        icon={<CreditCard size={18} />}
         tone="amber"
       />
       <ActionCard
@@ -133,7 +133,7 @@ export function DashboardActionCards({
         value={cards.unpaidBills}
         description={`ទឹកប្រាក់សរុប $${cards.unpaidAmount.toFixed(2)}`}
         href="/admin/billing"
-        icon={<AlertTriangle size={20} />}
+        icon={<AlertTriangle size={18} />}
         tone="red"
       />
       <ActionCard
@@ -141,7 +141,7 @@ export function DashboardActionCards({
         value={cards.contractsEndingSoon}
         description="នឹងផុតកំណត់ក្នុងរយៈពេល 30 ថ្ងៃ"
         href="/admin/contracts"
-        icon={<FileText size={20} />}
+        icon={<FileText size={18} />}
         tone="blue"
       />
       <ActionCard
@@ -149,7 +149,7 @@ export function DashboardActionCards({
         value={cards.maintenancePending}
         description="សំណើដែលកំពុងរង់ចាំដោះស្រាយ"
         href="/admin/maintenance"
-        icon={<Wrench size={20} />}
+        icon={<Wrench size={18} />}
         tone="purple"
       />
     </div>

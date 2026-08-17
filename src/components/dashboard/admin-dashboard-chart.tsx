@@ -56,13 +56,13 @@ function ChartCard({
   contentClassName?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
-      <div className="mb-4">
-        <h2 className="text-base font-semibold text-(--panel-text)">{title}</h2>
+    <div className="rounded-xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm">
+      <div className="mb-3">
+        <h2 className="text-sm font-semibold text-(--panel-text)">{title}</h2>
         <p className="text-xs text-(--panel-text-subtle) mt-1">{description}</p>
       </div>
 
-      <div className={cn("dashboard-chart w-full", contentClassName || "h-65")}>
+      <div className={cn("dashboard-chart w-full", contentClassName || "h-52")}>
         {children}
       </div>
     </div>
@@ -115,12 +115,12 @@ export function AdminDashboardCharts({
   const hasTrendData = hasRevenueData && revenueByMonth.length >= 2;
 
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
       <ChartCard title="ចំណូលតាមខែ" description="ចំណូលពីវិក្កយបត្រដែលបានបង់">
         {!hasRevenueData ? (
           <EmptyChart description="ចំណូលនឹងបង្ហាញនៅពេលវិក្កយបត្រត្រូវបានបង់" />
         ) : hasTrendData ? (
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={200}>
             <LineChart
               data={revenueByMonth}
               margin={{ top: 20, right: 24, left: 4, bottom: 10 }}
@@ -162,7 +162,7 @@ export function AdminDashboardCharts({
           </ResponsiveContainer>
         ) : (
           <div className="flex h-full flex-col">
-            <ResponsiveContainer width="100%" height={210}>
+            <ResponsiveContainer width="100%" height={170}>
               <BarChart
                 data={revenueByMonth}
                 margin={{ top: 20, right: 24, left: 4, bottom: 10 }}
@@ -193,7 +193,7 @@ export function AdminDashboardCharts({
                   cursor={{ fill: "var(--panel-hover)" }}
                 />
 
-                <Bar dataKey="revenue" radius={[8, 8, 0, 0]} barSize={56} fill="#22c55e" />
+                <Bar dataKey="revenue" radius={[8, 8, 0, 0]} barSize={44} fill="#22c55e" />
               </BarChart>
             </ResponsiveContainer>
 
@@ -206,7 +206,7 @@ export function AdminDashboardCharts({
       <ChartCard
         title="ស្ថានភាពបន្ទប់"
         description="ទំនេរ / មិនទំនេរ / ជួសជុល"
-        contentClassName={totalRooms === 0 ? "h-65" : "h-72"}
+        contentClassName={totalRooms === 0 ? "h-52" : "h-60"}
       >
         {totalRooms === 0 ? (
           <EmptyChart description="បន្ថែមបន្ទប់ដើម្បីមើលសមាមាត្រការកាន់កាប់" />
@@ -217,8 +217,8 @@ export function AdminDashboardCharts({
                 data={roomStatus}
                 dataKey="value"
                 nameKey="name"
-                innerRadius={64}
-                outerRadius={92}
+                innerRadius={50}
+                outerRadius={72}
                 paddingAngle={4}
                 labelLine={false}
               >
@@ -238,7 +238,7 @@ export function AdminDashboardCharts({
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="var(--panel-text)"
-                fontSize={24}
+                fontSize={19}
                 fontWeight={700}
               >
                 {totalRooms}
@@ -250,7 +250,7 @@ export function AdminDashboardCharts({
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="var(--panel-text-muted)"
-                fontSize={11}
+                fontSize={10}
               >
                 បន្ទប់សរុប
               </text>
@@ -259,8 +259,8 @@ export function AdminDashboardCharts({
 
               <Legend
                 iconType="circle"
-                iconSize={9}
-                wrapperStyle={{ ...legendStyle, paddingTop: 18, lineHeight: "26px" }}
+                iconSize={8}
+                wrapperStyle={{ ...legendStyle, paddingTop: 10, lineHeight: "20px" }}
                 formatter={(value: string) => {
                   const entry = roomStatus.find((item) => item.name === value);
                   const pct = totalRooms > 0 ? Math.round(((entry?.value ?? 0) / totalRooms) * 100) : 0;
@@ -275,7 +275,7 @@ export function AdminDashboardCharts({
         {totalBills === 0 ? (
           <EmptyChart description="ស្ថានភាពនឹងបង្ហាញនៅពេលមានវិក្កយបត្រ" />
         ) : (
-        <ResponsiveContainer width="100%" height={250}>
+        <ResponsiveContainer width="100%" height={200}>
           <BarChart
             data={billStatus}
             margin={{ top: 20, right: 18, left: -18, bottom: 10 }}
@@ -313,7 +313,7 @@ export function AdminDashboardCharts({
               contentStyle={tooltipStyle}
             />
 
-            <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={34}>
+            <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={28}>
               {billStatus.map((_, index) => (
                 <Cell
                   key={index}
@@ -333,7 +333,7 @@ export function AdminDashboardCharts({
         {totalPayments === 0 ? (
           <EmptyChart description="ស្ថានភាពនឹងបង្ហាញនៅពេលមានការទូទាត់" />
         ) : (
-        <ResponsiveContainer width="100%" height={250}>
+        <ResponsiveContainer width="100%" height={200}>
           <BarChart
             data={paymentStatus}
             margin={{ top: 20, right: 18, left: -18, bottom: 10 }}
@@ -366,7 +366,7 @@ export function AdminDashboardCharts({
               contentStyle={tooltipStyle}
             />
 
-            <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={38}>
+            <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={30}>
               {paymentStatus.map((_, index) => (
                 <Cell
                   key={index}
