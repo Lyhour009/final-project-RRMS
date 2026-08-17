@@ -2,13 +2,14 @@
 
 import { BarChart3 } from "lucide-react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   Legend,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -108,10 +109,10 @@ export function AdminDashboardCharts({
   const billStatusMax = Math.max(1, ...billStatus.map((item) => item.value));
   const paymentStatusMax = Math.max(1, ...paymentStatus.map((item) => item.value));
   const hasRevenueData = revenueByMonth.some((item) => item.revenue > 0);
-  // A line needs 2+ points to draw an actual line — with only one month of
-  // history, `<LineChart>` renders a single floating dot with nothing
-  // connecting it, which reads as broken rather than "not much data yet".
-  // A bar reads as a complete, deliberate chart even with just one value.
+  // An area/line needs 2+ points to draw an actual shape — with only one
+  // month of history, `<AreaChart>` renders a single floating dot with
+  // nothing connecting it, which reads as broken rather than "not much
+  // data yet". A bar reads as complete and deliberate even with one value.
   const hasTrendData = hasRevenueData && revenueByMonth.length >= 2;
 
   return (
@@ -121,7 +122,7 @@ export function AdminDashboardCharts({
           <EmptyChart description="ចំណូលនឹងបង្ហាញនៅពេលវិក្កយបត្រត្រូវបានបង់" />
         ) : hasTrendData ? (
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart
+            <AreaChart
               data={revenueByMonth}
               margin={{ top: 20, right: 24, left: 4, bottom: 10 }}
             >
@@ -148,17 +149,23 @@ export function AdminDashboardCharts({
                 ]}
                 labelStyle={{ color: "var(--panel-text)" }}
                 contentStyle={tooltipStyle}
+                cursor={{ stroke: "var(--panel-border)", strokeWidth: 1 }}
               />
 
-              <Line
+              {/* Flat solid fill at low opacity instead of a gradient def —
+                  gives the trend line visual weight without an actual
+                  gradient, matching the flat-color design used elsewhere. */}
+              <Area
                 type="monotone"
                 dataKey="revenue"
                 stroke="#22c55e"
                 strokeWidth={3}
-                dot={{ r: 4, fill: "#22c55e", strokeWidth: 0 }}
-                activeDot={{ r: 6 }}
+                fill="#22c55e"
+                fillOpacity={0.12}
+                dot={{ r: 4, fill: "#22c55e", strokeWidth: 2, stroke: "var(--panel)" }}
+                activeDot={{ r: 6, strokeWidth: 2, stroke: "var(--panel)" }}
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         ) : (
           <div className="flex h-full flex-col">
@@ -271,41 +278,41 @@ export function AdminDashboardCharts({
           </ResponsiveContainer>
         )}
       </ChartCard>
-      <ChartCard title="ស្ថានភាពវិក្កយបត្រ" description="បង់ / មិនបង់ / ហួស">
+      <ChartCard
+        title="ស្ថានភាពវិក្កយបត្រ"
+        description="បង់ / មិនបង់ / ហួស"
+        contentClassName="h-37"
+      >
         {totalBills === 0 ? (
           <EmptyChart description="ស្ថានភាពនឹងបង្ហាញនៅពេលមានវិក្កយបត្រ" />
         ) : (
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={billStatus}
-            margin={{ top: 20, right: 18, left: -18, bottom: 10 }}
+            layout="vertical"
+            margin={{ top: 4, right: 28, left: 0, bottom: 4 }}
+            barCategoryGap="28%"
           >
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="var(--panel-border)"
-              vertical={false}
+              horizontal={false}
             />
 
-            <XAxis
+            {/* Recharts' default "nice" auto-domain rounds the max up
+                (e.g. an actual max of 3 becomes an axis max of 4-5), which
+                left short bars looking stranded under empty headroom.
+                Scaling to the real max instead means the longest bar
+                always reaches the end of the chart. */}
+            <XAxis type="number" hide domain={[0, billStatusMax]} />
+
+            <YAxis
+              type="category"
               dataKey="name"
               tick={tickStyle}
               tickLine={false}
               axisLine={false}
-              dy={8}
-            />
-
-            <YAxis
-              tick={tickStyle}
-              tickLine={false}
-              axisLine={false}
-              allowDecimals={false}
-              width={28}
-              // Recharts' default "nice" auto-domain rounds the max up
-              // (e.g. an actual max of 3 becomes an axis max of 4-5),
-              // which left short bars looking stranded under a lot of
-              // empty headroom. Scaling to the real max instead means the
-              // tallest bar always reaches the top of the chart.
-              domain={[0, billStatusMax]}
+              width={64}
             />
 
             <Tooltip
@@ -313,13 +320,20 @@ export function AdminDashboardCharts({
               contentStyle={tooltipStyle}
             />
 
-            <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={28}>
+            <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={18}>
               {billStatus.map((_, index) => (
                 <Cell
                   key={index}
                   fill={STATUS_COLORS[index % STATUS_COLORS.length]}
                 />
               ))}
+              <LabelList
+                dataKey="value"
+                position="right"
+                fill="var(--panel-text)"
+                fontSize={11}
+                fontWeight={600}
+              />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -329,36 +343,33 @@ export function AdminDashboardCharts({
       <ChartCard
         title="ស្ថានភាពការទូទាត់"
         description="រង់ចាំ / អនុម័ត / បដិសេធ"
+        contentClassName="h-37"
       >
         {totalPayments === 0 ? (
           <EmptyChart description="ស្ថានភាពនឹងបង្ហាញនៅពេលមានការទូទាត់" />
         ) : (
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={paymentStatus}
-            margin={{ top: 20, right: 18, left: -18, bottom: 10 }}
+            layout="vertical"
+            margin={{ top: 4, right: 28, left: 0, bottom: 4 }}
+            barCategoryGap="28%"
           >
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="var(--panel-border)"
-              vertical={false}
+              horizontal={false}
             />
 
-            <XAxis
+            <XAxis type="number" hide domain={[0, paymentStatusMax]} />
+
+            <YAxis
+              type="category"
               dataKey="name"
               tick={tickStyle}
               tickLine={false}
               axisLine={false}
-              dy={8}
-            />
-
-            <YAxis
-              tick={tickStyle}
-              tickLine={false}
-              axisLine={false}
-              allowDecimals={false}
-              width={28}
-              domain={[0, paymentStatusMax]}
+              width={64}
             />
 
             <Tooltip
@@ -366,13 +377,20 @@ export function AdminDashboardCharts({
               contentStyle={tooltipStyle}
             />
 
-            <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={30}>
+            <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={18}>
               {paymentStatus.map((_, index) => (
                 <Cell
                   key={index}
                   fill={STATUS_COLORS[index % STATUS_COLORS.length]}
                 />
               ))}
+              <LabelList
+                dataKey="value"
+                position="right"
+                fill="var(--panel-text)"
+                fontSize={11}
+                fontWeight={600}
+              />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
