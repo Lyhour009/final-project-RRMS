@@ -37,7 +37,7 @@ npx tsx scripts/reset-admin-password.ts <user-id> <new-password>
 
 Per `AGENTS.md`, this Next.js version has breaking changes from what you may expect — check `node_modules/next/dist/docs/` before assuming an API. The one that matters most here:
 
-- **`middleware.ts` is gone — it's `src/proxy.ts`.** Next.js 16 renamed Middleware to Proxy (same mechanics, new file/export name: `export async function proxy(request)`). This file does route protection (redirect unauthenticated users, block cross-role access) and is the *first* of three enforcement layers described below — never treat it as sufficient on its own.
+- **`middleware.ts` is gone — it's `src/proxy.ts`.** Next.js 16 renamed Middleware to Proxy (same mechanics, new file/export name: `export async function proxy(request)`). This file does route protection (redirect unauthenticated users, block cross-role access) and is the _first_ of three enforcement layers described below — never treat it as sufficient on its own.
 
 ## Authorization: three layers, all required
 
@@ -49,7 +49,7 @@ Every protected action must be safe even if the other two layers were bypassed:
 
 When adding a new Server Action, always start with `const { supabase } = await requireAdmin()` (or `requireTenant`/`requireUser`) — don't assume the route-level proxy check is enough.
 
-`getAuthenticatedUser()` in `server.ts` is wrapped in React's `cache()` — this dedupes the auth round-trip *within one request* only (e.g. a layout + multiple `Promise.all`'d data-fetchers on the same navigation), never across requests. Don't reuse this expecting cross-request caching.
+`getAuthenticatedUser()` in `server.ts` is wrapped in React's `cache()` — this dedupes the auth round-trip _within one request_ only (e.g. a layout + multiple `Promise.all`'d data-fetchers on the same navigation), never across requests. Don't reuse this expecting cross-request caching.
 
 ## Server-only boundaries
 
