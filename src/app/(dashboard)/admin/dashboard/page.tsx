@@ -23,32 +23,37 @@ type StatTone = "indigo" | "sky" | "emerald" | "amber" | "violet";
 
 const STAT_TONES: Record<
   StatTone,
-  { icon: string; value: string; glow: string }
+  { accent: string; icon: string; iconHero: string; value: string }
 > = {
   indigo: {
+    accent: "bg-indigo-500",
     icon: "bg-indigo-500/12 text-indigo-500 dark:text-indigo-300",
+    iconHero: "bg-indigo-600 text-white",
     value: "text-indigo-700 dark:text-indigo-200",
-    glow: "from-indigo-500/12",
   },
   sky: {
+    accent: "bg-sky-500",
     icon: "bg-sky-500/12 text-sky-600 dark:text-sky-300",
+    iconHero: "bg-sky-600 text-white",
     value: "text-sky-700 dark:text-sky-200",
-    glow: "from-sky-500/12",
   },
   emerald: {
+    accent: "bg-emerald-500",
     icon: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-300",
+    iconHero: "bg-emerald-600 text-white",
     value: "text-emerald-700 dark:text-emerald-200",
-    glow: "from-emerald-500/12",
   },
   amber: {
+    accent: "bg-amber-500",
     icon: "bg-amber-500/12 text-amber-600 dark:text-amber-300",
+    iconHero: "bg-amber-600 text-white",
     value: "text-amber-700 dark:text-amber-200",
-    glow: "from-amber-500/12",
   },
   violet: {
+    accent: "bg-violet-500",
     icon: "bg-violet-500/12 text-violet-600 dark:text-violet-300",
+    iconHero: "bg-violet-600 text-white",
     value: "text-violet-700 dark:text-violet-200",
-    glow: "from-violet-500/12",
   },
 };
 
@@ -77,14 +82,8 @@ function StatCard({
         isHero ? "p-6" : "p-4",
       )}
     >
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-x-0 top-0 bg-linear-to-b to-transparent opacity-70",
-          isHero ? "h-32" : "h-20",
-          styles.glow,
-        )}
-      />
-      <div className="relative flex items-start justify-between gap-4">
+      <div className={cn("absolute inset-x-0 top-0 h-1", styles.accent)} />
+      <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p
             className={cn(
@@ -104,13 +103,19 @@ function StatCard({
             {value}
           </p>
         </div>
-        <div className={cn("rounded-xl", isHero ? "p-3" : "p-2", styles.icon)}>
+        <div
+          className={cn(
+            "rounded-xl",
+            isHero ? "p-3" : "p-2",
+            isHero ? styles.iconHero : styles.icon,
+          )}
+        >
           {icon}
         </div>
       </div>
       <p
         className={cn(
-          "relative text-(--panel-text-subtle)",
+          "text-(--panel-text-subtle)",
           isHero ? "mt-3 text-sm leading-6" : "mt-2 text-xs leading-5",
         )}
       >

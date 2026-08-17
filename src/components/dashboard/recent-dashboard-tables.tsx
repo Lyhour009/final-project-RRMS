@@ -159,7 +159,7 @@ export function RecentDashboardTables({ recent }: { recent: RecentData }) {
                 </div>
 
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-emerald-400">
+                  <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                     ${Number(bill.total_amount || 0).toFixed(2)}
                   </p>
                   <StatusBadge status={bill.status} />
@@ -190,7 +190,7 @@ export function RecentDashboardTables({ recent }: { recent: RecentData }) {
                 </div>
 
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-emerald-400">
+                  <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                     ${Number(payment.amount || 0).toFixed(2)}
                   </p>
                   <StatusBadge status={payment.status} />

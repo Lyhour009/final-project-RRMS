@@ -13,28 +13,32 @@ type Tone = "amber" | "red" | "blue" | "purple";
 
 const TONE_STYLES: Record<
   Tone,
-  { border: string; bg: string; icon: string; value: string }
+  { border: string; accent: string; bg: string; icon: string; value: string }
 > = {
   amber: {
     border: "border-amber-500/20 hover:border-amber-500/35",
+    accent: "bg-amber-500",
     bg: "bg-amber-500/6",
     icon: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
     value: "text-amber-700 dark:text-amber-200",
   },
   red: {
     border: "border-red-500/20 hover:border-red-500/35",
+    accent: "bg-red-500",
     bg: "bg-red-500/6",
     icon: "bg-red-500/15 text-red-600 dark:text-red-300",
     value: "text-red-700 dark:text-red-200",
   },
   blue: {
     border: "border-blue-500/20 hover:border-blue-500/35",
+    accent: "bg-blue-500",
     bg: "bg-blue-500/6",
     icon: "bg-blue-500/15 text-blue-600 dark:text-blue-300",
     value: "text-blue-700 dark:text-blue-200",
   },
   purple: {
     border: "border-purple-500/20 hover:border-purple-500/35",
+    accent: "bg-purple-500",
     bg: "bg-purple-500/6",
     icon: "bg-purple-500/15 text-purple-600 dark:text-purple-300",
     value: "text-purple-700 dark:text-purple-200",
@@ -58,9 +62,9 @@ function ActionCard({
 }) {
   const styles = TONE_STYLES[tone];
   // The "red" card is the one genuinely urgent item here (unpaid bills) — a
-  // thicker left-border accent plus a stronger tint makes it read as
-  // "act on this" at a glance instead of sitting at equal weight next to
-  // the other three, less time-sensitive follow-ups.
+  // thicker top accent plus a stronger tint makes it read as "act on this"
+  // at a glance instead of sitting at equal weight next to the other three,
+  // less time-sensitive follow-ups.
   const isUrgent = tone === "red";
 
   return (
@@ -69,11 +73,16 @@ function ActionCard({
       className={cn(
         "group relative overflow-hidden rounded-2xl border p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20",
         styles.border,
-        isUrgent
-          ? "border-l-4 border-l-red-500 bg-red-500/10 dark:bg-red-500/15"
-          : styles.bg,
+        isUrgent ? "bg-red-500/10 dark:bg-red-500/15" : styles.bg,
       )}
     >
+      <div
+        className={cn(
+          "absolute inset-x-0 top-0",
+          isUrgent ? "h-1.5" : "h-1",
+          styles.accent,
+        )}
+      />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[13px] font-medium text-(--panel-text-muted)">
