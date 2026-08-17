@@ -2,46 +2,54 @@ import { CreditCard, DollarSign, FileText, Home } from "lucide-react";
 import { getTenantDashboardData } from "@/actions/tenants/dashboard";
 import { PAYMENT_METHOD_LABELS } from "@/lib/validations/payments";
 
+const STAT_TONES = {
+  blue: { accent: "bg-blue-500", icon: "bg-blue-500/10 text-blue-600 dark:text-blue-300" },
+  emerald: { accent: "bg-emerald-500", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
+  amber: { accent: "bg-amber-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
+  indigo: { accent: "bg-indigo-500", icon: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300" },
+} as const;
+
 function StatCard({
   title,
   value,
   subtitle,
   icon,
-  color = "text-indigo-400",
+  tone = "indigo",
 }: {
   title: string;
   value: string | number;
   subtitle: string;
   icon: React.ReactNode;
-  color?: string;
+  tone?: keyof typeof STAT_TONES;
 }) {
+  const styles = STAT_TONES[tone];
+
   return (
-    <div className="group rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="group relative overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel) p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20">
+      <div className={`absolute inset-x-0 top-0 h-1 ${styles.accent}`} />
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-medium text-(--panel-text-muted)">{title}</p>
-        <div className={`rounded-xl bg-(--panel-inset) p-2.5 ${color}`}>{icon}</div>
+        <p className="text-xs font-medium text-(--panel-text-muted)">{title}</p>
+        <div className={`shrink-0 rounded-lg p-1.5 ${styles.icon}`}>{icon}</div>
       </div>
 
-      <p className="mt-5 text-3xl font-bold tracking-tight text-(--panel-text)">{value}</p>
-      <p className="mt-1 text-xs text-(--panel-text-subtle)">{subtitle}</p>
+      <p className="mt-1.5 text-lg font-bold leading-none tracking-tight text-(--panel-text)">{value}</p>
+      <p className="mt-1.5 text-xs text-(--panel-text-subtle)">{subtitle}</p>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
-  let className = "bg-zinc-500/10 text-(--panel-text-muted) border-zinc-500/20";
+  const config = {
+    green: { className: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-500" },
+    amber: { className: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-300", dot: "bg-amber-500" },
+    red: { className: "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-300", dot: "bg-red-500" },
+    gray: { className: "border-zinc-500/20 bg-zinc-500/10 text-(--panel-text-muted)", dot: "bg-zinc-400" },
+  };
 
-  if (["paid", "approved", "active"].includes(status)) {
-    className = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-  }
-
-  if (["unpaid", "pending"].includes(status)) {
-    className = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-  }
-
-  if (["overdue", "rejected"].includes(status)) {
-    className = "bg-red-500/10 text-red-400 border-red-500/20";
-  }
+  let tone: keyof typeof config = "gray";
+  if (["paid", "approved", "active"].includes(status)) tone = "green";
+  if (["unpaid", "pending"].includes(status)) tone = "amber";
+  if (["overdue", "rejected"].includes(status)) tone = "red";
 
   const labels: Record<string, string> = {
     active: "សកម្ម",
@@ -53,10 +61,11 @@ function StatusBadge({ status }: { status: string }) {
     rejected: "បដិសេធ",
   };
 
+  const { className, dot } = config[tone];
+
   return (
-    <span
-      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${className}`}
-    >
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${className}`}>
+      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
       {labels[status] || status}
     </span>
   );
@@ -81,7 +90,7 @@ function InfoRow({
       <span className="text-sm text-(--panel-text-subtle)">{label}</span>
       <span
         className={`text-sm font-medium ${
-          highlight ? "text-emerald-400" : "text-(--panel-text)"
+          highlight ? "text-emerald-600 dark:text-emerald-400" : "text-(--panel-text)"
         }`}
       >
         {value}
@@ -98,33 +107,33 @@ export default async function TenantOverviewPage() {
   const currentBill = data.currentBill;
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-7 p-4 text-(--panel-text) sm:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-[1680px] space-y-5 p-4 text-(--panel-text) sm:p-5 lg:p-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          👋 សួស្តី, {data.profile.full_name}
+          សួស្តី, {data.profile.full_name}
         </h1>
         <p className="text-sm text-(--panel-text-subtle) mt-1">
           ផ្ទាំងសង្ខេបព័ត៌មានបន្ទប់ កិច្ចសន្យា និងការទូទាត់របស់អ្នក
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <StatCard
           title="បន្ទប់របស់ខ្ញុំ"
           value={room ? `#${room.room_number}` : "-"}
           subtitle={
             room ? `${room.room_type} / ជាន់ ${room.floor}` : "មិនទាន់មានបន្ទប់"
           }
-          icon={<Home size={20} />}
-          color="text-blue-400"
+          icon={<Home size={16} />}
+          tone="blue"
         />
 
         <StatCard
           title="ថ្លៃបន្ទប់"
           value={room ? `$${Number(room.base_price || 0).toFixed(2)}` : "$0.00"}
           subtitle="តម្លៃបន្ទប់ប្រចាំខែ"
-          icon={<DollarSign size={20} />}
-          color="text-emerald-400"
+          icon={<DollarSign size={16} />}
+          tone="emerald"
         />
 
         <StatCard
@@ -139,23 +148,23 @@ export default async function TenantOverviewPage() {
               ? formatMonth(currentBill.billing_month)
               : "មិនមានវិក្កយបត្រ"
           }
-          icon={<CreditCard size={20} />}
-          color="text-amber-400"
+          icon={<CreditCard size={16} />}
+          tone="amber"
         />
 
         <StatCard
           title="ការទូទាត់រង់ចាំ"
           value={data.stats.pendingPayments}
           subtitle="រង់ចាំ Admin ផ្ទៀងផ្ទាត់"
-          icon={<FileText size={20} />}
-          color="text-indigo-400"
+          icon={<FileText size={16} />}
+          tone="indigo"
         />
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-3">
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm xl:col-span-2 sm:p-6">
-          <h2 className="text-lg font-semibold mb-4">
-            🏠 ព័ត៌មានបន្ទប់ និងកិច្ចសន្យា
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-3">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm xl:col-span-2 sm:p-5">
+          <h2 className="text-base font-semibold mb-4">
+            ព័ត៌មានបន្ទប់ និងកិច្ចសន្យា
           </h2>
 
           {!contract ? (
@@ -204,9 +213,9 @@ export default async function TenantOverviewPage() {
           )}
         </div>
 
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
-          <h2 className="text-lg font-semibold mb-4">
-            💰 វិក្កយបត្របច្ចុប្បន្ន
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm sm:p-5">
+          <h2 className="text-base font-semibold mb-4">
+            វិក្កយបត្របច្ចុប្បន្ន
           </h2>
 
           {!currentBill ? (
@@ -234,7 +243,7 @@ export default async function TenantOverviewPage() {
 
               <div className="border-t border-(--panel-border) pt-3 flex justify-between">
                 <span className="text-sm font-medium">សរុប</span>
-                <span className="text-lg font-bold text-emerald-400">
+                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
                   ${Number(currentBill.total_amount || 0).toFixed(2)}
                 </span>
               </div>
@@ -248,9 +257,9 @@ export default async function TenantOverviewPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
-          <h2 className="text-lg font-semibold mb-4">🧾 វិក្កយបត្រថ្មីៗ</h2>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm sm:p-5">
+          <h2 className="text-base font-semibold mb-4">វិក្កយបត្រថ្មីៗ</h2>
 
           <div className="space-y-3">
             {data.recentBills.length === 0 ? (
@@ -277,8 +286,8 @@ export default async function TenantOverviewPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-5 shadow-sm sm:p-6">
-          <h2 className="text-lg font-semibold mb-4">💳 ការទូទាត់ថ្មីៗ</h2>
+        <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm sm:p-5">
+          <h2 className="text-base font-semibold mb-4">ការទូទាត់ថ្មីៗ</h2>
 
           <div className="space-y-3">
             {data.recentPayments.length === 0 ? (
