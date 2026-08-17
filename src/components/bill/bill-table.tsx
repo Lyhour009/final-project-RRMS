@@ -8,6 +8,7 @@ import {
   Clock3,
   Edit2,
   Loader2,
+  MoreVertical,
   Plus,
   ReceiptText,
   RotateCcw,
@@ -16,6 +17,13 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { Input } from "@/components/ui/input";
 import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
 import { cn, formatKhmerDate } from "@/lib/utils";
@@ -57,11 +65,11 @@ const STATUS_LABELS: Record<BillStatus, string> = {
   overdue: "ហួសកាលកំណត់",
 };
 
-const FILTER_OPTIONS: { value: BillFilter; label: string; activeClass: string }[] = [
-  { value: "all", label: "ទាំងអស់", activeClass: "bg-indigo-600 text-white" },
-  { value: "unpaid", label: "មិនទាន់បង់", activeClass: "bg-amber-600 text-white" },
-  { value: "paid", label: "បានបង់", activeClass: "bg-emerald-600 text-white" },
-  { value: "overdue", label: "ហួសកំណត់", activeClass: "bg-red-600 text-white" },
+const FILTER_OPTIONS: { value: BillFilter; label: string; dotClass?: string }[] = [
+  { value: "all", label: "ទាំងអស់" },
+  { value: "unpaid", label: "មិនទាន់បង់", dotClass: "bg-amber-500" },
+  { value: "paid", label: "បានបង់", dotClass: "bg-emerald-500" },
+  { value: "overdue", label: "ហួសកំណត់", dotClass: "bg-red-500" },
 ];
 
 function StatCard({ title, value, subtitle, icon, tone }: {
@@ -72,15 +80,16 @@ function StatCard({ title, value, subtitle, icon, tone }: {
   tone: "indigo" | "amber" | "emerald" | "red";
 }) {
   const styles = {
-    indigo: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300",
-    amber: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
-    emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
-    red: "bg-red-500/10 text-red-600 dark:text-red-300",
+    indigo: { accent: "bg-indigo-500", icon: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300" },
+    amber: { accent: "bg-amber-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
+    emerald: { accent: "bg-emerald-500", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
+    red: { accent: "bg-red-500", icon: "bg-red-500/10 text-red-600 dark:text-red-300" },
   }[tone];
   return (
-    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20 sm:p-5">
-      <div className="flex items-start justify-between gap-3"><div><p className="text-[13px] font-medium text-(--panel-text-muted)">{title}</p><p className="mt-2 text-3xl font-bold leading-none tracking-tight">{value}</p></div><div className={cn("rounded-xl p-2.5", styles)}>{icon}</div></div>
-      <p className="mt-3 text-xs text-(--panel-text-subtle)">{subtitle}</p>
+    <div className="group relative overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel) p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20">
+      <div className={cn("absolute inset-x-0 top-0 h-1", styles.accent)} />
+      <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-(--panel-text-muted)">{title}</p><p className="mt-1.5 text-lg font-bold leading-none tracking-tight">{value}</p></div><div className={cn("shrink-0 rounded-lg p-1.5", styles.icon)}>{icon}</div></div>
+      <p className="mt-1.5 text-xs text-(--panel-text-subtle)">{subtitle}</p>
     </div>
   );
 }
@@ -135,21 +144,24 @@ export function BillTableWrapper({ initialBills, contracts, settings }: BillTabl
 
   return (
     <div className="space-y-5">
-      <section aria-label="ស្ថិតិវិក្កយបត្រ" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="វិក្កយបត្រសរុប" value={stats.total} subtitle={`តម្លៃសរុប $${stats.totalAmount.toFixed(2)}`} icon={<ReceiptText size={20} />} tone="indigo" />
-        <StatCard title="មិនទាន់បង់" value={stats.unpaid} subtitle={`នៅសល់ $${stats.unpaidAmount.toFixed(2)}`} icon={<Clock3 size={20} />} tone="amber" />
-        <StatCard title="បានបង់" value={stats.paid} subtitle={`ទទួលបាន $${stats.paidAmount.toFixed(2)}`} icon={<CheckCircle2 size={20} />} tone="emerald" />
-        <StatCard title="ហួសកាលកំណត់" value={stats.overdue} subtitle={`ត្រូវតាមដាន $${stats.overdueAmount.toFixed(2)}`} icon={<AlertTriangle size={20} />} tone="red" />
+      <section aria-label="ស្ថិតិវិក្កយបត្រ" className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatCard title="វិក្កយបត្រសរុប" value={stats.total} subtitle={`តម្លៃសរុប $${stats.totalAmount.toFixed(2)}`} icon={<ReceiptText size={16} />} tone="indigo" />
+        <StatCard title="មិនទាន់បង់" value={stats.unpaid} subtitle={`នៅសល់ $${stats.unpaidAmount.toFixed(2)}`} icon={<Clock3 size={16} />} tone="amber" />
+        <StatCard title="បានបង់" value={stats.paid} subtitle={`ទទួលបាន $${stats.paidAmount.toFixed(2)}`} icon={<CheckCircle2 size={16} />} tone="emerald" />
+        <StatCard title="ហួសកាលកំណត់" value={stats.overdue} subtitle={`ត្រូវតាមដាន $${stats.overdueAmount.toFixed(2)}`} icon={<AlertTriangle size={16} />} tone="red" />
       </section>
 
       <section className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="relative w-full xl:max-w-md"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--panel-text-subtle)" /><Input aria-label="ស្វែងរកវិក្កយបត្រ" placeholder="ស្វែងរកអ្នកជួល លេខបន្ទប់ ឬខែ..." value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="h-10 border-(--panel-border) bg-(--panel-inset) pl-10 text-(--panel-text) placeholder:text-(--panel-text-subtle)" /></div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="flex w-full items-center gap-1 overflow-x-auto rounded-xl border border-(--panel-border) bg-(--panel-inset) p-1 sm:w-auto">
-              {FILTER_OPTIONS.map((option) => <button key={option.value} type="button" onClick={() => setStatusFilter(option.value)} className={cn("inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition", statusFilter === option.value ? option.activeClass : "text-(--panel-text-muted) hover:bg-(--panel-hover) hover:text-(--panel-text)")}>{option.label}<span className={cn("text-[10px]", statusFilter === option.value ? "text-white/75" : "text-(--panel-text-subtle)")}>{counts[option.value]}</span></button>)}
-            </div>
-            <Button onClick={handleAddNew} className="h-10 gap-2 rounded-xl bg-indigo-600 px-4 text-white shadow-lg shadow-indigo-600/15 hover:bg-indigo-500"><Plus size={16} /> បន្ថែមវិក្កយបត្រ</Button>
+            <FilterDropdown
+              ariaLabel="ត្រងតាមស្ថានភាពវិក្កយបត្រ"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={FILTER_OPTIONS.map((option) => ({ ...option, count: counts[option.value] }))}
+            />
+            <Button onClick={handleAddNew} className="h-10 gap-2 rounded-xl bg-indigo-600 px-4 font-semibold text-white shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400/40 hover:bg-indigo-500"><Plus size={16} /> បន្ថែមវិក្កយបត្រ</Button>
           </div>
         </div>
       </section>
@@ -163,7 +175,25 @@ export function BillTableWrapper({ initialBills, contracts, settings }: BillTabl
             <table className="w-full min-w-[1120px] border-collapse text-left">
               <thead className="sticky top-0 z-10 border-b border-(--panel-border) bg-(--panel-inset)"><tr className="text-xs font-medium text-(--panel-text-muted)"><th className="px-5 py-3">អ្នកជួល</th><th className="px-5 py-3">បន្ទប់</th><th className="px-5 py-3">ខែវិក្កយបត្រ</th><th className="px-5 py-3">ថ្លៃបន្ទប់</th><th className="px-5 py-3">ទឹក និងភ្លើង</th><th className="px-5 py-3">សរុប</th><th className="px-5 py-3">ស្ថានភាព</th><th className="px-5 py-3 text-right">សកម្មភាព</th></tr></thead>
               <tbody className="divide-y divide-(--panel-border-subtle) text-sm">
-                {visibleBills.map((bill) => <tr key={bill.id} className="transition-colors hover:bg-(--panel-hover)/55"><td className="px-5 py-3.5"><p className="font-semibold text-(--panel-text)">{bill.profiles?.full_name || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{bill.profiles?.phone_number || "មិនមានលេខទូរស័ព្ទ"}</p></td><td className="px-5 py-3.5"><p className="font-semibold text-(--panel-text)">#{bill.contracts?.rooms?.room_number || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{bill.contracts?.rooms?.room_type || "-"}</p></td><td className="px-5 py-3.5"><div className="flex items-center gap-2 text-(--panel-text-muted)"><CalendarDays className="h-4 w-4 text-(--panel-text-subtle)" />{formatKhmerDate(bill.billing_month)}</div></td><td className="px-5 py-3.5 text-(--panel-text-muted)">${Number(bill.room_fee || 0).toFixed(2)}</td><td className="px-5 py-3.5"><p className="text-(--panel-text-muted)">ទឹក ${Number(bill.water_fee || 0).toFixed(2)}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">ភ្លើង ${Number(bill.elec_fee || 0).toFixed(2)}</p></td><td className="px-5 py-3.5 font-semibold text-emerald-600 dark:text-emerald-300">${Number(bill.total_amount || 0).toFixed(2)}</td><td className="px-5 py-3.5"><StatusBadge status={bill.status} /></td><td className="px-5 py-3.5 text-right"><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" aria-label="កែប្រែវិក្កយបត្រ" onClick={() => { setSelectedBill(bill); setIsModalOpen(true); }} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:text-indigo-500"><Edit2 size={15} /></Button><Button size="icon" variant="ghost" aria-label="លុបវិក្កយបត្រ" onClick={() => { setBillToDelete(bill); setIsDeleteModalOpen(true); }} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:bg-red-500/10 hover:text-red-500"><Trash2 size={15} /></Button></div></td></tr>)}
+                {visibleBills.map((bill) => <tr key={bill.id} className="transition-colors hover:bg-(--panel-hover)/55"><td className="px-5 py-2.5"><p className="font-semibold text-(--panel-text)">{bill.profiles?.full_name || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{bill.profiles?.phone_number || "មិនមានលេខទូរស័ព្ទ"}</p></td><td className="px-5 py-2.5"><p className="font-semibold text-(--panel-text)">#{bill.contracts?.rooms?.room_number || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{bill.contracts?.rooms?.room_type || "-"}</p></td><td className="px-5 py-2.5"><div className="flex items-center gap-2 text-(--panel-text-muted)"><CalendarDays className="h-4 w-4 text-(--panel-text-subtle)" />{formatKhmerDate(bill.billing_month)}</div></td><td className="px-5 py-2.5 text-(--panel-text-muted)">${Number(bill.room_fee || 0).toFixed(2)}</td><td className="px-5 py-2.5"><p className="text-(--panel-text-muted)">ទឹក ${Number(bill.water_fee || 0).toFixed(2)}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">ភ្លើង ${Number(bill.elec_fee || 0).toFixed(2)}</p></td><td className="px-5 py-2.5 font-semibold text-emerald-600 dark:text-emerald-300">${Number(bill.total_amount || 0).toFixed(2)}</td><td className="px-5 py-2.5"><StatusBadge status={bill.status} /></td><td className="px-5 py-2.5 text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button size="icon" variant="ghost" aria-label={`សកម្មភាពសម្រាប់វិក្កយបត្ររបស់ ${bill.profiles?.full_name || "-"}`} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:bg-(--panel-hover) hover:text-(--panel-text)">
+                          <MoreVertical size={16} />
+                        </Button>
+                      }
+                    />
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => { setSelectedBill(bill); setIsModalOpen(true); }}>
+                        <Edit2 size={14} /> កែប្រែ
+                      </DropdownMenuItem>
+                      <DropdownMenuItem variant="destructive" onClick={() => { setBillToDelete(bill); setIsDeleteModalOpen(true); }}>
+                        <Trash2 size={14} /> លុប
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </td></tr>)}
                 {hasMore && <tr><td colSpan={8} className="p-4 text-center"><div ref={sentinelRef} className="flex items-center justify-center gap-2 text-xs text-(--panel-text-subtle)"><Loader2 size={14} className="animate-spin" /> កំពុងផ្ទុកបន្ថែម...</div></td></tr>}
               </tbody>
             </table>

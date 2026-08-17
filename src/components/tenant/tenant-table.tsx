@@ -86,10 +86,10 @@ function StatCard({
   tone: "violet" | "emerald" | "blue" | "amber";
 }) {
   const styles = {
-    violet: "bg-violet-500/10 text-violet-600 dark:text-violet-300",
-    emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
-    blue: "bg-blue-500/10 text-blue-600 dark:text-blue-300",
-    amber: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
+    violet: { accent: "bg-violet-500", icon: "bg-violet-500/10 text-violet-600 dark:text-violet-300" },
+    emerald: { accent: "bg-emerald-500", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
+    blue: { accent: "bg-blue-500", icon: "bg-blue-500/10 text-blue-600 dark:text-blue-300" },
+    amber: { accent: "bg-amber-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
   }[tone];
 
   const canFilter = Boolean(onFilterClick) && (missingCount ?? 0) > 0;
@@ -97,16 +97,17 @@ function StatCard({
   return (
     <div
       className={cn(
-        "rounded-2xl border bg-(--panel) p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20 sm:p-5",
+        "group relative overflow-hidden rounded-xl border bg-(--panel) p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20",
         isFilterActive ? "border-indigo-500/50 ring-1 ring-indigo-500/30" : "border-(--panel-border)",
       )}
     >
+      <div className={cn("absolute inset-x-0 top-0 h-1", styles.accent)} />
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[13px] font-medium text-(--panel-text-muted)">{title}</p>
-          <p className="mt-2 text-3xl font-bold leading-none tracking-tight">{value}</p>
+          <p className="text-xs font-medium text-(--panel-text-muted)">{title}</p>
+          <p className="mt-1.5 text-lg font-bold leading-none tracking-tight">{value}</p>
         </div>
-        <div className={cn("rounded-xl p-2.5", styles)}>{icon}</div>
+        <div className={cn("shrink-0 rounded-lg p-1.5", styles.icon)}>{icon}</div>
       </div>
 
       {canFilter ? (
@@ -114,14 +115,14 @@ function StatCard({
           type="button"
           onClick={onFilterClick}
           className={cn(
-            "mt-3 inline-flex items-center gap-1 rounded-lg px-1.5 py-1 -ml-1.5 text-xs font-medium underline-offset-2 transition hover:bg-(--panel-hover) hover:underline",
+            "mt-1.5 inline-flex items-center gap-1 rounded-lg px-1.5 py-1 -ml-1.5 text-xs font-medium underline-offset-2 transition hover:bg-(--panel-hover) hover:underline",
             isFilterActive ? "text-indigo-600 dark:text-indigo-300" : "text-(--panel-text-subtle)",
           )}
         >
           {subtitle}
         </button>
       ) : (
-        <p className="mt-3 text-xs text-(--panel-text-subtle)">{subtitle}</p>
+        <p className="mt-1.5 text-xs text-(--panel-text-subtle)">{subtitle}</p>
       )}
     </div>
   );
@@ -203,8 +204,8 @@ export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
 
   return (
     <div className="space-y-5">
-      <section aria-label="ស្ថិតិអ្នកជួល" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="អ្នកជួលសរុប" value={stats.total} subtitle="គណនីអ្នកជួលក្នុងប្រព័ន្ធ" icon={<Users size={20} />} tone="violet" />
+      <section aria-label="ស្ថិតិអ្នកជួល" className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatCard title="អ្នកជួលសរុប" value={stats.total} subtitle="គណនីអ្នកជួលក្នុងប្រព័ន្ធ" icon={<Users size={16} />} tone="violet" />
         <StatCard
           title="មានលេខទូរស័ព្ទ"
           value={stats.withPhone}
@@ -212,7 +213,7 @@ export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
           missingCount={stats.total - stats.withPhone}
           onFilterClick={() => toggleDataFilter("phone")}
           isFilterActive={dataFilter === "phone"}
-          icon={<Phone size={20} />}
+          icon={<Phone size={16} />}
           tone="emerald"
         />
         <StatCard
@@ -222,7 +223,7 @@ export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
           missingCount={stats.total - stats.withEmail}
           onFilterClick={() => toggleDataFilter("email")}
           isFilterActive={dataFilter === "email"}
-          icon={<Mail size={20} />}
+          icon={<Mail size={16} />}
           tone="blue"
         />
         <StatCard
@@ -232,7 +233,7 @@ export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
           missingCount={stats.total - stats.withIdCard}
           onFilterClick={() => toggleDataFilter("idcard")}
           isFilterActive={dataFilter === "idcard"}
-          icon={<ImageIcon size={20} />}
+          icon={<ImageIcon size={16} />}
           tone="amber"
         />
       </section>

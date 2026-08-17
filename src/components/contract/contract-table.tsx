@@ -26,6 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
@@ -70,21 +71,12 @@ const STATUS_LABELS: Record<ContractStatus, string> = {
 const FILTER_OPTIONS: {
   value: ContractFilter;
   label: string;
-  activeClass: string;
-  activeCountClass: string;
+  dotClass?: string;
 }[] = [
-  {
-    value: "all",
-    label: "ទាំងអស់",
-    // Soft tint, not solid — keeps this from competing with the solid
-    // indigo "+ បន្ថែមកិច្ចសន្យា" button for attention as the primary action.
-    activeClass:
-      "bg-indigo-500/15 text-indigo-700 ring-1 ring-inset ring-indigo-500/30 dark:bg-indigo-500/20 dark:text-indigo-300",
-    activeCountClass: "text-indigo-700/70 dark:text-indigo-300/70",
-  },
-  { value: "active", label: "សកម្ម", activeClass: "bg-emerald-600 text-white", activeCountClass: "text-white/75" },
-  { value: "pending", label: "រង់ចាំ", activeClass: "bg-amber-600 text-white", activeCountClass: "text-white/75" },
-  { value: "ended", label: "បញ្ចប់", activeClass: "bg-red-600 text-white", activeCountClass: "text-white/75" },
+  { value: "all", label: "ទាំងអស់" },
+  { value: "active", label: "សកម្ម", dotClass: "bg-emerald-500" },
+  { value: "pending", label: "រង់ចាំ", dotClass: "bg-amber-500" },
+  { value: "ended", label: "បញ្ចប់", dotClass: "bg-red-500" },
 ];
 
 function StatCard({ title, value, subtitle, icon, tone }: {
@@ -95,22 +87,23 @@ function StatCard({ title, value, subtitle, icon, tone }: {
   tone: "indigo" | "emerald" | "amber" | "red";
 }) {
   const styles = {
-    indigo: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300",
-    emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
-    amber: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
-    red: "bg-red-500/10 text-red-600 dark:text-red-300",
+    indigo: { accent: "bg-indigo-500", icon: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300" },
+    emerald: { accent: "bg-emerald-500", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
+    amber: { accent: "bg-amber-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
+    red: { accent: "bg-red-500", icon: "bg-red-500/10 text-red-600 dark:text-red-300" },
   }[tone];
 
   return (
-    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20 sm:p-5">
+    <div className="group relative overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel) p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20">
+      <div className={cn("absolute inset-x-0 top-0 h-1", styles.accent)} />
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[13px] font-medium text-(--panel-text-muted)">{title}</p>
-          <p className="mt-2 text-3xl font-bold leading-none tracking-tight">{value}</p>
+          <p className="text-xs font-medium text-(--panel-text-muted)">{title}</p>
+          <p className="mt-1.5 text-lg font-bold leading-none tracking-tight">{value}</p>
         </div>
-        <div className={cn("rounded-xl p-2.5", styles)}>{icon}</div>
+        <div className={cn("shrink-0 rounded-lg p-1.5", styles.icon)}>{icon}</div>
       </div>
-      <p className="mt-3 text-xs text-(--panel-text-subtle)">{subtitle}</p>
+      <p className="mt-1.5 text-xs text-(--panel-text-subtle)">{subtitle}</p>
     </div>
   );
 }
@@ -172,11 +165,11 @@ export function ContractTableWrapper({ initialContracts, tenants, rooms, default
 
   return (
     <div className="space-y-5">
-      <section aria-label="ស្ថិតិកិច្ចសន្យា" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="កិច្ចសន្យាសរុប" value={stats.total} subtitle="កិច្ចសន្យាទាំងអស់ក្នុងប្រព័ន្ធ" icon={<FileText size={20} />} tone="indigo" />
-        <StatCard title="កំពុងសកម្ម" value={stats.active} subtitle="កិច្ចសន្យាដែលកំពុងដំណើរការ" icon={<CheckCircle2 size={20} />} tone="emerald" />
-        <StatCard title="កំពុងរង់ចាំ" value={stats.pending} subtitle="ត្រូវពិនិត្យ និងធ្វើឱ្យសកម្ម" icon={<Clock3 size={20} />} tone="amber" />
-        <StatCard title="បញ្ចប់ ឬផុតកំណត់" value={stats.ended} subtitle="កិច្ចសន្យាដែលលែងសកម្ម" icon={<XCircle size={20} />} tone="red" />
+      <section aria-label="ស្ថិតិកិច្ចសន្យា" className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatCard title="កិច្ចសន្យាសរុប" value={stats.total} subtitle="កិច្ចសន្យាទាំងអស់ក្នុងប្រព័ន្ធ" icon={<FileText size={16} />} tone="indigo" />
+        <StatCard title="កំពុងសកម្ម" value={stats.active} subtitle="កិច្ចសន្យាដែលកំពុងដំណើរការ" icon={<CheckCircle2 size={16} />} tone="emerald" />
+        <StatCard title="កំពុងរង់ចាំ" value={stats.pending} subtitle="ត្រូវពិនិត្យ និងធ្វើឱ្យសកម្ម" icon={<Clock3 size={16} />} tone="amber" />
+        <StatCard title="បញ្ចប់ ឬផុតកំណត់" value={stats.ended} subtitle="កិច្ចសន្យាដែលលែងសកម្ម" icon={<XCircle size={16} />} tone="red" />
       </section>
 
       <section className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm">
@@ -186,13 +179,12 @@ export function ContractTableWrapper({ initialContracts, tenants, rooms, default
             <Input aria-label="ស្វែងរកកិច្ចសន្យា" placeholder="ស្វែងរកអ្នកជួល លេខទូរស័ព្ទ ឬលេខបន្ទប់..." value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="h-10 border-(--panel-border) bg-(--panel-inset) pl-10 text-(--panel-text) placeholder:text-(--panel-text-subtle)" />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="flex w-full items-center gap-1 overflow-x-auto rounded-xl border border-(--panel-border) bg-(--panel-inset) p-1 sm:w-auto">
-              {FILTER_OPTIONS.map((option) => (
-                <button key={option.value} type="button" onClick={() => setStatusFilter(option.value)} className={cn("inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition", statusFilter === option.value ? option.activeClass : "text-(--panel-text-muted) hover:bg-(--panel-hover) hover:text-(--panel-text)")}>
-                  {option.label}<span className={cn("text-[10px]", statusFilter === option.value ? option.activeCountClass : "text-(--panel-text-subtle)")}>{counts[option.value]}</span>
-                </button>
-              ))}
-            </div>
+            <FilterDropdown
+              ariaLabel="ត្រងតាមស្ថានភាពកិច្ចសន្យា"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={FILTER_OPTIONS.map((option) => ({ ...option, count: counts[option.value] }))}
+            />
             <Button onClick={handleAddNew} className="h-10 gap-2 rounded-xl bg-indigo-600 px-4 font-semibold text-white shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400/40 hover:bg-indigo-500"><Plus size={16} /> បន្ថែមកិច្ចសន្យា</Button>
           </div>
         </div>

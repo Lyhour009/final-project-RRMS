@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Clock3,
   Loader2,
+  MoreVertical,
   Play,
   RotateCcw,
   Search,
@@ -17,6 +18,13 @@ import {
 
 import { updateMaintenanceStatus } from "@/actions/maintenances";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { Input } from "@/components/ui/input";
 import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
 import { cn, formatKhmerDate } from "@/lib/utils";
@@ -37,11 +45,11 @@ export interface MaintenanceRequestItem {
 
 type MaintenanceFilter = "all" | MaintenanceRequestItem["status"];
 
-const FILTER_OPTIONS: { value: MaintenanceFilter; label: string; activeClass: string }[] = [
-  { value: "all", label: "ទាំងអស់", activeClass: "bg-indigo-600 text-white" },
-  { value: "pending", label: "រង់ចាំ", activeClass: "bg-amber-600 text-white" },
-  { value: "in_progress", label: "កំពុងធ្វើ", activeClass: "bg-blue-600 text-white" },
-  { value: "resolved", label: "រួចរាល់", activeClass: "bg-emerald-600 text-white" },
+const FILTER_OPTIONS: { value: MaintenanceFilter; label: string; dotClass?: string }[] = [
+  { value: "all", label: "ទាំងអស់" },
+  { value: "pending", label: "រង់ចាំ", dotClass: "bg-amber-500" },
+  { value: "in_progress", label: "កំពុងធ្វើ", dotClass: "bg-blue-500" },
+  { value: "resolved", label: "រួចរាល់", dotClass: "bg-emerald-500" },
 ];
 
 function StatCard({ title, value, subtitle, icon, tone }: {
@@ -52,12 +60,12 @@ function StatCard({ title, value, subtitle, icon, tone }: {
   tone: "amber" | "blue" | "emerald" | "red";
 }) {
   const styles = {
-    amber: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
-    blue: "bg-blue-500/10 text-blue-600 dark:text-blue-300",
-    emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
-    red: "bg-red-500/10 text-red-600 dark:text-red-300",
+    amber: { accent: "bg-amber-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
+    blue: { accent: "bg-blue-500", icon: "bg-blue-500/10 text-blue-600 dark:text-blue-300" },
+    emerald: { accent: "bg-emerald-500", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
+    red: { accent: "bg-red-500", icon: "bg-red-500/10 text-red-600 dark:text-red-300" },
   }[tone];
-  return <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20 sm:p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-[13px] font-medium text-(--panel-text-muted)">{title}</p><p className="mt-2 text-3xl font-bold leading-none tracking-tight">{value}</p></div><div className={cn("rounded-xl p-2.5", styles)}>{icon}</div></div><p className="mt-3 text-xs text-(--panel-text-subtle)">{subtitle}</p></div>;
+  return <div className="group relative overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel) p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20"><div className={cn("absolute inset-x-0 top-0 h-1", styles.accent)} /><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-medium text-(--panel-text-muted)">{title}</p><p className="mt-1.5 text-lg font-bold leading-none tracking-tight">{value}</p></div><div className={cn("shrink-0 rounded-lg p-1.5", styles.icon)}>{icon}</div></div><p className="mt-1.5 text-xs text-(--panel-text-subtle)">{subtitle}</p></div>;
 }
 
 export function MaintenanceTable({ initialRequests }: { initialRequests: MaintenanceRequestItem[] }) {
@@ -102,16 +110,31 @@ export function MaintenanceTable({ initialRequests }: { initialRequests: Mainten
 
   return (
     <div className="space-y-5">
-      <section aria-label="ស្ថិតិសំណើជួសជុល" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="កំពុងរង់ចាំ" value={stats.pending} subtitle="សំណើដែលត្រូវពិនិត្យ" icon={<Clock3 size={20} />} tone="amber" />
-        <StatCard title="កំពុងធ្វើ" value={stats.inProgress} subtitle="ការងារដែលកំពុងដំណើរការ" icon={<Wrench size={20} />} tone="blue" />
-        <StatCard title="រួចរាល់" value={stats.resolved} subtitle="សំណើដែលបានដោះស្រាយ" icon={<CheckCircle2 size={20} />} tone="emerald" />
-        <StatCard title="អាទិភាពខ្ពស់" value={stats.highPriority} subtitle="សំណើសកម្មដែលត្រូវប្រញាប់" icon={<AlertTriangle size={20} />} tone="red" />
+      <section aria-label="ស្ថិតិសំណើជួសជុល" className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatCard title="កំពុងរង់ចាំ" value={stats.pending} subtitle="សំណើដែលត្រូវពិនិត្យ" icon={<Clock3 size={16} />} tone="amber" />
+        <StatCard title="កំពុងធ្វើ" value={stats.inProgress} subtitle="ការងារដែលកំពុងដំណើរការ" icon={<Wrench size={16} />} tone="blue" />
+        <StatCard title="រួចរាល់" value={stats.resolved} subtitle="សំណើដែលបានដោះស្រាយ" icon={<CheckCircle2 size={16} />} tone="emerald" />
+        <StatCard title="អាទិភាពខ្ពស់" value={stats.highPriority} subtitle="សំណើសកម្មដែលត្រូវប្រញាប់" icon={<AlertTriangle size={16} />} tone="red" />
       </section>
 
-      <section className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm"><div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between"><div className="relative w-full xl:max-w-md"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--panel-text-subtle)" /><Input aria-label="ស្វែងរកសំណើជួសជុល" placeholder="ស្វែងរកអ្នកជួល បន្ទប់ ឬបញ្ហា..." value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="h-10 border-(--panel-border) bg-(--panel-inset) pl-10 text-(--panel-text) placeholder:text-(--panel-text-subtle)" /></div><div className="flex w-full items-center gap-1 overflow-x-auto rounded-xl border border-(--panel-border) bg-(--panel-inset) p-1 xl:w-auto">{FILTER_OPTIONS.map((option) => <button key={option.value} type="button" onClick={() => setStatusFilter(option.value)} className={cn("inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition", statusFilter === option.value ? option.activeClass : "text-(--panel-text-muted) hover:bg-(--panel-hover) hover:text-(--panel-text)")}>{option.label}<span className={cn("text-[10px]", statusFilter === option.value ? "text-white/75" : "text-(--panel-text-subtle)")}>{counts[option.value]}</span></button>)}</div></div></section>
+      <section className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm"><div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between"><div className="relative w-full xl:max-w-md"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--panel-text-subtle)" /><Input aria-label="ស្វែងរកសំណើជួសជុល" placeholder="ស្វែងរកអ្នកជួល បន្ទប់ ឬបញ្ហា..." value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="h-10 border-(--panel-border) bg-(--panel-inset) pl-10 text-(--panel-text) placeholder:text-(--panel-text-subtle)" /></div><FilterDropdown ariaLabel="ត្រងតាមស្ថានភាពសំណើជួសជុល" value={statusFilter} onChange={setStatusFilter} options={FILTER_OPTIONS.map((option) => ({ ...option, count: counts[option.value] }))} /></div></section>
 
-      <section className="overflow-hidden rounded-2xl border border-(--panel-border) bg-(--panel) shadow-sm"><div className="flex items-center justify-between border-b border-(--panel-border-subtle) px-4 py-3 sm:px-5"><div><h2 className="text-sm font-semibold text-(--panel-text)">បញ្ជីសំណើជួសជុល</h2><p className="mt-0.5 text-xs text-(--panel-text-subtle)">បង្ហាញ {filteredRequests.length} ក្នុងចំណោម {requests.length} សំណើ</p></div>{hasActiveFilters && <button type="button" onClick={clearFilters} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium text-(--panel-text-muted) transition hover:bg-(--panel-hover) hover:text-(--panel-text)"><RotateCcw className="h-3.5 w-3.5" /> សម្អាតតម្រង</button>}</div><div ref={scrollContainerRef} className="max-h-[560px] overflow-auto">{filteredRequests.length === 0 ? <div className="flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center"><div className="mb-4 rounded-2xl bg-orange-500/10 p-4 text-orange-500 dark:text-orange-300">{hasActiveFilters ? <Search className="h-7 w-7" /> : <Wrench className="h-7 w-7" />}</div><h3 className="text-base font-semibold text-(--panel-text)">{hasActiveFilters ? "រកមិនឃើញសំណើជួសជុល" : "មិនទាន់មានសំណើជួសជុល"}</h3><p className="mt-1 max-w-sm text-sm leading-6 text-(--panel-text-subtle)">{hasActiveFilters ? "សាកល្បងពាក្យស្វែងរក ឬស្ថានភាពផ្សេងទៀត។" : "សំណើដែលអ្នកជួលបញ្ជូននឹងបង្ហាញនៅទីនេះសម្រាប់ការតាមដាន។"}</p>{hasActiveFilters && <Button onClick={clearFilters} variant="outline" className="mt-5 gap-2 rounded-xl"><RotateCcw size={16} /> សម្អាតតម្រង</Button>}</div> : <table className="w-full min-w-[1100px] border-collapse text-left"><thead className="sticky top-0 z-10 border-b border-(--panel-border) bg-(--panel-inset)"><tr className="text-xs font-medium text-(--panel-text-muted)"><th className="px-5 py-3">អ្នកជួល</th><th className="px-5 py-3">បន្ទប់</th><th className="px-5 py-3">បញ្ហា</th><th className="px-5 py-3">អាទិភាព</th><th className="px-5 py-3">ស្ថានភាព</th><th className="px-5 py-3">កាលបរិច្ឆេទ</th><th className="px-5 py-3 text-right">សកម្មភាព</th></tr></thead><tbody className="divide-y divide-(--panel-border-subtle) text-sm">{visibleItems.map((item) => <tr key={item.id} className="transition-colors hover:bg-(--panel-hover)/55"><td className="px-5 py-3.5"><p className="font-semibold text-(--panel-text)">{item.profiles?.full_name || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{item.profiles?.phone_number || "មិនមានលេខទូរស័ព្ទ"}</p></td><td className="px-5 py-3.5 font-medium text-(--panel-text-muted)">#{item.rooms?.room_number || "-"}</td><td className="max-w-md px-5 py-3.5"><p className="font-medium text-(--panel-text)">{item.issue_title}</p><p className="mt-1 line-clamp-2 text-xs leading-5 text-(--panel-text-subtle)">{item.issue_description}</p></td><td className="px-5 py-3.5"><PriorityBadge priority={item.priority} /></td><td className="px-5 py-3.5"><StatusBadge status={item.status} /></td><td className="px-5 py-3.5 text-(--panel-text-muted)">{formatKhmerDate(item.created_at, { withDay: true })}</td><td className="px-5 py-3.5 text-right"><div className="flex justify-end gap-1">{item.status === "pending" && <Button size="sm" onClick={() => changeStatus(item, "in_progress")} disabled={loadingId === item.id} className="h-9 gap-1.5 rounded-lg bg-blue-600 px-3 text-white hover:bg-blue-500">{loadingId === item.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />} ចាប់ផ្តើម</Button>}{item.status !== "resolved" && <Button size="sm" onClick={() => changeStatus(item, "resolved")} disabled={loadingId === item.id} className="h-9 gap-1.5 rounded-lg bg-emerald-600 px-3 text-white hover:bg-emerald-500"><Check className="h-3.5 w-3.5" /> រួចរាល់</Button>}{item.status !== "resolved" && <Button size="icon" variant="ghost" aria-label="លុបសំណើជួសជុល" onClick={() => setRequestToDelete(item)} disabled={loadingId === item.id} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:bg-red-500/10 hover:text-red-500"><Trash2 size={15} /></Button>}</div></td></tr>)}{hasMore && <tr><td colSpan={7} className="p-4 text-center"><div ref={sentinelRef} className="flex items-center justify-center gap-2 text-xs text-(--panel-text-subtle)"><Loader2 size={14} className="animate-spin" /> កំពុងផ្ទុកបន្ថែម...</div></td></tr>}</tbody></table>}</div></section>
+      <section className="overflow-hidden rounded-2xl border border-(--panel-border) bg-(--panel) shadow-sm"><div className="flex items-center justify-between border-b border-(--panel-border-subtle) px-4 py-3 sm:px-5"><div><h2 className="text-sm font-semibold text-(--panel-text)">បញ្ជីសំណើជួសជុល</h2><p className="mt-0.5 text-xs text-(--panel-text-subtle)">បង្ហាញ {filteredRequests.length} ក្នុងចំណោម {requests.length} សំណើ</p></div>{hasActiveFilters && <button type="button" onClick={clearFilters} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium text-(--panel-text-muted) transition hover:bg-(--panel-hover) hover:text-(--panel-text)"><RotateCcw className="h-3.5 w-3.5" /> សម្អាតតម្រង</button>}</div><div ref={scrollContainerRef} className="max-h-[560px] overflow-auto">{filteredRequests.length === 0 ? <div className="flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center"><div className="mb-4 rounded-2xl bg-orange-500/10 p-4 text-orange-500 dark:text-orange-300">{hasActiveFilters ? <Search className="h-7 w-7" /> : <Wrench className="h-7 w-7" />}</div><h3 className="text-base font-semibold text-(--panel-text)">{hasActiveFilters ? "រកមិនឃើញសំណើជួសជុល" : "មិនទាន់មានសំណើជួសជុល"}</h3><p className="mt-1 max-w-sm text-sm leading-6 text-(--panel-text-subtle)">{hasActiveFilters ? "សាកល្បងពាក្យស្វែងរក ឬស្ថានភាពផ្សេងទៀត។" : "សំណើដែលអ្នកជួលបញ្ជូននឹងបង្ហាញនៅទីនេះសម្រាប់ការតាមដាន។"}</p>{hasActiveFilters && <Button onClick={clearFilters} variant="outline" className="mt-5 gap-2 rounded-xl"><RotateCcw size={16} /> សម្អាតតម្រង</Button>}</div> : <table className="w-full min-w-[1100px] border-collapse text-left"><thead className="sticky top-0 z-10 border-b border-(--panel-border) bg-(--panel-inset)"><tr className="text-xs font-medium text-(--panel-text-muted)"><th className="px-5 py-3">អ្នកជួល</th><th className="px-5 py-3">បន្ទប់</th><th className="px-5 py-3">បញ្ហា</th><th className="px-5 py-3">អាទិភាព</th><th className="px-5 py-3">ស្ថានភាព</th><th className="px-5 py-3">កាលបរិច្ឆេទ</th><th className="px-5 py-3 text-right">សកម្មភាព</th></tr></thead><tbody className="divide-y divide-(--panel-border-subtle) text-sm">{visibleItems.map((item) => <tr key={item.id} className="transition-colors hover:bg-(--panel-hover)/55"><td className="px-5 py-2.5"><p className="font-semibold text-(--panel-text)">{item.profiles?.full_name || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{item.profiles?.phone_number || "មិនមានលេខទូរស័ព្ទ"}</p></td><td className="px-5 py-2.5 font-medium text-(--panel-text-muted)">#{item.rooms?.room_number || "-"}</td><td className="max-w-md px-5 py-2.5"><p className="font-medium text-(--panel-text)">{item.issue_title}</p><p className="mt-1 line-clamp-2 text-xs leading-5 text-(--panel-text-subtle)">{item.issue_description}</p></td><td className="px-5 py-2.5"><PriorityBadge priority={item.priority} /></td><td className="px-5 py-2.5"><StatusBadge status={item.status} /></td><td className="px-5 py-2.5 text-(--panel-text-muted)">{formatKhmerDate(item.created_at, { withDay: true })}</td><td className="px-5 py-2.5 text-right"><div className="flex justify-end items-center gap-1">{item.status === "pending" && <Button size="sm" onClick={() => changeStatus(item, "in_progress")} disabled={loadingId === item.id} className="h-9 gap-1.5 rounded-lg bg-blue-600 px-3 text-white hover:bg-blue-500">{loadingId === item.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />} ចាប់ផ្តើម</Button>}{item.status !== "resolved" && <Button size="sm" onClick={() => changeStatus(item, "resolved")} disabled={loadingId === item.id} className="h-9 gap-1.5 rounded-lg bg-emerald-600 px-3 text-white hover:bg-emerald-500"><Check className="h-3.5 w-3.5" /> រួចរាល់</Button>}{item.status !== "resolved" && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button size="icon" variant="ghost" aria-label={`សកម្មភាពសម្រាប់សំណើជួសជុលរបស់ ${item.profiles?.full_name || "-"}`} disabled={loadingId === item.id} className="h-9 w-9 rounded-lg text-(--panel-text-muted) hover:bg-(--panel-hover) hover:text-(--panel-text)">
+                <MoreVertical size={16} />
+              </Button>
+            }
+          />
+          <DropdownMenuContent>
+            <DropdownMenuItem variant="destructive" onClick={() => setRequestToDelete(item)}>
+              <Trash2 size={14} /> លុប
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}</div></td></tr>)}{hasMore && <tr><td colSpan={7} className="p-4 text-center"><div ref={sentinelRef} className="flex items-center justify-center gap-2 text-xs text-(--panel-text-subtle)"><Loader2 size={14} className="animate-spin" /> កំពុងផ្ទុកបន្ថែម...</div></td></tr>}</tbody></table>}</div></section>
 
       <MaintenanceDeleteModal request={requestToDelete} isOpen={Boolean(requestToDelete)} onClose={() => setRequestToDelete(null)} onDeleteSuccess={(requestId) => setRequests((current) => current.filter((item) => item.id !== requestId))} />
     </div>

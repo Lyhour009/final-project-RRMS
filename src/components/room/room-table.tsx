@@ -24,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { Input } from "@/components/ui/input";
 import { useInfiniteReveal } from "@/hooks/use-infinite-reveal";
 import { cn } from "@/lib/utils";
@@ -41,23 +42,12 @@ type RoomStatus = "all" | Room["status"];
 const STATUS_OPTIONS: {
   value: RoomStatus;
   label: string;
-  activeClass: string;
-  activeCountClass: string;
+  dotClass?: string;
 }[] = [
-  {
-    value: "all",
-    label: "ទាំងអស់",
-    // Soft tint, not a solid fill — the primary "+ បន្ថែមបន្ទប់" button is
-    // solid indigo, so an equally solid indigo "all" filter competed with it
-    // for attention. A tint keeps this readable as "selected filter" while
-    // staying visually secondary to the one true call-to-action.
-    activeClass:
-      "bg-indigo-500/15 text-indigo-700 ring-1 ring-inset ring-indigo-500/30 dark:bg-indigo-500/20 dark:text-indigo-300",
-    activeCountClass: "text-indigo-700/70 dark:text-indigo-300/70",
-  },
-  { value: "available", label: "ទំនេរ", activeClass: "bg-emerald-600 text-white", activeCountClass: "text-white/75" },
-  { value: "occupied", label: "មិនទំនេរ", activeClass: "bg-blue-600 text-white", activeCountClass: "text-white/75" },
-  { value: "maintenance", label: "ជួសជុល", activeClass: "bg-amber-600 text-white", activeCountClass: "text-white/75" },
+  { value: "all", label: "ទាំងអស់" },
+  { value: "available", label: "ទំនេរ", dotClass: "bg-emerald-500" },
+  { value: "occupied", label: "មិនទំនេរ", dotClass: "bg-blue-500" },
+  { value: "maintenance", label: "ជួសជុល", dotClass: "bg-amber-500" },
 ];
 
 function StatCard({
@@ -74,22 +64,23 @@ function StatCard({
   tone: "indigo" | "emerald" | "blue" | "amber";
 }) {
   const styles = {
-    indigo: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300",
-    emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
-    blue: "bg-blue-500/10 text-blue-600 dark:text-blue-300",
-    amber: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
+    indigo: { accent: "bg-indigo-500", icon: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300" },
+    emerald: { accent: "bg-emerald-500", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
+    blue: { accent: "bg-blue-500", icon: "bg-blue-500/10 text-blue-600 dark:text-blue-300" },
+    amber: { accent: "bg-amber-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-300" },
   }[tone];
 
   return (
-    <div className="group rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20 sm:p-5">
+    <div className="group relative overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel) p-3.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-950/5 dark:hover:shadow-black/20">
+      <div className={cn("absolute inset-x-0 top-0 h-1", styles.accent)} />
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[13px] font-medium text-(--panel-text-muted)">{title}</p>
-          <p className="mt-2 text-3xl font-bold leading-none tracking-tight">{value}</p>
+          <p className="text-xs font-medium text-(--panel-text-muted)">{title}</p>
+          <p className="mt-1.5 text-lg font-bold leading-none tracking-tight">{value}</p>
         </div>
-        <div className={cn("rounded-xl p-2.5", styles)}>{icon}</div>
+        <div className={cn("shrink-0 rounded-lg p-1.5", styles.icon)}>{icon}</div>
       </div>
-      <p className="mt-3 text-xs text-(--panel-text-subtle)">{subtitle}</p>
+      <p className="mt-1.5 text-xs text-(--panel-text-subtle)">{subtitle}</p>
     </div>
   );
 }
@@ -164,11 +155,11 @@ export default function RoomTable({ initialRooms }: RoomTableProps) {
 
   return (
     <div className="space-y-5">
-      <section aria-label="ស្ថិតិបន្ទប់" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="បន្ទប់សរុប" value={stats.total} subtitle="បន្ទប់ទាំងអស់ក្នុងប្រព័ន្ធ" icon={<Home size={20} />} tone="indigo" />
-        <StatCard title="បន្ទប់ទំនេរ" value={stats.available} subtitle="អាចទទួលអ្នកជួលថ្មី" icon={<CheckCircle2 size={20} />} tone="emerald" />
-        <StatCard title="កំពុងជួល" value={stats.occupied} subtitle="បន្ទប់ដែលមានអ្នកជួល" icon={<UserCheck size={20} />} tone="blue" />
-        <StatCard title="កំពុងជួសជុល" value={stats.maintenance} subtitle="មិនទាន់អាចដាក់ជួល" icon={<AlertTriangle size={20} />} tone="amber" />
+      <section aria-label="ស្ថិតិបន្ទប់" className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatCard title="បន្ទប់សរុប" value={stats.total} subtitle="បន្ទប់ទាំងអស់ក្នុងប្រព័ន្ធ" icon={<Home size={16} />} tone="indigo" />
+        <StatCard title="បន្ទប់ទំនេរ" value={stats.available} subtitle="អាចទទួលអ្នកជួលថ្មី" icon={<CheckCircle2 size={16} />} tone="emerald" />
+        <StatCard title="កំពុងជួល" value={stats.occupied} subtitle="បន្ទប់ដែលមានអ្នកជួល" icon={<UserCheck size={16} />} tone="blue" />
+        <StatCard title="កំពុងជួសជុល" value={stats.maintenance} subtitle="មិនទាន់អាចដាក់ជួល" icon={<AlertTriangle size={16} />} tone="amber" />
       </section>
 
       <section className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm">
@@ -185,30 +176,15 @@ export default function RoomTable({ initialRooms }: RoomTableProps) {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="flex w-full items-center gap-1 overflow-x-auto rounded-xl border border-(--panel-border) bg-(--panel-inset) p-1 sm:w-auto">
-              {STATUS_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setStatusFilter(option.value)}
-                  className={cn(
-                    "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition",
-                    statusFilter === option.value
-                      ? option.activeClass
-                      : "text-(--panel-text-muted) hover:bg-(--panel-hover) hover:text-(--panel-text)",
-                  )}
-                >
-                  {option.label}
-                  <span className={cn("text-[10px]", statusFilter === option.value ? option.activeCountClass : "text-(--panel-text-subtle)")}>
-                    {counts[option.value]}
-                  </span>
-                </button>
-              ))}
-            </div>
+            <FilterDropdown
+              ariaLabel="ត្រងតាមស្ថានភាពបន្ទប់"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={STATUS_OPTIONS.map((option) => ({ ...option, count: counts[option.value] }))}
+            />
 
             {/* The one true call-to-action on this page: solid fill, ring, and a
-                heavier shadow so it reads as clearly primary next to the now-muted
-                "all" filter tint above. */}
+                heavier shadow so it reads as clearly primary. */}
             <Button onClick={handleAddNew} className="h-10 gap-2 rounded-xl bg-indigo-600 px-4 font-semibold text-white shadow-lg shadow-indigo-600/30 ring-1 ring-indigo-400/40 hover:bg-indigo-500">
               <Plus size={16} /> បន្ថែមបន្ទប់
             </Button>

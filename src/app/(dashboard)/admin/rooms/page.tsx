@@ -6,7 +6,7 @@ export default async function RoomsPage() {
   const rooms = await getRooms();
 
   return (
-    <div className="mx-auto w-full max-w-[1680px] space-y-6 p-4 text-(--panel-text) sm:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-[1680px] space-y-5 p-4 text-(--panel-text) sm:p-5 lg:p-6">
       <div className="flex items-center gap-3">
         <div className="rounded-2xl bg-indigo-500/10 p-3 text-indigo-600 dark:text-indigo-300">
           <Building2 className="h-6 w-6" />

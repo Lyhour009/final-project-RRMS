@@ -17,7 +17,7 @@ export default async function ContractsPage() {
     Status: contract.status,
   }));
   return (
-    <div className="mx-auto w-full max-w-[1680px] space-y-6 p-4 text-(--panel-text) sm:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-[1680px] space-y-5 p-4 text-(--panel-text) sm:p-5 lg:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="rounded-2xl bg-blue-500/10 p-3 text-blue-600 dark:text-blue-300">
