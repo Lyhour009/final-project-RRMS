@@ -9,10 +9,17 @@ export async function getTenantBillsData() {
 
   const tenantId = user.id;
 
-  const { data: bills, error: billsError } = await supabase
-    .from("bills")
-    .select(
-      `
+  // Three independent reads for this page — fetch concurrently instead of
+  // three sequential round trips.
+  const [
+    { data: bills, error: billsError },
+    { data: payments, error: paymentsError },
+    { data: settings, error: settingsError },
+  ] = await Promise.all([
+    supabase
+      .from("bills")
+      .select(
+        `
       id,
       billing_month,
       room_fee,
@@ -23,26 +30,23 @@ export async function getTenantBillsData() {
       paid_at,
       created_at
     `,
-    )
-    .eq("tenant_id", tenantId)
-    .order("created_at", { ascending: false });
+      )
+      .eq("tenant_id", tenantId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("payments")
+      .select("id, bill_id, amount, payment_method, status, paid_at, created_at")
+      .eq("tenant_id", tenantId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("settings")
+      .select("payment_qr_url, payment_instruction")
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   if (billsError) throw new Error(billsError.message);
-
-  const { data: payments, error: paymentsError } = await supabase
-    .from("payments")
-    .select("id, bill_id, amount, payment_method, status, paid_at, created_at")
-    .eq("tenant_id", tenantId)
-    .order("created_at", { ascending: false });
-
   if (paymentsError) throw new Error(paymentsError.message);
-
-  const { data: settings, error: settingsError } = await supabase
-    .from("settings")
-    .select("payment_qr_url, payment_instruction")
-    .limit(1)
-    .maybeSingle();
-
   if (settingsError) throw new Error(settingsError.message);
 
   return {

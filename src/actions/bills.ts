@@ -88,28 +88,6 @@ export async function upsertBill(id: string | null, formData: FormData) {
   const billing_month =
     billingMonthRaw.length === 7 ? `${billingMonthRaw}-01` : billingMonthRaw;
 
-  const { data: contractData, error: contractError } = await supabase
-    .from("contracts")
-    .select(
-      `
-      id,
-      tenant_id,
-      room_id,
-      rooms:room_id (
-        id,
-        base_price
-      )
-    `,
-    )
-    .eq("id", contract_id)
-    .single();
-
-  const contract = contractData as unknown as ContractWithRoom | null;
-
-  if (contractError || !contract) {
-    throw new Error("រកមិនឃើញកិច្ចសន្យានេះទេ");
-  }
-
   // Prevent duplicate bill for same contract + same month
   let duplicateQuery = supabase
     .from("bills")
@@ -121,8 +99,42 @@ export async function upsertBill(id: string | null, formData: FormData) {
     duplicateQuery = duplicateQuery.neq("id", id);
   }
 
-  const { data: duplicateBill, error: duplicateError } =
-    await duplicateQuery.maybeSingle();
+  // None of these three reads depends on another's result, so run them
+  // concurrently instead of paying for three sequential round trips to
+  // Supabase (each ~200-300ms here, so this alone saves ~400-600ms).
+  const [
+    { data: contractData, error: contractError },
+    { data: duplicateBill, error: duplicateError },
+    { data: settings, error: settingsError },
+  ] = await Promise.all([
+    supabase
+      .from("contracts")
+      .select(
+        `
+        id,
+        tenant_id,
+        room_id,
+        rooms:room_id (
+          id,
+          base_price
+        )
+      `,
+      )
+      .eq("id", contract_id)
+      .single(),
+    duplicateQuery.maybeSingle(),
+    supabase
+      .from("settings")
+      .select("water_rate, electric_rate, late_fee, currency")
+      .limit(1)
+      .single(),
+  ]);
+
+  const contract = contractData as unknown as ContractWithRoom | null;
+
+  if (contractError || !contract) {
+    throw new Error("រកមិនឃើញកិច្ចសន្យានេះទេ");
+  }
 
   if (duplicateError) {
     throw new Error(duplicateError.message);
@@ -131,12 +143,6 @@ export async function upsertBill(id: string | null, formData: FormData) {
   if (duplicateBill) {
     throw new Error("វិក្កយបត្រសម្រាប់កិច្ចសន្យា និងខែនេះបានបង្កើតរួចហើយ");
   }
-
-  const { data: settings, error: settingsError } = await supabase
-    .from("settings")
-    .select("water_rate, electric_rate, late_fee, currency")
-    .limit(1)
-    .single();
 
   if (settingsError || !settings) {
     throw new Error("រកមិនឃើញ Settings សម្រាប់គណនាតម្លៃទឹក/ភ្លើង");

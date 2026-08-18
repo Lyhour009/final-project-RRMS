@@ -85,12 +85,6 @@ export async function getContractFormData() {
     tenantsQuery = tenantsQuery.not("id", "in", `(${usedTenantIds.join(",")})`);
   }
 
-  const { data: tenants, error: tenantsError } = await tenantsQuery;
-
-  if (tenantsError) {
-    throw new Error(tenantsError.message);
-  }
-
   let roomsQuery = supabase
     .from("rooms")
     .select("id, room_number, room_type, base_price, floor, status")
@@ -101,11 +95,22 @@ export async function getContractFormData() {
     roomsQuery = roomsQuery.not("id", "in", `(${usedRoomIds.join(",")})`);
   }
 
-  const [{ data: rooms, error: roomsError }, { data: settings, error: settingsError }] =
-    await Promise.all([
-      roomsQuery,
-      supabase.from("settings").select("monthly_due_day").limit(1).maybeSingle(),
-    ]);
+  // tenantsQuery, roomsQuery, and settings are independent of each other
+  // once the activeContracts filter above is known — fetch all three
+  // concurrently instead of tenants alone, then rooms+settings.
+  const [
+    { data: tenants, error: tenantsError },
+    { data: rooms, error: roomsError },
+    { data: settings, error: settingsError },
+  ] = await Promise.all([
+    tenantsQuery,
+    roomsQuery,
+    supabase.from("settings").select("monthly_due_day").limit(1).maybeSingle(),
+  ]);
+
+  if (tenantsError) {
+    throw new Error(tenantsError.message);
+  }
 
   if (roomsError) {
     throw new Error(roomsError.message);
@@ -147,22 +152,33 @@ export async function upsertContract(id: string | null, formData: FormData) {
     due_day,
   } = parsed.data;
 
-  const { data: tenant, error: tenantError } = await supabase
-    .from("profiles")
-    .select("id, role")
-    .eq("id", tenant_id)
-    .eq("role", "tenant")
-    .single();
+  // Tenant, room, and (on edit) the existing contract are three independent
+  // lookups — none depends on another's result — so fetch them concurrently
+  // instead of paying for up to three sequential round trips to Supabase.
+  const [
+    { data: tenant, error: tenantError },
+    { data: room, error: roomError },
+    oldContractResult,
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, role")
+      .eq("id", tenant_id)
+      .eq("role", "tenant")
+      .single(),
+    supabase.from("rooms").select("id, status").eq("id", room_id).single(),
+    id
+      ? supabase
+          .from("contracts")
+          .select("id, room_id, status")
+          .eq("id", id)
+          .single()
+      : Promise.resolve(null),
+  ]);
 
   if (tenantError || !tenant) {
     throw new Error("រកមិនឃើញអ្នកជួលនេះទេ");
   }
-
-  const { data: room, error: roomError } = await supabase
-    .from("rooms")
-    .select("id, status")
-    .eq("id", room_id)
-    .single();
 
   if (roomError || !room) {
     throw new Error("រកមិនឃើញបន្ទប់នេះទេ");
@@ -172,11 +188,7 @@ export async function upsertContract(id: string | null, formData: FormData) {
   let oldStatus: string | null = null;
 
   if (id) {
-    const { data: oldContract, error: oldContractError } = await supabase
-      .from("contracts")
-      .select("id, room_id, status")
-      .eq("id", id)
-      .single();
+    const { data: oldContract, error: oldContractError } = oldContractResult!;
 
     if (oldContractError || !oldContract) {
       throw new Error("រកមិនឃើញកិច្ចសន្យានេះទេ");

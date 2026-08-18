@@ -176,11 +176,21 @@ export async function submitPayment(formData: FormData) {
   const { bill_id, amount, payment_method, note } = parsed.data;
   const proofFile = formData.get("proof_image") as File | null;
 
-  const { data: bill, error: billError } = await supabase
-    .from("bills")
-    .select("id, tenant_id, total_amount, status")
-    .eq("id", bill_id)
-    .single();
+  // Both reads only need bill_id, neither depends on the other's result.
+  const [{ data: bill, error: billError }, { data: existingPending }] =
+    await Promise.all([
+      supabase
+        .from("bills")
+        .select("id, tenant_id, total_amount, status")
+        .eq("id", bill_id)
+        .single(),
+      supabase
+        .from("payments")
+        .select("id")
+        .eq("bill_id", bill_id)
+        .eq("status", "pending")
+        .maybeSingle(),
+    ]);
 
   if (billError || !bill) {
     throw new Error("រកមិនឃើញវិក្កយបត្រនេះទេ");
@@ -197,13 +207,6 @@ export async function submitPayment(formData: FormData) {
   if (amount > Number(bill.total_amount)) {
     throw new Error("ចំនួនបង់មិនអាចលើសចំនួនសរុបវិក្កយបត្របានទេ");
   }
-
-  const { data: existingPending } = await supabase
-    .from("payments")
-    .select("id")
-    .eq("bill_id", bill_id)
-    .eq("status", "pending")
-    .maybeSingle();
 
   if (existingPending) {
     throw new Error("វិក្កយបត្រនេះមានការទូទាត់កំពុងរង់ចាំរួចហើយ");

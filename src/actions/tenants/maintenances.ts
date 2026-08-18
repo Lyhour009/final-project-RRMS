@@ -40,10 +40,15 @@ export async function getTenantMaintenanceData() {
 
   const tenantId = user.id;
 
-  const { data: contractData, error: contractError } = await supabase
-    .from("contracts")
-    .select(
-      `
+  // Independent reads — fetch concurrently instead of two sequential round trips.
+  const [
+    { data: contractData, error: contractError },
+    { data: requests, error: requestsError },
+  ] = await Promise.all([
+    supabase
+      .from("contracts")
+      .select(
+        `
       id,
       room_id,
       rooms:room_id (
@@ -52,21 +57,14 @@ export async function getTenantMaintenanceData() {
         room_type
       )
     `,
-    )
-    .eq("tenant_id", tenantId)
-    .eq("status", "active")
-    .maybeSingle();
-
-  const contract = contractData as unknown as ActiveContractWithRoom | null;
-
-  if (contractError) {
-    throw new Error(contractError.message);
-  }
-
-  const { data: requests, error: requestsError } = await supabase
-    .from("maintenance_requests")
-    .select(
-      `
+      )
+      .eq("tenant_id", tenantId)
+      .eq("status", "active")
+      .maybeSingle(),
+    supabase
+      .from("maintenance_requests")
+      .select(
+        `
       id,
       tenant_id,
       room_id,
@@ -82,9 +80,16 @@ export async function getTenantMaintenanceData() {
         room_type
       )
     `,
-    )
-    .eq("tenant_id", tenantId)
-    .order("created_at", { ascending: false });
+      )
+      .eq("tenant_id", tenantId)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  const contract = contractData as unknown as ActiveContractWithRoom | null;
+
+  if (contractError) {
+    throw new Error(contractError.message);
+  }
 
   if (requestsError) {
     throw new Error(requestsError.message);
@@ -113,12 +118,22 @@ export async function createTenantMaintenanceRequest(formData: FormData) {
 
   const { issue_title, issue_description, priority } = parsed.data;
 
-  const { data: contract, error: contractError } = await supabase
-    .from("contracts")
-    .select("id, room_id")
-    .eq("tenant_id", tenantId)
-    .eq("status", "active")
-    .maybeSingle();
+  // The active-contract lookup and the admin-recipient list don't depend on
+  // each other, so fetch both up front concurrently — the admin list is only
+  // needed after the insert below, but there's no reason to wait for the
+  // insert to *start* fetching it.
+  const [
+    { data: contract, error: contractError },
+    { data: admins },
+  ] = await Promise.all([
+    supabase
+      .from("contracts")
+      .select("id, room_id")
+      .eq("tenant_id", tenantId)
+      .eq("status", "active")
+      .maybeSingle(),
+    supabase.from("profiles").select("id").eq("role", "admin"),
+  ]);
 
   if (contractError) {
     throw new Error(contractError.message);
@@ -142,11 +157,6 @@ export async function createTenantMaintenanceRequest(formData: FormData) {
   if (requestError) {
     throw new Error(requestError.message);
   }
-
-  const { data: admins } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("role", "admin");
 
   await Promise.all(
     (admins || []).map((admin) =>

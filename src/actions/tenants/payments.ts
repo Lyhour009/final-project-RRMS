@@ -28,19 +28,23 @@ export async function getTenantPaymentsData() {
 
   const tenantId = user.id;
 
-  const { data: unpaidBills, error: billsError } = await supabase
-    .from("bills")
-    .select("id, billing_month, total_amount, status")
-    .eq("tenant_id", tenantId)
-    .in("status", ["unpaid", "overdue"])
-    .order("created_at", { ascending: false });
-
-  if (billsError) throw new Error(billsError.message);
-
-  const { data: payments, error: paymentsError } = await supabase
-    .from("payments")
-    .select(
-      `
+  // Bills, payments, and settings are three independent reads for this page
+  // — fetch them concurrently instead of three sequential round trips.
+  const [
+    { data: unpaidBills, error: billsError },
+    { data: payments, error: paymentsError },
+    { data: settings, error: settingsError },
+  ] = await Promise.all([
+    supabase
+      .from("bills")
+      .select("id, billing_month, total_amount, status")
+      .eq("tenant_id", tenantId)
+      .in("status", ["unpaid", "overdue"])
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("payments")
+      .select(
+        `
       id,
       bill_id,
       amount,
@@ -56,18 +60,18 @@ export async function getTenantPaymentsData() {
         total_amount
       )
     `,
-    )
-    .eq("tenant_id", tenantId)
-    .order("created_at", { ascending: false });
+      )
+      .eq("tenant_id", tenantId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("settings")
+      .select("payment_qr_url, payment_instruction")
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
+  if (billsError) throw new Error(billsError.message);
   if (paymentsError) throw new Error(paymentsError.message);
-
-  const { data: settings, error: settingsError } = await supabase
-    .from("settings")
-    .select("payment_qr_url, payment_instruction")
-    .limit(1)
-    .maybeSingle();
-
   if (settingsError) throw new Error(settingsError.message);
 
   // Sign every proof path in one Storage API call instead of one call per
@@ -127,12 +131,23 @@ export async function submitTenantPayment(formData: FormData) {
     if (!PROOF_EXTENSIONS[proofFile.type]) throw new Error("Payment proof must be JPG, PNG, or WebP");
   }
 
-  const { data: bill, error: billError } = await supabase
-    .from("bills")
-    .select("id, tenant_id, total_amount, status")
-    .eq("id", billId)
-    .eq("tenant_id", tenantId)
-    .single();
+  // Both reads only need billId/tenantId, neither depends on the other.
+  const [{ data: bill, error: billError }, { data: existingPending }] =
+    await Promise.all([
+      supabase
+        .from("bills")
+        .select("id, tenant_id, total_amount, status")
+        .eq("id", billId)
+        .eq("tenant_id", tenantId)
+        .single(),
+      supabase
+        .from("payments")
+        .select("id")
+        .eq("bill_id", billId)
+        .eq("tenant_id", tenantId)
+        .eq("status", "pending")
+        .maybeSingle(),
+    ]);
 
   if (billError || !bill) {
     throw new Error("រកមិនឃើញវិក្កយបត្រនេះទេ");
@@ -141,14 +156,6 @@ export async function submitTenantPayment(formData: FormData) {
   if (bill.status === "paid") {
     throw new Error("វិក្កយបត្រនេះបានបង់រួចហើយ");
   }
-
-  const { data: existingPending } = await supabase
-    .from("payments")
-    .select("id")
-    .eq("bill_id", billId)
-    .eq("tenant_id", tenantId)
-    .eq("status", "pending")
-    .maybeSingle();
 
   if (existingPending) {
     throw new Error(
