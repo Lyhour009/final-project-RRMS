@@ -114,7 +114,16 @@ export async function getTenants() {
   });
 }
 
-export async function upsertTenant(id: string | null, formData: FormData) {
+const GENERIC_ERROR = "មានបញ្ហាក្នុងការរក្សាទុកទិន្នន័យ សូមព្យាយាមម្តងទៀត";
+
+export type UpsertTenantResult =
+  | { success: true; data: Awaited<ReturnType<typeof attachSignedIdCard>> }
+  | { success: false; message: string };
+
+export async function upsertTenant(
+  id: string | null,
+  formData: FormData,
+): Promise<UpsertTenantResult> {
   await requireAdmin();
   const supabase = createAdminClient();
 
@@ -127,14 +136,17 @@ export async function upsertTenant(id: string | null, formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message || "ទិន្នន័យមិនត្រឹមត្រូវ");
+    return {
+      success: false,
+      message: parsed.error.issues[0]?.message || "ទិន្នន័យមិនត្រឹមត្រូវ",
+    };
   }
 
   const { full_name, email, phone_number } = parsed.data;
   const password = (parsed.data.password ?? "").trim();
 
   if (!id && password.length < 6) {
-    throw new Error("លេខកូដសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ ៦ ខ្ទង់");
+    return { success: false, message: "លេខកូដសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ ៦ ខ្ទង់" };
   }
 
   const imageFile = formData.get("id_card_image") as File | null;
@@ -148,7 +160,10 @@ export async function upsertTenant(id: string | null, formData: FormData) {
         .eq("id", id)
         .single();
 
-    if (existingProfileError) throw new Error(existingProfileError.message);
+    if (existingProfileError) {
+      console.error("upsertTenant: failed to load existing profile", existingProfileError);
+      return { success: false, message: GENERIC_ERROR };
+    }
     previousImagePath = existingProfile.id_card_images?.[0] || "";
   }
 
@@ -156,7 +171,9 @@ export async function upsertTenant(id: string | null, formData: FormData) {
 
   if (imageFile && imageFile.size > 0) {
     const extension = IMAGE_EXTENSIONS[imageFile.type];
-    if (!extension) throw new Error("Unsupported image type");
+    if (!extension) {
+      return { success: false, message: "ប្រភេទរូបភាពមិនត្រូវបានគាំទ្រ" };
+    }
 
     const fileName = `${crypto.randomUUID()}.${extension}`;
 
@@ -168,7 +185,8 @@ export async function upsertTenant(id: string | null, formData: FormData) {
       });
 
     if (uploadError) {
-      throw new Error("Upload រូបភាពបរាជ័យ: " + uploadError.message);
+      console.error("upsertTenant: image upload failed", uploadError);
+      return { success: false, message: "Upload រូបភាពបរាជ័យ សូមព្យាយាមម្តងទៀត" };
     }
 
     imagePath = fileName;
@@ -205,7 +223,8 @@ export async function upsertTenant(id: string | null, formData: FormData) {
       if (imagePath && imagePath !== previousImagePath) {
         await supabase.storage.from("tenants").remove([imagePath]);
       }
-      throw new Error(authError.message);
+      console.error("upsertTenant: auth update failed", authError);
+      return { success: false, message: GENERIC_ERROR };
     }
 
     const { data, error } = await supabase
@@ -221,14 +240,17 @@ export async function upsertTenant(id: string | null, formData: FormData) {
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("upsertTenant: profile update failed", error);
+      return { success: false, message: GENERIC_ERROR };
+    }
 
     if (previousImagePath && previousImagePath !== imagePath) {
       await supabase.storage.from("tenants").remove([previousImagePath]);
     }
 
     revalidatePath("/admin/tenants");
-    return attachSignedIdCard(supabase, data as Tenant);
+    return { success: true, data: await attachSignedIdCard(supabase, data as Tenant) };
   }
 
   const { data: authData, error: authError } =
@@ -245,7 +267,8 @@ export async function upsertTenant(id: string | null, formData: FormData) {
 
   if (authError) {
     if (imagePath) await supabase.storage.from("tenants").remove([imagePath]);
-    throw new Error(authError.message);
+    console.error("upsertTenant: auth create failed", authError);
+    return { success: false, message: GENERIC_ERROR };
   }
 
   const userId = authData.user.id;
@@ -268,14 +291,17 @@ export async function upsertTenant(id: string | null, formData: FormData) {
   if (error) {
     await supabase.auth.admin.deleteUser(userId);
     if (imagePath) await supabase.storage.from("tenants").remove([imagePath]);
-    throw new Error(error.message);
+    console.error("upsertTenant: profile insert failed", error);
+    return { success: false, message: GENERIC_ERROR };
   }
 
   revalidatePath("/admin/tenants");
-  return attachSignedIdCard(supabase, data as Tenant);
+  return { success: true, data: await attachSignedIdCard(supabase, data as Tenant) };
 }
 
-export async function deleteTenant(id: string) {
+export type DeleteTenantResult = { success: true } | { success: false; message: string };
+
+export async function deleteTenant(id: string): Promise<DeleteTenantResult> {
   await requireAdmin();
   const supabase = createAdminClient();
 
@@ -288,10 +314,16 @@ export async function deleteTenant(id: string) {
       .eq("tenant_id", id)
       .limit(1);
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error(`deleteTenant: failed checking ${table}`, error);
+      return { success: false, message: GENERIC_ERROR };
+    }
 
     if (data && data.length > 0) {
-      throw new Error("មិនអាចលុបអ្នកជួលនេះបានទេ ព្រោះមានទិន្នន័យពាក់ព័ន្ធ");
+      return {
+        success: false,
+        message: "មិនអាចលុបអ្នកជួលនេះបានទេ ព្រោះមានទិន្នន័យពាក់ព័ន្ធ",
+      };
     }
   }
 
@@ -309,7 +341,11 @@ export async function deleteTenant(id: string) {
 
   const { error } = await supabase.auth.admin.deleteUser(id);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("deleteTenant: auth delete failed", error);
+    return { success: false, message: GENERIC_ERROR };
+  }
 
   revalidatePath("/admin/tenants");
+  return { success: true };
 }

@@ -35,7 +35,6 @@ import {
   TenantFormValues,
 } from "@/lib/validations/tenants";
 import { upsertTenant } from "@/actions/tenants";
-import { getErrorMessage } from "@/lib/utils";
 
 interface TenantModalProps {
   isOpen: boolean;
@@ -119,17 +118,22 @@ export default function TenantModal({
     try {
       const result = await upsertTenant(tenant?.id || null, formData);
 
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
       toast.success(
         isEditMode ? "បានកែប្រែអ្នកជួលជោគជ័យ" : "បានបង្កើតអ្នកជួលថ្មីជោគជ័យ",
       );
 
-      if (onSuccess && result) {
-        onSuccess(result as Tenant);
+      if (onSuccess) {
+        onSuccess(result.data as Tenant);
       }
 
       onClose();
-    } catch (error) {
-      toast.error(getErrorMessage(error, "មានបញ្ហាខុសបច្ចេកទេស"));
+    } catch {
+      toast.error("មានបញ្ហាខុសបច្ចេកទេស");
     } finally {
       setLoading(false);
     }

@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/modal-styles";
 import { toast } from "sonner";
 import { deleteTenant } from "@/actions/tenants";
-import { getErrorMessage } from "@/lib/utils";
 
 interface TenantDeleteModalProps {
   isOpen: boolean;
@@ -44,13 +43,18 @@ export default function TenantDeleteModal({
     setIsDeleting(true);
 
     try {
-      await deleteTenant(tenant.id);
+      const result = await deleteTenant(tenant.id);
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
 
       onDeleteSuccess(tenant.id);
       onClose();
       toast.success("បានលុបអ្នកជួលជោគជ័យ");
-    } catch (error) {
-      toast.error(getErrorMessage(error, "មានបញ្ហាក្នុងការលុបអ្នកជួលនេះ"));
+    } catch {
+      toast.error("មានបញ្ហាក្នុងការលុបអ្នកជួលនេះ");
     } finally {
       setIsDeleting(false);
     }
