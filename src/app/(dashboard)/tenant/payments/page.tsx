@@ -4,9 +4,16 @@ import {
   submitTenantPayment,
 } from "@/actions/tenants/payments";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { LabeledSelect } from "@/components/ui/labeled-select";
+import { Label } from "@/components/ui/label";
 import { StatCard } from "@/components/ui/stat-card";
 import { formatBillingMonth } from "@/lib/utils";
 import { PAYMENT_METHOD_LABELS } from "@/lib/validations/payments";
+
+const PAYMENT_METHOD_OPTIONS = Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => ({ value, label }));
+
+const SELECT_FIELD_CLASSNAME = "h-10 w-full border-(--panel-border) bg-(--panel) text-(--panel-text)";
 
 function StatusBadge({ status }: { status: string }) {
   let tone: "green" | "amber" | "red" | "gray" = "gray";
@@ -53,8 +60,8 @@ export default async function TenantPaymentsPage({
   return (
     <div className="mx-auto w-full max-w-[1680px] space-y-5 p-4 text-(--panel-text) sm:p-5 lg:p-6">
       <div>
-        <h1 className="text-2xl font-bold">ការទូទាត់របស់ខ្ញុំ</h1>
-        <p className="text-sm text-(--panel-text-subtle) mt-1">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">ការទូទាត់របស់ខ្ញុំ</h1>
+        <p className="mt-1 text-sm leading-6 text-(--panel-text-muted)">
           បញ្ជាក់ការទូទាត់ និងមើលប្រវត្តិការទូទាត់របស់អ្នក
         </p>
       </div>
@@ -75,67 +82,62 @@ export default async function TenantPaymentsPage({
             </p>
           ) : (
             <form action={submitTenantPayment} className="space-y-4">
-              <div>
-                <label className="text-sm text-(--panel-text-muted)">
+              <div className="space-y-1.5">
+                <Label className="text-(--panel-text-muted)">
                   ជ្រើសរើសវិក្កយបត្រ
-                </label>
-                <select
+                </Label>
+                <LabeledSelect
                   name="bill_id"
                   defaultValue={selectedBill?.id}
-                  className="mt-1 h-10 w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 text-sm text-(--panel-text)"
-                >
-                  {unpaidBills.map((bill) => (
-                    <option key={bill.id} value={bill.id}>
-                      ខែ {formatBillingMonth(bill.billing_month)} - $
-                      {Number(bill.total_amount || 0).toFixed(2)}
-                    </option>
-                  ))}
-                </select>
+                  triggerClassName={SELECT_FIELD_CLASSNAME}
+                  contentClassName="border-(--panel-border) bg-(--panel) text-(--panel-text)"
+                  itemClassName="text-sm"
+                  options={unpaidBills.map((bill) => ({
+                    value: bill.id,
+                    label: `ខែ ${formatBillingMonth(bill.billing_month)} - $${Number(bill.total_amount || 0).toFixed(2)}`,
+                  }))}
+                />
               </div>
 
               <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4">
                 <p className="text-sm text-(--panel-text-subtle)">ចំនួនត្រូវបង់</p>
-                <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1.5">
                   ${Number(selectedBill?.total_amount || 0).toFixed(2)}
                 </p>
               </div>
 
-              <div>
-                <label className="text-sm text-(--panel-text-muted)">វិធីបង់ប្រាក់</label>
-                <select
+              <div className="space-y-1.5">
+                <Label className="text-(--panel-text-muted)">វិធីបង់ប្រាក់</Label>
+                <LabeledSelect
                   name="payment_method"
                   defaultValue="aba"
-                  className=" h-10 w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 text-sm text-(--panel-text)"
-                >
-                  <option value="aba">ABA</option>
-                  <option value="acleda">ACLEDA</option>
-                  <option value="wing">Wing</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="cash">Cash</option>
-                  <option value="other">ផ្សេងៗ</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-sm text-(--panel-text-muted)">ចំណាំ</label>
-                <input
-                  name="note"
-                  placeholder="ឧ. បានបង់តាម ABA"
-                  className="mt-1 h-10 w-full rounded-lg border border-(--panel-border) bg-(--panel-inset) px-3 text-sm text-(--panel-text) placeholder-(--panel-text-subtle)"
+                  triggerClassName={SELECT_FIELD_CLASSNAME}
+                  contentClassName="border-(--panel-border) bg-(--panel) text-(--panel-text)"
+                  itemClassName="text-sm"
+                  options={PAYMENT_METHOD_OPTIONS}
                 />
               </div>
 
-              <div>
-                <label className="text-sm text-(--panel-text-muted)">
+              <div className="space-y-1.5">
+                <Label className="text-(--panel-text-muted)">ចំណាំ</Label>
+                <Input
+                  name="note"
+                  placeholder="ឧ. បានបង់តាម ABA"
+                  className="h-10 border-(--panel-border) bg-(--panel) text-(--panel-text)"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-(--panel-text-muted)">
                   Payment proof (required for electronic payments)
-                </label>
-                <input
+                </Label>
+                <Input
                   type="file"
                   name="proof_image"
                   accept="image/jpeg,image/png,image/webp"
-                  className="mt-1 block w-full cursor-pointer rounded-xl border border-dashed border-indigo-500/40 bg-indigo-500/5 px-3 py-3 text-sm text-(--panel-text) file:mr-3 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
+                  className="cursor-pointer border-(--panel-border) bg-(--panel) text-(--panel-text) file:mr-3 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
                 />
-                <p className="mt-1 text-xs text-(--panel-text-subtle)">
+                <p className="text-xs text-(--panel-text-subtle)">
                   JPG, PNG or WebP, maximum 5MB. Cash payments do not require an image.
                 </p>
               </div>
@@ -147,7 +149,7 @@ export default async function TenantPaymentsPage({
               ) : (
                 <button
                   type="submit"
-                  className="w-full rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-700 sm:w-auto"
+                  className="flex h-10 w-full items-center justify-center rounded-xl bg-indigo-600 px-5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/15 transition hover:bg-indigo-500 sm:w-auto"
                 >
                   ខ្ញុំបានបង់ប្រាក់រួចហើយ
                 </button>
@@ -159,17 +161,17 @@ export default async function TenantPaymentsPage({
         <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold">QR Code</h2>
-            <CreditCard className="text-emerald-500 dark:text-emerald-400" size={18} />
+            <CreditCard className="text-emerald-500 dark:text-emerald-400" size={20} />
           </div>
 
           {settings?.payment_qr_url ? (
             <img
               src={settings.payment_qr_url}
               alt="Payment QR"
-              className="w-full rounded-xl border border-(--panel-border) bg-white p-3"
+              className="mx-auto aspect-square w-full max-w-[280px] rounded-xl border border-(--panel-border) bg-white p-4 shadow-sm"
             />
           ) : (
-            <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-(--panel-border) bg-(--panel-inset) text-center text-sm text-(--panel-text-subtle)">
+            <div className="flex aspect-square min-h-52 w-full items-center justify-center rounded-xl border border-dashed border-(--panel-border) bg-(--panel-inset) px-4 text-center text-sm text-(--panel-text-subtle)">
               មិនទាន់មាន QR Code
             </div>
           )}
@@ -191,7 +193,7 @@ export default async function TenantPaymentsPage({
             payments.map((payment) => (
               <div
                 key={payment.id}
-                className="flex items-center justify-between rounded-lg border border-(--panel-border) bg-(--panel-inset) p-3 transition hover:border-indigo-400/30 hover:bg-(--panel)"
+                className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3.5 transition hover:border-indigo-400/30 hover:bg-(--panel)"
               >
                 <div>
                   <p className="text-sm font-medium">

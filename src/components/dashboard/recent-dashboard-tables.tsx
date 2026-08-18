@@ -83,7 +83,7 @@ function RecentCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm">
+    <div className="rounded-2xl border border-(--panel-border) bg-(--panel) p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-(--panel-text)">{title}</h2>
         <Link

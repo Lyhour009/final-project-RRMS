@@ -60,7 +60,7 @@ export function StatCard({
           <div
             className={cn(
               "font-bold leading-none tracking-tight",
-              isHero ? "mt-2 text-[30px]" : "mt-1.5 text-lg",
+              isHero ? "mt-2 text-3xl" : "mt-1.5 text-lg",
               tintValue && styles.value,
             )}
           >

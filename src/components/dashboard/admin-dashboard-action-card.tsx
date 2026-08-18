@@ -88,11 +88,11 @@ function ActionCard({
           <p className="text-xs font-medium text-(--panel-text-muted)">
             {title}
           </p>
-          <p className={`mt-1.5 text-xl font-bold leading-none ${styles.value}`}>
+          <p className={`mt-1.5 text-lg font-bold leading-none tracking-tight ${styles.value}`}>
             {value}
           </p>
         </div>
-        <div className={`shrink-0 rounded-lg p-2 ${styles.icon}`}>{icon}</div>
+        <div className={`shrink-0 rounded-lg p-1.5 ${styles.icon}`}>{icon}</div>
       </div>
 
       <div className="mt-2.5 flex items-end justify-between gap-3">
@@ -125,7 +125,7 @@ export function DashboardActionCards({
         value={cards.pendingPayments}
         description="ពិនិត្យ និងអនុម័តការទូទាត់"
         href="/admin/payments"
-        icon={<CreditCard size={18} />}
+        icon={<CreditCard size={16} />}
         tone="amber"
       />
       <ActionCard
@@ -133,7 +133,7 @@ export function DashboardActionCards({
         value={cards.unpaidBills}
         description={`ទឹកប្រាក់សរុប $${cards.unpaidAmount.toFixed(2)}`}
         href="/admin/billing"
-        icon={<AlertTriangle size={18} />}
+        icon={<AlertTriangle size={16} />}
         tone="red"
       />
       <ActionCard
@@ -141,7 +141,7 @@ export function DashboardActionCards({
         value={cards.contractsEndingSoon}
         description="នឹងផុតកំណត់ក្នុងរយៈពេល 30 ថ្ងៃ"
         href="/admin/contracts"
-        icon={<FileText size={18} />}
+        icon={<FileText size={16} />}
         tone="blue"
       />
       <ActionCard
@@ -149,7 +149,7 @@ export function DashboardActionCards({
         value={cards.maintenancePending}
         description="សំណើដែលកំពុងរង់ចាំដោះស្រាយ"
         href="/admin/maintenance"
-        icon={<Wrench size={18} />}
+        icon={<Wrench size={16} />}
         tone="purple"
       />
     </div>

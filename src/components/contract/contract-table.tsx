@@ -180,11 +180,11 @@ export function ContractTableWrapper({ initialContracts, tenants, rooms, default
             <table className="w-full min-w-270 border-collapse text-left">
               <thead className="sticky top-0 z-10 border-b border-(--panel-border) bg-(--panel-inset)">
                 <tr className="text-xs font-medium text-(--panel-text-muted)">
-                  <th className="px-4 py-3">អ្នកជួល</th>
-                  <th className="px-4 py-3">បន្ទប់</th>
-                  <th className="px-4 py-3">រយៈពេលកិច្ចសន្យា</th>
-                  <th className="px-4 py-3">ប្រាក់កក់</th>
-                  <th className="px-4 py-3">
+                  <th className="px-5 py-3">អ្នកជួល</th>
+                  <th className="px-5 py-3">បន្ទប់</th>
+                  <th className="px-5 py-3">រយៈពេលកិច្ចសន្យា</th>
+                  <th className="px-5 py-3">ប្រាក់កក់</th>
+                  <th className="px-5 py-3">
                     <Tooltip>
                       <TooltipTrigger render={<span className="inline-flex cursor-default items-center gap-1" />}>
                         <CalendarClock className="h-3.5 w-3.5 text-(--panel-text-subtle)" />
@@ -193,16 +193,16 @@ export function ContractTableWrapper({ initialContracts, tenants, rooms, default
                       <TooltipContent>ថ្ងៃប្រចាំខែដែលត្រូវបង់ប្រាក់ជួល</TooltipContent>
                     </Tooltip>
                   </th>
-                  <th className="px-4 py-3">ស្ថានភាព</th>
-                  <th className="px-4 py-3 text-right">សកម្មភាព</th>
+                  <th className="px-5 py-3">ស្ថានភាព</th>
+                  <th className="px-5 py-3 text-right">សកម្មភាព</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-(--panel-border-subtle) text-sm">
                 {visibleContracts.map((contract) => (
                   <tr key={contract.id} className="transition-colors hover:bg-(--panel-hover)/55">
-                    <td className="px-4 py-2.5"><p className="font-semibold text-(--panel-text)">{contract.profiles?.full_name || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{contract.profiles?.phone_number || "មិនមានលេខទូរស័ព្ទ"}</p></td>
-                    <td className="px-4 py-2.5"><p className="font-semibold text-(--panel-text)">#{contract.rooms?.room_number || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{contract.rooms?.room_type || "-"} · ជាន់ {contract.rooms?.floor || "-"}</p></td>
-                    <td className="px-4 py-2.5">
+                    <td className="px-5 py-2.5"><p className="font-semibold text-(--panel-text)">{contract.profiles?.full_name || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{contract.profiles?.phone_number || "មិនមានលេខទូរស័ព្ទ"}</p></td>
+                    <td className="px-5 py-2.5"><p className="font-semibold text-(--panel-text)">#{contract.rooms?.room_number || "-"}</p><p className="mt-0.5 text-xs text-(--panel-text-subtle)">{contract.rooms?.room_type || "-"} · ជាន់ {contract.rooms?.floor || "-"}</p></td>
+                    <td className="px-5 py-2.5">
                       <Tooltip>
                         <TooltipTrigger
                           render={
@@ -217,10 +217,10 @@ export function ContractTableWrapper({ initialContracts, tenants, rooms, default
                         </TooltipContent>
                       </Tooltip>
                     </td>
-                    <td className="px-4 py-2.5 font-semibold text-emerald-600 dark:text-emerald-300">${Number(contract.deposit_amount || 0).toFixed(2)}</td>
-                    <td className="px-4 py-2.5 text-(--panel-text-muted)">ថ្ងៃទី {contract.due_day}</td>
-                    <td className="px-4 py-2.5"><StatusBadge status={contract.status} /></td>
-                    <td className="px-4 py-2.5 text-right">
+                    <td className="px-5 py-2.5 font-semibold text-emerald-600 dark:text-emerald-300">${Number(contract.deposit_amount || 0).toFixed(2)}</td>
+                    <td className="px-5 py-2.5 text-(--panel-text-muted)">ថ្ងៃទី {contract.due_day}</td>
+                    <td className="px-5 py-2.5"><StatusBadge status={contract.status} /></td>
+                    <td className="px-5 py-2.5 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           render={

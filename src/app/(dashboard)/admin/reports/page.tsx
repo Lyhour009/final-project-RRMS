@@ -42,7 +42,7 @@ function ReportCard({
         </div>
         <div className={`shrink-0 rounded-lg p-1.5 ${styles.icon}`}>{icon}</div>
       </div>
-      <p className="mt-1.5 text-xs text-(--panel-text-subtle)">{subtitle}</p>
+      <p className="mt-1.5 text-xs leading-5 text-(--panel-text-subtle)">{subtitle}</p>
     </div>
   );
 }

@@ -91,7 +91,7 @@ export default function SettingsForm({ settings }: { settings: SettingsData }) {
         <form action={formAction} onChange={() => setIsDirty(true)} className="overflow-hidden rounded-2xl border border-(--panel-border) bg-(--panel) shadow-sm">
           <input type="hidden" name="id" value={settings.id} />
           <div className="flex items-center justify-between gap-4 border-b border-(--panel-border-subtle) px-5 py-4 sm:px-6">
-            <div><h2 className="text-base font-semibold">ការកំណត់សំខាន់ៗ</h2><p className="mt-1 text-xs text-(--panel-text-subtle)">ប្រើសម្រាប់គណនាវិក្កយបត្រ និងបង្ហាញទៅអ្នកជួល</p></div>
+            <div><h2 className="text-sm font-semibold">ការកំណត់សំខាន់ៗ</h2><p className="mt-1 text-xs text-(--panel-text-subtle)">ប្រើសម្រាប់គណនាវិក្កយបត្រ និងបង្ហាញទៅអ្នកជួល</p></div>
             <button type="submit" disabled={pending || !isDirty} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-medium text-white shadow-lg shadow-indigo-600/15 transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-45">
               {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{pending ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
             </button>

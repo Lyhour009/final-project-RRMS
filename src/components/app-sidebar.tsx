@@ -164,15 +164,15 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
         <div className="flex items-center gap-3">
           {/* Logo badge */}
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-indigo-500 to-sky-500 shadow-lg shadow-indigo-500/30">
-            <Building2 className="h-4.5 w-4.5 text-(--panel-text)" />
+            <Building2 className="h-4 w-4 text-(--panel-text)" />
           </div>
 
           {/* Name + role */}
           <div className="leading-none">
-            <p className="text-[15px] font-bold tracking-tight text-(--panel-text)">
+            <p className="text-sm font-bold tracking-tight text-(--panel-text)">
               RRMS
             </p>
-            <p className="mt-0.5 text-[12px]  uppercase  text-indigo-400/70 font-bold">
+            <p className="mt-0.5 text-xs font-bold uppercase tracking-wide text-indigo-400/70">
               {role === "admin"
                 ? "ផ្ទាំងគ្រប់គ្រងប្រព័ន្ធ"
                 : "ប្រព័ន្ធព័ត៌មានអ្នកជួល"}
@@ -185,7 +185,7 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
       <SidebarContent className="px-3">
         <SidebarGroup>
           {/* Section label */}
-          <p className="mb-2 px-3 text-[12px] font-bold uppercase  text-indigo-400/50">
+          <p className="mb-2 px-3 text-xs font-bold uppercase tracking-wide text-indigo-400/50">
             {role === "admin" ? "ការគ្រប់គ្រង" : "គណនីរបស់ខ្ញុំ"}
           </p>
 
@@ -203,7 +203,7 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
                     <Link
                       href={item.url}
                       className={cn(
-                        "group relative flex w-full items-center gap-3 rounded-xl px-4 py-2 text-[13.5px] font-medium transition-all duration-150",
+                        "group relative flex w-full items-center gap-3 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-150",
                         isActive
                           ? "bg-indigo-500/20 text-indigo-700 dark:text-white ring-1 ring-indigo-500/30"
                           : "text-(--panel-text-muted) hover:bg-(--panel-hover) hover:text-(--panel-text)",
@@ -240,15 +240,15 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
         {/* User card */}
         <Link href="/profile" prefetch={false} className="flex items-center gap-3 rounded-xl border border-(--panel-border-subtle) bg-(--panel-hover) px-4 py-2 backdrop-blur-sm transition hover:border-indigo-500/30 hover:bg-indigo-500/10">
           <Avatar className="h-8 w-8 rounded-lg">
-            <AvatarFallback className="rounded-lg bg-linear-to-br from-indigo-500 to-sky-500 text-[11px] font-bold text-white">
+            <AvatarFallback className="rounded-lg bg-linear-to-br from-indigo-500 to-sky-500 text-xs font-bold text-white">
               {userInitials}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-semibold capitalize text-(--panel-text)">
+            <p className="truncate text-sm font-semibold capitalize text-(--panel-text)">
               {displayName}
             </p>
-            <p className="truncate text-[12px] text-(--panel-text-subtle)">{userEmail}</p>
+            <p className="truncate text-xs text-(--panel-text-subtle)">{userEmail}</p>
           </div>
         </Link>
 
@@ -257,7 +257,7 @@ export function AppSidebar({ user, role }: { user: User; role: string }) {
           <Button
             type="submit"
             variant="ghost"
-            className="w-full justify-start gap-3 rounded-xl px-4 text-[13px] font-medium text-slate-500 hover:bg-red-500/10 hover:text-red-400"
+            className="w-full justify-start gap-3 rounded-xl px-4 text-sm font-medium text-slate-500 hover:bg-red-500/10 hover:text-red-400"
           >
             <LogOut className="h-4 w-4 shrink-0" />
             <span>ចាកចេញ</span>

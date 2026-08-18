@@ -42,8 +42,8 @@ export default async function TenantContractPage() {
   return (
     <div className="mx-auto w-full max-w-[1680px] space-y-5 p-4 text-(--panel-text) sm:p-5 lg:p-6">
       <div>
-        <h1 className="text-2xl font-bold">កិច្ចសន្យារបស់ខ្ញុំ</h1>
-        <p className="text-sm text-(--panel-text-subtle) mt-1">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">កិច្ចសន្យារបស់ខ្ញុំ</h1>
+        <p className="mt-1 text-sm leading-6 text-(--panel-text-muted)">
           ព័ត៌មានកិច្ចសន្យា និងបន្ទប់ជួលរបស់អ្នក
         </p>
       </div>
@@ -143,28 +143,28 @@ export default async function TenantContractPage() {
               <h2 className="text-base font-semibold mb-4">សង្ខេបកិច្ចសន្យា</h2>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg border border-(--panel-border) bg-(--panel-inset) p-3.5">
+                <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3.5">
                   <p className="text-xs text-(--panel-text-subtle)">ថ្លៃបន្ទប់ប្រចាំខែ</p>
                   <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                     ${Number(room?.base_price || 0).toFixed(2)}
                   </p>
                 </div>
 
-                <div className="rounded-lg border border-(--panel-border) bg-(--panel-inset) p-3.5">
+                <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3.5">
                   <p className="text-xs text-(--panel-text-subtle)">ប្រាក់កក់</p>
                   <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1">
                     ${Number(contract.deposit_amount || 0).toFixed(2)}
                   </p>
                 </div>
 
-                <div className="rounded-lg border border-(--panel-border) bg-(--panel-inset) p-3.5">
+                <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3.5">
                   <p className="text-xs text-(--panel-text-subtle)">ថ្ងៃបង់ប្រាក់</p>
                   <p className="text-lg font-bold text-amber-600 dark:text-amber-400 mt-1">
                     ថ្ងៃទី {contract.due_day}
                   </p>
                 </div>
 
-                <div className="rounded-lg border border-(--panel-border) bg-(--panel-inset) p-3.5">
+                <div className="rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3.5">
                   <p className="text-xs text-(--panel-text-subtle)">ស្ថានភាព</p>
                   <div className="mt-2">
                     <StatusBadge status={contract.status} />

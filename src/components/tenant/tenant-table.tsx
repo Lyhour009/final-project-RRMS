@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -244,7 +245,7 @@ export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
                         </Avatar>
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-(--panel-text)">{tenant.full_name}</p>
-                          <p className="mt-0.5 truncate font-mono text-[10px] text-(--panel-text-subtle)/70">
+                          <p className="mt-0.5 truncate font-mono text-xs text-(--panel-text-subtle)/70">
                             {tenant.id.slice(0, 8)}
                           </p>
                         </div>
@@ -254,13 +255,11 @@ export function TenantTableWrapper({ initialTenants }: TenantTableProps) {
                     <td className="px-5 py-2.5 text-(--panel-text-muted)">{tenant.phone_number || <span className="text-(--panel-text-subtle)">មិនបានបញ្ចូល</span>}</td>
                     <td className="px-5 py-2.5">
                       {tenant.activeContract ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-600 dark:text-blue-300">
-                          <DoorOpen size={12} className="shrink-0" /> បន្ទប់ #{tenant.activeContract.roomNumber}
-                        </span>
+                        <Badge tone="blue" dot={false} icon={<DoorOpen size={12} className="shrink-0" />}>
+                          បន្ទប់ #{tenant.activeContract.roomNumber}
+                        </Badge>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-500/20 bg-zinc-500/10 px-2.5 py-1 text-xs font-medium text-(--panel-text-muted)">
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" /> គ្មានកិច្ចសន្យា
-                        </span>
+                        <Badge tone="gray">គ្មានកិច្ចសន្យា</Badge>
                       )}
                     </td>
                     <td className="px-5 py-2.5 text-(--panel-text-muted)">{formatKhmerDate(tenant.created_at, { withDay: true })}</td>

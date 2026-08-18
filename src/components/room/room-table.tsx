@@ -217,7 +217,7 @@ export default function RoomTable({ initialRooms }: RoomTableProps) {
                     <td className="px-5 py-2.5">
                       <p className="font-semibold text-(--panel-text)">#{room.room_number}</p>
                       <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-(--panel-text-subtle)">
-                        <Users size={11} className="shrink-0" /> អតិបរមា {room.max_occupants} នាក់
+                        <Users size={14} className="shrink-0" /> អតិបរមា {room.max_occupants} នាក់
                       </p>
                     </td>
                     <td className="px-5 py-2.5 text-(--panel-text-muted)">{room.room_type}</td>

@@ -42,7 +42,7 @@ export default async function DashboardLayout({
             {/* Left: trigger + breadcrumb */}
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" />
-              <div className="hidden sm:flex items-center gap-1.5 text-[13px]">
+              <div className="hidden sm:flex items-center gap-1.5 text-sm">
                 <span className="font-medium text-slate-700 dark:text-slate-200">
                   {userRole === "admin"
                     ? "ផ្ទាំងគ្រប់គ្រងប្រព័ន្ធ"
@@ -63,10 +63,10 @@ export default async function DashboardLayout({
 
               {/* Avatar */}
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-[11px] font-bold select-none shadow-sm">
+                <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold select-none shadow-sm">
                   {userInitials}
                 </div>
-                <span className="hidden md:block text-[13px] font-medium text-slate-700 dark:text-slate-300 capitalize">
+                <span className="hidden md:block text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">
                   {displayName}
                 </span>
               </div>

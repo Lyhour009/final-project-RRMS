@@ -57,10 +57,10 @@ export default async function TenantOverviewPage() {
   return (
     <div className="mx-auto w-full max-w-[1680px] space-y-5 p-4 text-(--panel-text) sm:p-5 lg:p-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           សួស្តី, {data.profile.full_name}
         </h1>
-        <p className="text-sm text-(--panel-text-subtle) mt-1">
+        <p className="mt-1 text-sm leading-6 text-(--panel-text-muted)">
           ផ្ទាំងសង្ខេបព័ត៌មានបន្ទប់ កិច្ចសន្យា និងការទូទាត់របស់អ្នក
         </p>
       </div>
@@ -121,7 +121,7 @@ export default async function TenantOverviewPage() {
             </p>
           ) : (
             <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2">
-              <div className="overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3.5">
+              <div className="overflow-hidden rounded-xl border border-(--panel-border) bg-(--panel-inset) p-4">
                 {room?.images?.[0] ? (
                   <img
                     src={room.images[0]}
@@ -140,7 +140,7 @@ export default async function TenantOverviewPage() {
                 <p className="text-sm text-(--panel-text-subtle) mt-1">{room?.room_type}</p>
               </div>
 
-              <div className="space-y-4 rounded-xl border border-(--panel-border) bg-(--panel-inset) p-5">
+              <div className="space-y-4 rounded-xl border border-(--panel-border) bg-(--panel-inset) p-4">
                 <InfoRow
                   label="ស្ថានភាព"
                   value={<StatusBadge status={contract.status} />}
@@ -216,7 +216,7 @@ export default async function TenantOverviewPage() {
               data.recentBills.map((bill) => (
                 <div
                   key={bill.id}
-                  className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
+                  className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3.5"
                 >
                   <div>
                     <p className="text-sm font-medium text-(--panel-text)">
@@ -244,7 +244,7 @@ export default async function TenantOverviewPage() {
               data.recentPayments.map((payment) => (
                 <div
                   key={payment.id}
-                  className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3"
+                  className="flex items-center justify-between rounded-xl border border-(--panel-border) bg-(--panel-inset) p-3.5"
                 >
                   <div>
                     <p className="text-sm font-medium text-(--panel-text)">
