@@ -2,7 +2,6 @@
 
 import { useActionState, useEffect, useState } from "react";
 import {
-  Banknote,
   CalendarDays,
   CreditCard,
   Loader2,
@@ -117,11 +116,6 @@ export default function SettingsForm({ settings }: { settings: SettingsData }) {
               <label htmlFor="payment_instruction" className="sr-only">ការណែនាំការទូទាត់</label>
               <textarea id="payment_instruction" name="payment_instruction" defaultValue={settings.payment_instruction ?? ""} rows={5} placeholder="ឧទាហរណ៍៖ សូមសរសេរលេខបន្ទប់ក្នុងចំណាំការផ្ទេរប្រាក់..." className="w-full resize-y rounded-xl border border-(--panel-border) bg-(--panel) px-3 py-3 text-sm leading-6 text-(--panel-text) outline-none transition placeholder:text-(--panel-text-subtle) focus:border-indigo-500/50 focus:ring-3 focus:ring-indigo-500/10" />
             </Section>
-          </div>
-
-          <div className="flex flex-col gap-3 border-t border-(--panel-border-subtle) bg-(--panel-inset)/55 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <div className="flex items-center gap-2 text-xs text-(--panel-text-subtle)"><Banknote className="h-4 w-4" />{isDirty ? "មានការផ្លាស់ប្តូរមិនទាន់រក្សាទុក" : "ការកំណត់បានរក្សាទុករួច"}</div>
-            <button type="submit" disabled={pending || !isDirty} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto">{pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{pending ? "កំពុងរក្សាទុក..." : "រក្សាទុកការកំណត់"}</button>
           </div>
         </form>
       </div>
