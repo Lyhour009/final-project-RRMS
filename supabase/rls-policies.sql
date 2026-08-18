@@ -34,6 +34,20 @@ $$;
 -- ── profiles ───────────────────────────────────────────────────────────
 alter table public.profiles enable row level security;
 
+-- Legacy policies from early manual setup via the Supabase Studio UI, before
+-- this file existed. They used a different naming convention so the drops
+-- below (which only ever knew this file's own policy names) never removed
+-- them, and "Tenants update own profile" had no `with check`, letting any
+-- tenant update their own `role` column straight to 'admin'. Postgres ORs
+-- all permissive policies together, so this one alone defeated the correct,
+-- stricter profiles_update_admin policy sitting right next to it. Dropping
+-- these by their exact (human-readable, non-snake_case) names is what
+-- actually closes the hole — re-running the rest of this file without these
+-- three lines does nothing, since it never referenced these names.
+drop policy if exists "Admins full access to profiles" on public.profiles;
+drop policy if exists "Tenants view own profile" on public.profiles;
+drop policy if exists "Tenants update own profile" on public.profiles;
+
 drop policy if exists "profiles_select_self_or_admin" on public.profiles;
 create policy "profiles_select_self_or_admin"
   on public.profiles for select
@@ -58,6 +72,12 @@ create policy "profiles_update_admin"
 -- join rooms via contracts/bills) can read them. Only admins can write.
 alter table public.rooms enable row level security;
 
+-- Legacy duplicate from the same early manual Studio setup as the profiles
+-- one above. Redundant (also admin-only), not itself exploitable, but
+-- dropped for the same reason: an unlisted policy name can't be kept in
+-- sync by editing this file, so it should not exist at all.
+drop policy if exists "Admins full access to rooms" on public.rooms;
+
 drop policy if exists "rooms_select_authenticated" on public.rooms;
 create policy "rooms_select_authenticated"
   on public.rooms for select
@@ -71,6 +91,12 @@ create policy "rooms_write_admin"
 
 -- ── contracts ──────────────────────────────────────────────────────────
 alter table public.contracts enable row level security;
+
+-- Same early-Studio-setup legacy duplicates as profiles/rooms above. Both
+-- are read-only or admin-only, so not exploitable, but cleaned up so this
+-- file is a complete list of what's actually live.
+drop policy if exists "Admins full access to contracts" on public.contracts;
+drop policy if exists "Tenants view own contracts" on public.contracts;
 
 drop policy if exists "contracts_select_self_or_admin" on public.contracts;
 create policy "contracts_select_self_or_admin"
@@ -96,6 +122,11 @@ create policy "contracts_delete_admin"
 -- ── bills ──────────────────────────────────────────────────────────────
 alter table public.bills enable row level security;
 
+-- Same early-Studio-setup legacy duplicates as above — both read-only or
+-- admin-only, not exploitable, cleaned up for a complete/accurate file.
+drop policy if exists "Admins full access to bills" on public.bills;
+drop policy if exists "Tenants view own bills" on public.bills;
+
 drop policy if exists "bills_select_self_or_admin" on public.bills;
 create policy "bills_select_self_or_admin"
   on public.bills for select
@@ -109,6 +140,14 @@ create policy "bills_write_admin"
 
 -- ── payments ───────────────────────────────────────────────────────────
 alter table public.payments enable row level security;
+
+-- Same early-Studio-setup legacy duplicates as above — one admin-only
+-- (via a direct profiles EXISTS check instead of is_admin()), one
+-- read-only for a tenant's own rows. Neither grants tenant write access
+-- (that would have been as serious as the profiles bug), but cleaned up
+-- so this file is a complete/accurate list of what's actually live.
+drop policy if exists "admin_all_payments" on public.payments;
+drop policy if exists "tenant_select_payments" on public.payments;
 
 drop policy if exists "payments_select_self_or_admin" on public.payments;
 create policy "payments_select_self_or_admin"
@@ -136,6 +175,14 @@ create policy "payments_delete_admin"
 -- ── maintenance_requests ───────────────────────────────────────────────
 alter table public.maintenance_requests enable row level security;
 
+-- Same early-Studio-setup legacy duplicates as above. "Tenants can create
+-- maintenance" is scoped to tenant_id = auth.uid(), same restriction as
+-- maintenance_insert_self_or_admin below, so not exploitable — cleaned up
+-- so this file is a complete/accurate list of what's actually live.
+drop policy if exists "Admins full access to maintenance" on public.maintenance_requests;
+drop policy if exists "Tenants can create maintenance" on public.maintenance_requests;
+drop policy if exists "Tenants view own maintenance" on public.maintenance_requests;
+
 drop policy if exists "maintenance_select_self_or_admin" on public.maintenance_requests;
 create policy "maintenance_select_self_or_admin"
   on public.maintenance_requests for select
@@ -162,6 +209,14 @@ create policy "maintenance_delete_admin"
 -- only admins may write.
 alter table public.settings enable row level security;
 
+-- Legacy duplicate from the early Studio setup, with `using (true)` instead
+-- of an explicit auth check. settings holds no PII (billing rates, QR image
+-- path, payment instructions), so this wasn't a data leak, but a
+-- condition-less policy is exactly the shape that turned into a real bug on
+-- profiles — dropped so nothing looser than settings_select_authenticated
+-- remains.
+drop policy if exists "Allow authenticated users to read settings" on public.settings;
+
 drop policy if exists "settings_select_authenticated" on public.settings;
 create policy "settings_select_authenticated"
   on public.settings for select
@@ -175,6 +230,19 @@ create policy "settings_write_admin"
 
 -- ── notifications ──────────────────────────────────────────────────────
 alter table public.notifications enable row level security;
+
+-- Legacy duplicates from the early Studio setup. "user_select_notifications"
+-- and "user_update_notifications" are functionally identical to the real
+-- policies below (both scoped to user_id = auth.uid()), so not exploitable.
+-- "admin_insert_notifications", though, let any admin's own browser session
+-- insert notifications directly via the anon key + JWT — contradicting the
+-- deliberate design in src/lib/notifications.ts (no public createNotification
+-- Server Action exists specifically so the browser can never fire arbitrary
+-- notifications; see CLAUDE.md). Dropped so the comment below is actually
+-- true: no insert policy exists at all, service-role only.
+drop policy if exists "user_select_notifications" on public.notifications;
+drop policy if exists "user_update_notifications" on public.notifications;
+drop policy if exists "admin_insert_notifications" on public.notifications;
 
 drop policy if exists "notifications_select_self" on public.notifications;
 create policy "notifications_select_self"
