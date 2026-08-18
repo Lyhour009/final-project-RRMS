@@ -154,7 +154,7 @@ export default function PaymentSubmitModal({
 
       const payment = await submitPayment(formData);
 
-      toast.success("បានបញ្ជូនការទូទាត់។ សូមរង់ចាំ Admin ផ្ទៀងផ្ទាត់។");
+      toast.success("បានកត់ត្រាការទូទាត់ជោគជ័យ។ សូមអនុម័តដើម្បីបញ្ចប់ដំណើរការ។");
 
       onSuccess?.(payment as Payment);
 
@@ -385,7 +385,7 @@ export default function PaymentSubmitModal({
               disabled={loading}
               className={MODAL_PRIMARY_BUTTON}
             >
-              {loading ? "កំពុងបញ្ជូន..." : "ខ្ញុំបានបង់ប្រាក់រួចហើយ"}
+              {loading ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
             </Button>
           </div>
         </form>
